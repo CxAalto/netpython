@@ -1,0 +1,9 @@
+tee jotain ulkoisten binäärien hakemistoiongelmille ja temppifileille
+erotus, unioni...
+solmukohtaiset ominaisuudet (deg...) ja metadata
+DONEmst pitäisi pystyä muodostamaan myös verkoista joissa solmut ovat muita kuin lukuja
+mst(prim)
+DONEgetSubnet
+korjaa addNet siten etta Net+SymmNet toimii
+dokumentaatiota
+tee himmeliwrapperiin koordinaattien uudelleeaytto eli vertex filea tekeva koodi
