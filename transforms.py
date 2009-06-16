@@ -32,7 +32,7 @@ def mst_kruskal(net,randomize=True,maximum=False):
         random.shuffle(edges) #the sort has been stable since python version 2.3
     edges.sort(lambda x,y:cmp(x[2],y[2]),reverse=maximum)
     mst=pynet.SymmNet()
-    numberOfNodes=len(net._nodes)
+    numberOfNodes=len(net)
     #ktree=percolator.Ktree(numberOfNodes)
     ktree=percolator.Ktree() #just use dict
     addedEdges=0
