@@ -394,7 +394,7 @@ class Himmeli:
 
         complaint="Cannot find Himmeli! This is where it should be: "+himmeliExecutable
 
-        raiseException(complaint)
+        raise Exception(complaint)
 
 
     epsilon=0.0001 #hack, find the real thing
