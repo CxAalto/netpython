@@ -22,7 +22,7 @@
 import pynet,netext
 #from eden import MicrosatelliteData
 from matplotlib.mlab import norm
-knownFiletypes=["edg","gml","mat"]
+knownFiletypes=["edg","gml","mat","net"]
 
 def getFiletype(filename):
     """
@@ -164,6 +164,9 @@ def loadNet_mat(input, mutualEdges = False, splitterChar = None,symmetricNet=Tru
 
     return newNet
 
+def loadNet_net(input):
+    raise Exception("Reading Pajek file format is not implemented.")
+
 def writeNet_gml(net,filename):
     file=open(filename,'w')
     file.write("graph [\n")
@@ -197,6 +200,32 @@ def writeNet_edg(net,filename,headers=False):
     for edge in edges:
         file.write(str(edge[0])+"\t"+str(edge[1])+"\t"+str(edge[2])+"\n")
 
+def writeNet_net(net,filename):
+    """
+    Write network files in Pajek format.
+
+    Todo: add writing metadata to the vertices rows
+    """
+    file=open(filename,'w')
+
+    #Writing vertices to the disk.
+    numberOfNodes=len(net)
+    nodeNameToIndex={}
+    file.write("*Vertices "+str(numberOfNodes)+"\n")
+    for index,node in enumerate(net):
+        file.write(str(index+1)+" "+str(node)+"\n")
+        nodeNameToIndex[node]=index
+
+    #Writing edges to the disk
+    file.write("*Arcs\n")
+    if net.isSymmetric():
+        file.write("*Edges\n")
+    for edge in net.edges:
+        file.write(str(nodeNameToIndex[edge[0]])+"\t"+str(nodeNameToIndex[edge[1]])+"\t"+str(edge[2])+"\n")
+    if not net.isSymmetric():
+        file.write("*Edges\n")
+
+    del nodeNameToIndex
 
 
 def writeNet_mat(net,filename):
@@ -224,6 +253,8 @@ def writeNet(net,filename,headers=False):
         writeNet_gml(net,filename)
     elif filetype=='mat':
         writeNet_mat(net,filename)
+    elif filetype=='net':
+        writeNet_net(net,filename)
     else:
         print "Unknown filetype, use writeNet_[filetype]"
 
@@ -237,6 +268,8 @@ def loadNet(filename, mutualEdges = False, splitterChar = None,symmetricNet=True
         newNet=loadNet_gml(inputfile)
     elif filetype=='mat':
         newNet=loadNet_mat(inputfile)
+    elif filetype=='net':
+        newNet=loadNet_net(inputfile)
     else:
         print "Unknown filetype, use loadNet_[filetype]"
     inputfile.close()
