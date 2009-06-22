@@ -181,9 +181,9 @@ def writeNet_gml(net,filename):
 
     for edge in net.edges:
         file.write("edge [\n")
-        file.write("source " + str(nodeIndex[edge[0]]))
-        file.write("target " + str(nodeIndex[edge[1]]))
-        file.write("value " + str(edge[2]))
+        file.write("source " + str(nodeIndex[edge[0]])+"\n")
+        file.write("target " + str(nodeIndex[edge[1]])+"\n")
+        file.write("value " + str(edge[2])+"\n")
         file.write("]\n")
 
     file.write("]\n")
