@@ -214,7 +214,7 @@ def writeNet_net(net,filename):
     file.write("*Vertices "+str(numberOfNodes)+"\n")
     for index,node in enumerate(net):
         file.write(str(index+1)+" "+str(node)+"\n")
-        nodeNameToIndex[node]=index
+        nodeNameToIndex[node]=index+1
 
     #Writing edges to the disk
     file.write("*Arcs\n")
