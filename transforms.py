@@ -191,6 +191,20 @@ def filterNet(net,keep_these_nodes):
     
 
 
+def collapseBipartiteNet(net,nodesToRemove):
+    """
+    Returns an unipartite projection of a bipartite network.
+    """
+    newNet=pynet.SymmNet()
+    for node in nodesToRemove:
+        degree=float(net[node].deg())
+        for node1 in net[node]:
+            for node2 in net[node]:
+                if node1.__hash__()>node2.__hash__():
+                    newNet[node1,node2]=newNet[node1,node2]+1.0/degree
+
+    netext.copyNodeProperties(net,newnet)
+    return newNet
 
 
     
