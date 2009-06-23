@@ -33,6 +33,7 @@ import random
 import heapq
 import string
 import percolator
+import transforms
 import shutil
 import copy
 from PIL import Image
@@ -229,14 +230,15 @@ def fullNet(nodes,weight=1):
 
 
 def collapseBiNet(net,nodesToRemove):
-    newNet=pynet.SymmNet()
-    for node in nodesToRemove:
-        degree=float(net[node].deg())
-        for node1 in net[node]:
-            for node2 in net[node]:
-                if node1.__hash__()>node2.__hash__():
-                    newNet[node1,node2]=newNet[node1,node2]+1.0/degree
-    return newNet
+    return transforms.collapseBipartiteNet(net,nodesToRemove)
+#    newNet=pynet.SymmNet()
+#    for node in nodesToRemove:
+#        degree=float(net[node].deg())
+#        for node1 in net[node]:
+#            for node2 in net[node]:
+#                if node1.__hash__()>node2.__hash__():
+#                    newNet[node1,node2]=newNet[node1,node2]+1.0/degree
+#    return newNet
 
 def getMeanDistance(theSet,distanceFunction):
     l=list(theSet)
