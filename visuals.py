@@ -1,3 +1,4 @@
+# -*- coding: latin-1 -*-
 import pynet
 import netext,percolator,netio
 import os
@@ -7,19 +8,64 @@ import random
 import shutil
 import Image
 
+
 ### LIST OF CHANGES
 #
-# JS/280509: Implemented use of labels in visualizeNet: if dict labels
+# 
+# Riitta Toivonen/230609:
+# 
+# 1) Added the input argument edgeColorMap. Now any pylab colormap can be
+# used for setting colors for edges (according to edge weight) and
+# nodes (according to node strength).
+#
+# Jari's default colors (yellow->blue->red) can be used with the
+# option edgeColorMap='primary'. Another custom colormap is available
+# by the name edgeColorMap='orange'.  All 150 pylab colormaps are
+# available (please see help cm, and look for DATA). The 'colortuple'
+# function is no longer needed.
+#
+# 2) I also added the input argument weightLimits.  The tuple
+# weightLimits=(minWeight, maxWeight) provides the minimum and maximum
+# value for weights. If none are given, (almost) the true min and max
+# weights in the network will be used.  If the true min weight is not
+# zero, minWeight is set to slightly below true min weight. Otherwise,
+# when normalizing the weights, the minimum weights would be
+# transformed to zero and the edges not visible at all. The
+# weightLimits are used for setting edge colors and width. They enable
+# the user to plot several networks (which may have different min and
+# max weights) such that a certain color and width always correspond
+# to a certain edge weight. Thus, the color and width in the
+# visualization can be used to infer edge weight. If the network turns
+# out to contain weights above the given maxWeight (below minWeight)
+# these will be rounded downwards (upwards) to the given limit. It is
+# more reasonable however for the user to provide limits that can
+# accommodate all weights, this is just a necessary precaution for the
+# case where the given limits are too tight.
+# 
+# 3) To do the above, I added these methods to VisualizeNet:
+#    normalizeWeight(value,weightLimits)
+#    setEdgeColorMap(edgeColorMap)
+#    setEdgeColor(value,weightLimits,edgeColorMap)
+#    setEdgeWidth(value,weightLimits,minwidth,maxwidth)
+#
+# 4) I also added a few usage examples to the help text
+# (visible with help(visuals.VisualizeNet) ).          
+#
+# 5) I started writing tests for visuals.py. Many more still need to
+# be written. They are found in   netpython/tests/visuals/test_visuals.py
+#     -Riitta
+#
+# Jari Saramäki/280509: Implemented use of labels in visualizeNet: if dict labels
 # given, these will be displayed. If uselabels='all', all labels will
 # be displayed, no dict needs to be input.  Tested with simple cases
 # (uselabels='all', uselabels='none', labels given in dict
 # labels. Appears to work.
 #
-# JS/040609: Added ReturnPlotObject, which generates a matplotlib plot
+# Jari Saramäki/040609: Added ReturnPlotObject, which generates a matplotlib plot
 # object which can be directly displayed e.g. on a canvas
-
+# 
 # -----------------------------------------------------------------------------------
-
+# 
 # --------------------------------------        
 
 class Myplot(object):
@@ -30,15 +76,15 @@ class Myplot(object):
 
 def ReturnPlotObject(data,plotcommand='plot',titlestring='',xstring='',ystring=''):
 
-    '''Input: data [[xseries1,yseries1],[xseries2,yseries2],...] (float,int, whatever)
-    plotcommand = matplotlib's plot command (default 'plot', could
-    also be 'loglog' etc), titlestring=plot title, xstring=x-axis label, ystring=y-axis label.
-    Outputs a container object, corresponding to a matplotlib plot. This can be displayed
-    in various ways, eg. on a TkInter canvas:
-    myplot.canvas=FigureCanvasTkAgg(myplot.thisFigure,master=plotbody)
-    myplot.canvas.show()
-    plotbody.pack()
-    where plotbody is a Frame object.'''
+    #Input: data [[xseries1,yseries1],[xseries2,yseries2],...] (float,int, whatever)
+    #plotcommand = matplotlib's plot command (default 'plot', could
+    #also be 'loglog' etc), titlestring=plot title, xstring=x-axis label, ystring=y-axis label.
+    #Outputs a container object, corresponding to a matplotlib plot. This can be displayed
+    #in various ways, eg. on a TkInter canvas:
+    #myplot.canvas=FigureCanvasTkAgg(myplot.thisFigure,master=plotbody)
+    #myplot.canvas.show()
+    #plotbody.pack()
+    #where plotbody is a Frame object.
 
     Nplots=len(data)
 
@@ -77,102 +123,188 @@ class Myplot(object):
 
 # ---------------------------------------
 
-def colortuple(value,vmin,vmax):
-        '''calculates color tuple (r,g,b) for
-           value. Color map goes yellow->blue->red'''
+def normalizeWeight(value,weightLimits):
+    # Transforms a weight to the range (0,1). It is intended that the
+    # user should set weightLimits such that the true weights in the
+    # network fall between the limits. If this is not the case,
+    # weights above given maxweight or below given minweight are
+    # truncated. The rest of the values are transformed linearly, such
+    # that the range (given minweight, given maxweight) becomes (0,1).
+    # 
+    #     normalizedWeight= (true weight - given minweight) / (given maxweight - given minweight )
+    # 
+    if (weightLimits[0]-weightLimits[1])==0: # if given minweight and maxweight are the same, all weights will be equal
+        normalizedWeight=1
+    elif value<weightLimits[0]: # if weight is smaller than given minweight
+        normalizedWeight=0
+    elif value>weightLimits[1]: # if weight is larger than given maxweight
+        normalizedWeight=1
+    else:
+        normalizedWeight=(value-weightLimits[0])/float(weightLimits[1]-weightLimits[0])
+    return normalizedWeight 
 
-        if not(vmin==vmax):
 
-            vmid=(vmin+vmax)/2.0
+def setEdgeColorMap(edgeColorMap):
+    # Sets a colormap for edges. Two options of our own are available
+    # ('orange' and 'primary'), in addition to the 150 pylab readymade
+    # colormaps. 
+    
+    if edgeColorMap=='primary':
+        # Jari's map: yellow->blue->red 
+        myMap=get_cmap()
+        myMap._segmentdata={
+            'red': ( (0,1,1), (0.5,0,0), (1,1,1)  ),
+            'green': ( (0,1,1), (0.5,0.5,0.5), (1,0,0) ),
+            'blue': ( (0,0,0), (0.5,1,1), (1,0,0) ),
+            }
 
-            # calculate red component (curve: 255->0->255)
+    elif edgeColorMap=='orange':
+        # Riitta's color map from white through yellow and orange to red 
+        myMap=get_cmap()
+        myMap._segmentdata = { 'red'  : ( (0.,.99,.99), (0.2,.98,.98), (0.4,.99,.99), (0.6,.99,.99), (0.8,.99,.99), (1.0,.92,.92) ),
+                               'green': ( (0,0.99,0.99), (0.2,.89,.89),  (0.4,.80,.80), (0.6,.50,.50), (0.8,.33,.33), (1.0,.10,.10) ),
+                               'blue' : ( (0,.99,.99), (0.2,.59,.59), (0.4,.20,.20), (0.6,0.0,0.0), (0.8,0.0,0.0), (1.0,.03,.03) )  }
 
-            maxcolor=1.0
+    else:
+        try:
+            myMap=get_cmap(edgeColorMap)
+        except AssertionError:
+            comment='\nCould not recognize given edgeColorMap name \''+ edgeColorMap+'\' \n\n'
+            raise AssertionError(comment)            
+    return myMap
 
-            if value<vmid:
 
-                A=-maxcolor/(vmid-vmin)
-                B=-A*vmid
+def setEdgeColor(value,weightLimits,edgeColorMap):
+    # Set edge color by weight (no other option implemented thus far)
+    if not (weightLimits[0]-weightLimits[1])==0: 
+        normalizedWeight=normalizeWeight(value,weightLimits) 
+        color=edgeColorMap(normalizedWeight) 
+    else:
+        color=(0.5,0.5,0.5)  # gray if all weights are equal
+    return color
 
-            else:
 
-                A=-maxcolor/(vmid-vmax)
-                B=-A*vmid
-
-            rc=A*value+B
-            if rc<0.0:
-                rc=0.0
-            elif rc>1.0:
-                rc=1.0
-
-            # calculate green component (curve: 255->0)
-
-            A=-maxcolor/(vmax-vmin)
-            B=-A*vmax
-            gc=A*value+B
-
-            if gc<0.0:
-                gc=0.0
-            elif gc>1.0:
-                gc=1.0
-
-            # calculate blue component (curve: 0->255->0)
-
-            if value<vmid:
-
-                A=-maxcolor/(vmin-vmid)
-                B=-A*vmin
-
-            else:   
-
-                A=maxcolor/(vmid-vmax)
-                B=-A*vmax
-
-            bc=A*value+B
-            if bc<0.0:
-                bc=0.0
-            elif bc>1.0:
-                bc=1.0
-
-        else:
-
-            bc=0.5
-            rc=0.5
-            gc=0.5
-
-        return tuple([rc,gc,bc])
+def setEdgeWidth(value,weightLimits,minwidth,maxwidth):
+    # Transforms edge weights to widths in the range  (minwidth,maxwidth).
+    # If given minwidth and maxwidth are the same, simply use that given width.
+    if not(weightLimits[0]-weightLimits[1])==0:
+        normalizedWeight=normalizeWeight(value,weightLimits)  # normalizes the weight linearly to the range (0,1)
+        width=minwidth+normalizedWeight*(maxwidth-minwidth)   # transforms the normalized weight linearly to the range (minwidth,maxwidth)     
+    else:
+        width=minwidth # if given minwidth and maxwidth are the same, simply use that width
+    return width
+    
 
 def plot_edge(plotobject,xcoords,ycoords,width=1.0,colour='k'):
-
-        plotobject.plot(xcoords,ycoords,'-',lw=width,color=colour)
+    
+    plotobject.plot(xcoords,ycoords,'-',lw=width,color=colour)
 
 def plot_node(plotobject,x,y,color='w',size=8.0):
+    
+    plotobject.plot([x],[y],'yo',markerfacecolor=color,markersize=size)
 
-        plotobject.plot([x],[y],'yo',markerfacecolor=color,markersize=size)
 
-def VisualizeNet(net,xy,coloredvertices=False,equalsize=False,labels={},showAllNodes=True,vcolor=[1.0,1.0,1.0],vsize=1.0,nodeColors={},bgcolor=[0.0,0.0,0.0],maxwidth=2.0,minwidth=0.2,uselabels='none'):
+def VisualizeNet(net,xy,coloredvertices=False,equalsize=False,labels={},showAllNodes=True,vcolor=[1.0,1.0,1.0],vsize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits='none'): 
 
-        '''Visualizes a network. Inputs:
-        net  = network to be visualized
-        xy = coordinates (usually originating from visuals.Himmeli, e.g. h=visuals.Himmeli(net,...,...) followed by xy=h.getCoordinates()
-        coloredvertices = (True/False). If True, i) IF dict nodeColors was given, these colors are used, ii) IF NOT, vcolor is used if given, and if not, nodes are white. If False, node colors are based on strength.
-        equalsize = (True/False) True: all vertices are of same size, input as vsize, default 1.0. False: sizes are based on vertex strength.
-        showAllNodes = (True/False) something of a quick hack; if True, displays disconnected components and nodes which have no edges left after e.g. thresholding
-        bgcolor = [r g b], r/g/b between 0.0 and 1.0. Background color, default is black.
-        maxwidth = max width of edges, default 2.0
-        minwidth = min width of edges, default 0.2
-        uselabels = ('none','all') Determines if node labels are shown. 'none' shows none, 'all' shows all. Note: any labels input in dict labels ({nodename:labelstring}) are always shown;
-                    use this dict to show labels next to your chosen nodes of interest'''
+        '''
+        Visualizes a network. Inputs:
 
+        net = network to be visualized (of type SymmNet() ).
+
+        xy = coordinates (usually originating from visuals.Himmeli,
+        e.g. h=visuals.Himmeli(net,...,...) followed by
+        xy=h.getCoordinates()
+
+        coloredvertices = (True/False). If True, i) IF dict nodeColors
+        was given, these colors are used, ii) IF NOT, vcolor is used
+        if given, and if not, nodes are white. If False, node colors
+        are based on strength.
+
+        equalsize = (True/False) True: all vertices are of same size,
+        input as vsize, default 1.0. False: sizes are based on vertex
+        strength.
+
+        showAllNodes = (True/False) something of a quick hack; if
+        True, displays disconnected components and nodes which have no
+        edges left after e.g. thresholding
+
+        bgcolor = [r g b], r/g/b between 0.0 and 1.0. Background
+        color, default is black.
+
+        maxwidth = max width of edges as plotted, default 2.0
+
+        minwidth = min width of edges as plotted, default 0.2
+
+        uselabels = ('none','all') Determines if node labels are shown.
+        'none' shows none, 'all' shows all. Note: any labels input in
+        dict labels ({nodename:labelstring}) are always shown; use
+        this dict to show labels next to your chosen nodes of
+        interest. 
+
+        edgeColorMap=myMap allows the user to set color scheme for
+        edges.  Edges are always colored according to edge weights,
+        which are first normalized to the range (0,1) and then
+        transformed to colors using edgeColorMap. There are 150
+        colormaps available in pylab; for a full listing, please see
+        help(pylab.cm) (and look for DATA). Or try, for example,
+        edgeColorMap='orange' or edgeColorMap='primary', two colormaps
+        of our own that are not available in pylab.
+
+        weightLimits=(0,5) The tuple (minWeight, maxWeight) provides
+        the minimum and maximum value for weights. If none are given,
+        (nearly) the true min and max weights in the network will be
+        used. The weightLimits are used for setting edge colors and
+        width. They enable the user to plot several networks (which
+        may have different min and max weights) such that a certain
+        color and width always correspond to a certain edge
+        weight. Thus, the color and width in the visualization can be
+        used to infer edge weight. If the network turns out to contain
+        weights above the given maxWeight (below minWeight) these will
+        be rounded downwards (upwards) to the given limit. It is more
+        reasonable however for the user to provide limits that can
+        accommodate all weights, this is just a necessary precaution
+        for the case where the given limits are too tight.
+
+
+        Usage examples:
+            m=pynet.SymmNet()
+            m[0][1]=1.0
+            m[1][2]=3.5
+            m[0][2]=5.0
+
+            Here are the coordinates, a dictionary that contains 2-tuples 
+            xy={}
+            xy[0]=(0,0)
+            xy[1]=(4,0)
+            xy[2]=(2,3) 
+
+            f=FigureCanvasBase(visuals.VisualizeNet(m,xy))
+            f.print_eps("tmp.eps",dpi=80.0)
+
+            f=FigureCanvasBase(visuals.VisualizeNet(m,xy,edgeColorMap='orange'))
+            f.print_eps("tmp2.eps",dpi=80.0)
+
+            f=FigureCanvasBase(visuals.VisualizeNet(m,xy,edgeColorMap='orange',equalsize=True,vsize=16))
+            f.print_eps("tmp3.eps",dpi=80.0)
+
+            (General questions: Is there a neater way to output the
+            figures than using FigureCanvasBase? How can I have a look
+            at the figures from within python, without saving them to
+            .eps files?)
+            
+        '''
+        
         thisfigure=Figure(figsize=(6,6),dpi=100,facecolor=bgcolor)
         axes=thisfigure.add_subplot(111)
         axes.set_axis_bgcolor(bgcolor)
 
         # sets the color for node labels
-
+        
         fontcolor='w'
         if bgcolor=='white':
             fontcolor='k'
+        
+
 
         # first draw all edges
 
@@ -185,25 +317,29 @@ def VisualizeNet(net,xy,coloredvertices=False,equalsize=False,labels={},showAllN
         wmin=min(wlist)
         wmax=max(wlist)
 
-        if not(wmax==wmin):
-
-            A=(maxwidth-minwidth)/(wmax-wmin)
-            B=maxwidth-A*wmax
-
-        else:
-
-            A=1.0
-            B=0.0
-
+        # If weightLimits were not given, use (almost) the true min
+        # and max weights in the network. Note: using a value slightly
+        # below wmin, because otherwise when normalizing the weights,
+        # the minimum weights would be transformed to zero and the
+        # edges not visible at all.  - Riitta
+        
+        if weightLimits=='none':
+            if wmin==0:
+                weightLimits=(wmin,wmax)
+            else:
+                weightLimits=(wmin-0.00001,wmax) 
+        
+        myEdgeColorMap=setEdgeColorMap(edgeColorMap)
+        
         for edge in edges:
 
-            width=A*edge[2]+B
+            width=setEdgeWidth(edge[2],weightLimits,minwidth,maxwidth)
+
+            colour=setEdgeColor(edge[2],weightLimits,myEdgeColorMap)
 
             xcoords=[xy[edge[0]][0],xy[edge[1]][0]]
 
             ycoords=[xy[edge[0]][1],xy[edge[1]][1]]
-
-            colour=colortuple(edge[2],wmin,wmax)
 
             plot_edge(axes,xcoords,ycoords,width=width,colour=colour)
 
@@ -324,7 +460,8 @@ def VisualizeNet(net,xy,coloredvertices=False,equalsize=False,labels={},showAllN
 
             else:
 
-                color=colortuple(nodestrength,mins,maxs)
+                color=setEdgeColor(nodestrength,(mins,maxs),myEdgeColorMap) # use the same colormap for nodes as for edges (now the name edgeColorMap is a bit misleading... Could change it to just colorMap, or alternatively add another input option, 'nodeColorMap') 
+                #color=colortuple(nodestrength,mins,maxs)
                 
 
             plot_node(axes,x=xy[node][0],y=xy[node][1],color=color,size=nodesize)
@@ -362,7 +499,7 @@ def VisualizeNet(net,xy,coloredvertices=False,equalsize=False,labels={},showAllN
 
               
 class Himmeli:
-
+        
     # this class uses the executable Himmeli, which produces an .eps file AND outputs x-y-coordinates of nodes for visualization
     # first we have to find this executable
 
@@ -768,4 +905,7 @@ def drawNet(net,labels={},coordinates=None,showAllNodes=False):
         
 
 
-
+if __name__ == '__main__':
+    """Run unit tests if called."""
+    from tests.visuals.test_visuals import *
+    unittest.main()
