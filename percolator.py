@@ -457,7 +457,38 @@ def kcliquePercolator(net,k,start,stop,evaluations,reverse=False,weightFunction=
         yield community
         
 
+def getKCliqueBipartiteNet(net,k):
+    """
+    Returns a bipartite network where to partitions are k-cliques and 
+    (k-1)-cliques in the net that is given as a parameter. There is a link
+    between a k-clique and (k-1)-clique if the (k-1)-clique is a subclique of 
+    the k-clique.
+    """
+
+    kcliques=set()
+    krcliques=set()
+    kbinet=pynet.SymmNet()
+    for kclique in kcliquesByEdges(net.edges,k):
+        kcliques.add(kclique)
+        for krclique in kclique.getSubcliques():
+            krcliques.add(krclique)
+            kbinet[kclique,krclique]=1
+    return kbinet,kclqiues,krcliques
+
 def getKCliqueNet(net,k):
+    """
+    Returns a network of k-cliques in the network given as a parameter.
+    Two k-cliques are adjacent if they share a (k-1)-clique.
+    """
+    kbinet,kclqiues,krcliques=getKCliqueBipartiteNet(net,k)
+    return transforms.collapseBipartiteNet(net,krcliques)
+
+def getKRCliqueNet(net,k):
+    """
+    Returns a network of (k-1)-cliques, which are subcliques of some k-clique in the
+    network given as a parameter.
+    Two (k-1)-cliques are adjacent if they are subcliques of the same k-clique.
+    """
     krnet=pynet.SymmNet()
     for kclique in kcliquesByEdges(net.edges,k):
         krcliques=list(kclique.getSubcliques())
