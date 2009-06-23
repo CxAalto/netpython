@@ -101,7 +101,7 @@ def collapseIndices(net):
                 newNet[indexmap[i]][indexmap[j]] = net[i][j]
                 newNet[indexmap[j]][indexmap[i]] = net[j][i]
 
-    netext.copyNodeProperties(net,newnet)
+    netext.copyNodeProperties(net,newNet)
 
 
     return newNet
