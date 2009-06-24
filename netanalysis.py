@@ -15,7 +15,8 @@ from PIL import Image
 from math import ceil
 from Tkinter import *
 
-# fixes:
+# Changes:
+# 24.06.[JS] added weightStats(net), which just yields [min_weight,max_weight,avg_weight] for a network
 # 26.05 [JS] fixed logbin hang-up bug in knn_spectrum,clustering_spectrum,X_distribution
 
 def generateLogbins(minvalue,maxvalue,factor,uselinear=True):
@@ -485,5 +486,17 @@ def globalClustering(net):
         return 0
         
 
-    
+def weightStats(net):
+    """Input: network, output: [min_weight,max_weight,avg_weight]"""
+    witer=net.weights.__iter__()
+    weight_vector=[]
+    for eachitem in witer:
+        weight_vector.append(eachitem)
+
+    maxw=max(weight_vector)
+    minw=min(weight_vector)
+                 
+    avgw=sum(weight_vector)/len(weight_vector)
+
+    return [minw,maxw,avgw]
     
