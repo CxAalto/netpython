@@ -63,4 +63,4 @@
 {2: 3, 4: 1}
 65.0
 """
-__all__=["netio","pynet","netext","percolator","eden","visuals","netanalysis","models","transforms","communities"]
+__all__=["netio","pynet","netext","percolator","eden","visuals","netanalysis","models","transforms","communities","dialogues"]
