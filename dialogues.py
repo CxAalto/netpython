@@ -5,7 +5,7 @@ Collection of dialogue windows
 
 """
 
-import pynet,os,netio,netext
+import pynet,os,netio,netext,visuals
 import random
 import heapq
 import string
@@ -14,6 +14,11 @@ import shutil
 from PIL import Image
 from math import ceil
 from Tkinter import *
+#from pylab import *
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,NavigationToolbar2TkAgg
+
+
+# NEW DIALOGUE WINDOWS / JS / MAY-JUNE 09
 
 class MySimpleDialog(Toplevel):
     '''Master class for a dialog popup window.
@@ -25,8 +30,8 @@ class MySimpleDialog(Toplevel):
         Toplevel.__init__(self,parent)
         self.transient(parent)
 
-        if title:
-            self.title=title
+
+        self.title(title)
 
         self.parent=parent
         self.result=None
@@ -138,6 +143,137 @@ class WLogbinDialog(MySimpleDialog):
     def applyme(self):
         self.result=[self.linfirst.get(),float(self.numbins.get())]
 
+class LoadMatrixDialog(MySimpleDialog):
+    """Asks for the number of bins for log binning
+       and allows linear bins for 1...10"""
+
+
+    def __init__(self,parent,title='Please provide information:'):
+
+        Toplevel.__init__(self,parent)
+       # self.configure(bg='Gray80')
+       # self.transient(parent)
+
+        
+        self.title(title)
+
+        self.parent=parent
+        self.result=None
+        self.clones=StringVar()
+        self.measuretype=StringVar()
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        self.buttonbox()
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.wait_window(self)
+
+    def body(self,masterclass,masterwindow):
+
+        self.c1=Label(masterwindow,text='What distance measure has been used?',anchor=W)
+        self.c1.grid(row=0,column=0)
+
+        r1=Radiobutton(masterwindow,text='Non-shared alleles',value='nsa',variable=masterclass.measuretype)
+        r2=Radiobutton(masterwindow,text='Linear Manhattan',value='lm',variable=masterclass.measuretype)
+        r3=Radiobutton(masterwindow,text='Allele parsimony',value='ap',variable=masterclass.measuretype)
+        r4=Radiobutton(masterwindow,text='Hybrid',value="hybrid",variable=masterclass.measuretype)
+        r5=Radiobutton(masterwindow,text='Unknown',value="unknown",variable=masterclass.measuretype)
+        r1.grid(row=1,column=0,sticky=W)
+        r2.grid(row=2,column=0,sticky=W)
+        r3.grid(row=3,column=0,sticky=W)
+        r4.grid(row=4,column=0,sticky=W)
+        r5.grid(row=5,column=0,sticky=W)
+
+        self.c2=Label(masterwindow,text='How have clones been handled?',anchor=W)
+        self.c2.grid(row=6,column=0)
+        r6=Radiobutton(masterwindow,text='Removed',value='collapsed',variable=masterclass.clones)
+        r7=Radiobutton(masterwindow,text='Kept',value='included',variable=masterclass.clones)
+        r8=Radiobutton(masterwindow,text='Unknown',value='unknown',variable=masterclass.clones)
+        r6.grid(row=7,column=0,sticky=W)
+        r7.grid(row=8,column=0,sticky=W)
+        r8.grid(row=9,column=0,sticky=W)
+        
+        masterclass.measuretype.set('unknown')
+        masterclass.clones.set('unknown')
+
+        return self.c1
+
+    def applyme(self):
+        self.result=[self.measuretype.get(),self.clones.get()]
+
+class MetaHelpWindow(MySimpleDialog):
+
+
+    def __init__(self,parent,title=None,datatype='msat'):
+
+        Toplevel.__init__(self,parent)
+        self.configure(bg='Gray80')
+        self.transient(parent)
+        self.datatype=datatype
+
+        if title:
+            self.title=title
+
+        self.parent=parent
+        self.result=None
+        self.linfirst=IntVar()
+        self.numbins=StringVar()
+
+        body=Frame(self,bg='Gray80')
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        self.buttonbox()
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.wait_window(self)
+
+    def body(self,masterclass,masterwindow):
+
+        self.text=Text(self,bg='Gray90')
+        self.text.pack(expand=YES,fill=BOTH)
+
+        str1="Auxiliary data files are used for reading node properties, such as labels, classes, and sampling sites. "
+        str2="File format is ASCII, such that each row lists properties for a node. \n"
+        str3="The first row must contain HEADERS, i.e. labels for the properties. \n\n"
+        str4="Example for the first row: \n node_label node_site node_latitude node_longitude node_geoclass \n"
+
+        if self.datatype=='net':
+
+            str4=str4+"\nWhen the input data is a network (.edg,.gml), THE FIRST HEADER COLUMN MUST BE node_label, "
+            str4=str4+"and there must be a row for each node in the original network, using original node labels."
+            str4=str4+"If you have saved the node properties in EDEN Analyzer, this has been taken care of already."
+
+        if self.datatype=='msat':
+            str4=str4+"\nThere must be one row for each row in the original microsatellite data file. "
+
+        if self.datatype=="dmat":
+            str4=str4+"\nThere must be one row for each row in the original distance matrix file. "
+
+        self.text.insert(INSERT,str1+str2+str3+str4)
+        
+
 class AskNumberOfBins(MySimpleDialog):
     """Asks for number of bins for binning"""
 
@@ -185,6 +321,241 @@ class AskNumberOfBins(MySimpleDialog):
 
     def applyme(self):
         self.result=float(self.numbins.get())
+
+class ProjectLaunchDialog(MySimpleDialog):
+    """First window shown when launching a new analysis wizard.
+        Inquires if the user wants to load microsatellite data,
+        a distance matrix, or a network file."""
+    
+
+    def __init__(self,parent,title=None):
+
+        Toplevel.__init__(self,parent)
+        #self.configure(bg='Gray80')
+      #  self.transient(parent)
+
+        self.title("New analysis project")
+
+        self.parent=parent
+        self.result=None
+
+        self.datatype=StringVar()
+      
+       # self.linfirst=IntVar()
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        self.buttonbox()
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.wait_window(self)
+
+    def body(self,masterclass,masterwindow):
+
+       # self.b1=Checkbutton(masterwindow,text='Use linear bins for 1..10',variable=masterclass.linfirst,state=ACTIVE,bg='Gray80')
+       # self.b1.grid(row=0,column=0,columnspan=2)
+
+        self.wholeframe=Frame(masterwindow,relief='sunken',borderwidth=2)
+        
+        self.clabel=Label(self.wholeframe,text="Select input data type:",justify=LEFT,anchor=W,bg='gray90',relief='groove',borderwidth=1)
+        self.clabel.pack(side=TOP,expand=YES,fill=X,ipadx=5,ipady=5)
+
+        self.bottompart=Frame(self.wholeframe)
+
+        r1=Radiobutton(self.bottompart,text='Microsatellite repetitions',value='ms',variable=masterclass.datatype)
+        r2=Radiobutton(self.bottompart,text='Distance matrix',value='dmat',variable=masterclass.datatype)
+        r3=Radiobutton(self.bottompart,text='Network data',value='net',variable=masterclass.datatype)
+        r1.grid(row=1,column=0,sticky=W)
+        r2.grid(row=2,column=0,sticky=W)
+        r3.grid(row=3,column=0,sticky=W)
+
+        self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
+
+        masterclass.datatype.set('ms')
+
+        self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
+       
+        return self.wholeframe
+
+    def applyme(self):
+        self.result=(self.datatype.get())
+
+class ChooseDistanceMeasure(MySimpleDialog):
+    """First window shown when launching a new analysis wizard.
+        Inquires if the user wants to load microsatellite data,
+        a distance matrix, or a network file."""
+    
+
+    def __init__(self,parent,title=None,titlemsg="Choose genetic distance measure"):
+
+        Toplevel.__init__(self,parent)
+        #self.configure(bg='Gray80')
+      #  self.transient(parent)
+
+        self.title(title)
+
+        self.titlemsg=titlemsg
+        self.parent=parent
+        self.result=None
+
+        self.measuretype=StringVar()
+      
+       # self.linfirst=IntVar()
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        self.buttonbox()
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.wait_window(self)
+
+    def body(self,masterclass,masterwindow,titlemsg="Choose genetic distance measure"):
+
+       # self.b1=Checkbutton(masterwindow,text='Use linear bins for 1..10',variable=masterclass.linfirst,state=ACTIVE,bg='Gray80')
+       # self.b1.grid(row=0,column=0,columnspan=2)
+
+        self.wholeframe=Frame(masterwindow,relief='sunken',borderwidth=2)
+        
+        self.clabel=Label(self.wholeframe,text=self.titlemsg,justify=LEFT,anchor=W,bg='gray90',relief='groove',borderwidth=1)
+        self.clabel.pack(side=TOP,expand=YES,fill=X,ipadx=5,ipady=5)
+
+        self.bottompart=Frame(self.wholeframe)
+
+
+        r1=Radiobutton(self.bottompart,text='Non-shared alleles',value='nsa',variable=masterclass.measuretype)
+        r2=Radiobutton(self.bottompart,text='Linear Manhattan',value='lm',variable=masterclass.measuretype)
+        r3=Radiobutton(self.bottompart,text='Allele parsimony',value='ap',variable=masterclass.measuretype)
+        r4=Radiobutton(self.bottompart,text='Hybrid',value="hybrid",variable=masterclass.measuretype)
+        r1.grid(row=1,column=0,sticky=W)
+        r2.grid(row=2,column=0,sticky=W)
+        r3.grid(row=3,column=0,sticky=W)
+        r4.grid(row=4,column=0,sticky=W)
+
+        self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
+        
+        masterclass.measuretype.set('nsa')
+
+        self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
+       
+        return self.wholeframe
+
+    def applyme(self):
+        self.result=(self.measuretype.get())
+
+class ImportMetadataYesNo(MySimpleDialog):
+    """First window shown when launching a new analysis wizard.
+        Inquires if the user wants to load microsatellite data,
+        a distance matrix, or a network file."""
+    
+
+    def __init__(self,parent,title=None,titlemsg="Do you want to import auxiliary node data?",datatype='msat'):
+
+        Toplevel.__init__(self,parent)
+        #self.configure(bg='Gray80')
+      #  self.transient(parent)
+
+        self.title(title)
+
+        self.datatype=datatype
+
+        self.titlemsg=titlemsg
+        self.parent=parent
+        self.result=None
+
+        self.metatype=IntVar()
+      
+       # self.linfirst=IntVar()
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        self.buttonbox(self.datatype)
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.wait_window(self)
+
+    def buttonbox(self,datatype='msat'):
+        """OK, Cancel and Help buttons"""
+
+        box=Frame(self)
+        w=Button(box,text="OK",width=10,command=self.ok,default=ACTIVE)
+        w.pack(side=LEFT,padx=5,pady=5)
+        w=Button(box,text="Cancel",width=10,command=self.cancel)
+        w.pack(side=LEFT,padx=5,pady=5)
+        w=Button(box,text="Help",width=10,command=lambda s=self,t=datatype: s.displayhelp(t))
+        w.pack(side=LEFT,padx=5,pady=5)
+
+        self.bind("&lt;Return>",self.ok)
+        self.bind("&lt;Escape",self.cancel)
+
+        box.pack()
+
+    def body(self,masterclass,masterwindow,titlemsg="Do you want to import auxiliary node data?"):
+
+       # self.b1=Checkbutton(masterwindow,text='Use linear bins for 1..10',variable=masterclass.linfirst,state=ACTIVE,bg='Gray80')
+       # self.b1.grid(row=0,column=0,columnspan=2)
+
+        self.wholeframe=Frame(masterwindow,relief='sunken',borderwidth=2)
+        
+        self.clabel=Label(self.wholeframe,text=self.titlemsg,justify=LEFT,anchor=W,bg='gray90',relief='groove',borderwidth=1)
+        self.clabel.pack(side=TOP,expand=YES,fill=X,ipadx=5,ipady=5)
+
+        self.bottompart=Frame(self.wholeframe)
+
+        r1=Radiobutton(self.bottompart,text='Yes',value=1,variable=masterclass.metatype)
+        r2=Radiobutton(self.bottompart,text='No',value=0,variable=masterclass.metatype)
+  
+        r1.grid(row=1,column=0,sticky=W)
+        r2.grid(row=2,column=0,sticky=W)
+     
+        masterclass.metatype.set(1)
+
+        self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
+
+        self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
+       
+        return self.wholeframe
+
+    def applyme(self):
+        self.result=(self.metatype.get())
+
+    def displayhelp(self,datatype):
+        MetaHelpWindow(self,datatype)
+
+
+
 
 class MatrixDialog(MySimpleDialog):
     """Used when loading a matrix. Asks if the matrix contains weights or distances"""
@@ -248,20 +619,20 @@ class MsatDialog(MySimpleDialog):
     """Used when loading a matrix. Asks if the matrix contains weights or distances"""
     
 
-    def __init__(self,parent,title=None):
+    def __init__(self,parent,title=None,titlemsg="Handling clones"):
 
         Toplevel.__init__(self,parent)
         #self.configure(bg='Gray80')
       #  self.transient(parent)
 
-        if title:
-            self.title=title
+        self.title(title)
+
+        self.titlemsg=titlemsg
 
         self.parent=parent
         self.result=None
 
         self.mattype=IntVar()
-        self.dtype=IntVar()
       
        # self.linfirst=IntVar()
 
@@ -283,37 +654,34 @@ class MsatDialog(MySimpleDialog):
 
         self.wait_window(self)
 
-    def body(self,masterclass,masterwindow):
+    def body(self,masterclass,masterwindow,titlemsg="Handling clones"):
 
        # self.b1=Checkbutton(masterwindow,text='Use linear bins for 1..10',variable=masterclass.linfirst,state=ACTIVE,bg='Gray80')
        # self.b1.grid(row=0,column=0,columnspan=2)
+
+        self.wholeframe=Frame(masterwindow,relief='sunken',borderwidth=2)
         
-        self.c1=Label(masterwindow,text='Handling clones:')
-        self.c1.grid(row=0,column=0)
+        self.clabel=Label(self.wholeframe,text=self.titlemsg,justify=LEFT,anchor=W,bg='gray90',relief='groove',borderwidth=1)
+        self.clabel.pack(side=TOP,expand=YES,fill=X,ipadx=5,ipady=5)
 
-        r1=Radiobutton(masterwindow,text='Collapse clones',value=1,variable=masterclass.mattype)
-        r2=Radiobutton(masterwindow,text='Leave clones',value=0,variable=masterclass.mattype)
-        r1.grid(row=0,column=1,sticky=W)
-        r2.grid(row=1,column=1,sticky=W)
+        self.bottompart=Frame(self.wholeframe)
 
-        self.c2=Label(masterwindow,text='Distance measure:')
-        self.c2.grid(row=2,column=0)
+      
+        r1=Radiobutton(self.bottompart,text='Collapse clones',value=1,variable=masterclass.mattype)
+        r2=Radiobutton(self.bottompart,text='Leave clones',value=0,variable=masterclass.mattype)
+        r1.grid(row=1,column=0,sticky=W)
+        r2.grid(row=2,column=0,sticky=W)
 
-        r3=Radiobutton(masterwindow,text='Linear Manhattan',value=0,variable=masterclass.dtype)
-        r4=Radiobutton(masterwindow,text='Non-shared alleles',value=1,variable=masterclass.dtype)
-        r5=Radiobutton(masterwindow,text='Allele parsimony',value=2,variable=masterclass.dtype)
-        r3.grid(row=2,column=1,sticky=W)
-        r4.grid(row=3,column=1,sticky=W)
-        r5.grid(row=4,column=1,sticky=W)
+        self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
+
+        self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
         
-
-        masterclass.dtype.set(1)    
         masterclass.mattype.set(1)
        
-        return self.c1
+        return self.wholeframe
 
     def applyme(self):
-        self.result=[(self.mattype.get()),(self.dtype.get())]
+        self.result=(self.mattype.get())
 
         
 class VisualizationDialog(MySimpleDialog):
@@ -335,6 +703,7 @@ class VisualizationDialog(MySimpleDialog):
         self.vtxsize=StringVar()
         self.vtxcolor=StringVar()
         self.bgcolor=StringVar()
+        self.showlabels=StringVar()
        # self.linfirst=IntVar()
 
         body=Frame(self)
@@ -377,10 +746,14 @@ class VisualizationDialog(MySimpleDialog):
             rowcount=rowcount+1
             Radiobutton(masterwindow,text=text,value=value,variable=masterclass.bgcolor).grid(row=rowcount,column=1,sticky=W)
         masterclass.bgcolor.set('black')
+        Label(masterwindow,text="Vertex labels:").grid(row=rowcount+1,column=0)
+        for text, value in [('None','none'),('All','all'),('Top 10','top10')]:
+            rowcount=rowcount+1
+            Radiobutton(masterwindow,text=text,value=value,variable=masterclass.showlabels).grid(row=rowcount,column=1,sticky=W)
         return self.c1
 
     def applyme(self):
-        self.result=(self.vtxcolor.get(),self.vtxsize.get(),self.bgcolor.get())
+        self.result=(self.vtxcolor.get(),self.vtxsize.get(),self.bgcolor.get(),self.showlabels.get())
 
 class AskThreshold(MySimpleDialog):
     """Asks threshold for thresholding"""
@@ -429,5 +802,82 @@ class AskThreshold(MySimpleDialog):
 
     def applyme(self):
         self.result=float(self.threshold.get())
+
+class PercolationDialog(MySimpleDialog):
+    """First window shown when launching a new analysis wizard.
+        Inquires if the user wants to load microsatellite data,
+        a distance matrix, or a network file."""
+    
+
+    def __init__(self,parent,title=None,titlemsg="Set threshold distance",pdata=[],suscmax_thresh=0.0):
+
+        Toplevel.__init__(self,parent)
+        #self.configure(bg='Gray80')
+      #  self.transient(parent)
+
+        self.title(title)
+
+        self.titlemsg=titlemsg
+        self.parent=parent
+        self.result=None
+        self.data=pdata
+        self.default_thresh=suscmax_thresh
+
+        self.threshold=StringVar()
+      
+       # self.linfirst=IntVar()
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        self.buttonbox()
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.wait_window(self)
+
+    def body(self,masterclass,masterwindow,titlemsg="Choose genetic distance measure"):
+
+       # self.b1=Checkbutton(masterwindow,text='Use linear bins for 1..10',variable=masterclass.linfirst,state=ACTIVE,bg='Gray80')
+       # self.b1.grid(row=0,column=0,columnspan=2)
+
+        self.wholeframe=Frame(masterwindow,relief='groove',borderwidth=2,bg="Gray95")
+        
+       # self.clabel=Label(self.wholeframe,text=self.titlemsg,bg='DarkOliveGreen2',relief='groove',borderwidth=1)
+       # self.clabel.pack(side=TOP,expand=YES,fill=X,ipadx=5,ipady=5)
+
+        self.midpart=Frame(self.wholeframe)
+
+        myplot=visuals.ReturnPlotObject(self.data,plotcommand="plot",addstr=",color=\"#9e0b0f\"",titlestring="Largest component size:Susceptibility",xstring="Threshold distance",ystring="GCC size:Susceptibility",fontsize=9)
+        myplot.canvas=FigureCanvasTkAgg(myplot.thisFigure,master=self.midpart)
+        myplot.canvas.show()
+        myplot.canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=YES, padx=10,pady=10) 
+
+        self.midpart.pack(side=TOP,expand=YES,fill=BOTH)
+
+        self.bottompart=Frame(self.wholeframe)
+        
+        Label(self.bottompart,text='Estimated percolation threshold = %2.2f' % self.default_thresh).grid(row=1,column=0,columnspan=2)
+        Label(self.bottompart,text='Threshold: ').grid(row=2,column=0)
+        self.c1=Entry(self.bottompart,textvariable=masterclass.threshold,bg='Gray95')
+        masterclass.threshold.set(str(self.default_thresh))
+        self.c1.grid(row=2,column=1)
+        self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
+
+        self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
+       
+        return self.wholeframe
+
+    def applyme(self):
+        self.result=(self.threshold.get())
         
         
