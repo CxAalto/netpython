@@ -1,6 +1,6 @@
 # -*- coding: latin-1 -*-
 import pynet
-import netext,percolator,netio
+import netext,percolator,netio,transforms
 import os
 from pylab import *
 import copy
@@ -10,6 +10,12 @@ import Image
 
 
 ### LIST OF CHANGES
+#
+# Jari 2406 :
+# - updated ReturnPlotObject (used primarily for EDEN toolbox)
+# - fixed the node size bug in VisualizeNet
+# - added figsize (figsize=(w,h)) as input parameter to VisualizeNet
+# - added automatic conversion of edge distances to weights in VisualizeNet & Himmeli (EDEN-specific)
 #
 # 
 # Riitta Toivonen/230609:
@@ -74,17 +80,30 @@ class Myplot(object):
 
 # ---------------------------------------
 
-def ReturnPlotObject(data,plotcommand='plot',titlestring='',xstring='',ystring=''):
 
-    #Input: data [[xseries1,yseries1],[xseries2,yseries2],...] (float,int, whatever)
-    #plotcommand = matplotlib's plot command (default 'plot', could
-    #also be 'loglog' etc), titlestring=plot title, xstring=x-axis label, ystring=y-axis label.
-    #Outputs a container object, corresponding to a matplotlib plot. This can be displayed
-    #in various ways, eg. on a TkInter canvas:
-    #myplot.canvas=FigureCanvasTkAgg(myplot.thisFigure,master=plotbody)
-    #myplot.canvas.show()
-    #plotbody.pack()
-    #where plotbody is a Frame object.
+
+# --------------------------------------        
+
+class Myplot(object):
+    '''empty container'''
+    pass
+
+# ---------------------------------------
+
+def ReturnPlotObject(data,plotcommand='plot',titlestring='',xstring='',ystring='',figsize=(5,4),fontsize=14,fontname='Times',addstr='',labelMultiplier=1.2,plotcolor='r',facecolor="#cacfbe",edgecolor=None):
+
+    '''Input: data [[xseries1,yseries1],[xseries2,yseries2],...] (float,int, whatever)
+    plotcommand = matplotlib's plot command (default 'plot', could
+    also be 'loglog' etc), titlestring=plot title, xstring=x-axis label, ystring=y-axis label.
+    Outputs a container object, corresponding to a matplotlib plot. This can be displayed
+    in various ways, eg. on a TkInter canvas:
+    myplot.canvas=FigureCanvasTkAgg(myplot.thisFigure,master=plotbody)
+    myplot.canvas.show()
+    plotbody.pack()
+    where plotbody is a Frame object.
+
+
+    quick hack: addstr takes in arguments for plotting command, e.g. ",'ro'","width=0.1", etc. To be fixed.'''
 
     Nplots=len(data)
 
@@ -102,26 +121,47 @@ def ReturnPlotObject(data,plotcommand='plot',titlestring='',xstring='',ystring='
     subplotstring=str(Nplots)+'1'
 
     myplot=Myplot()
-    myplot.thisFigure=Figure(figsize=(5,4),dpi=100)
+    myplot.thisFigure=Figure(figsize=figsize,dpi=100,facecolor=facecolor,edgecolor=edgecolor)
 
     myplot.axes=[]
+
+
+    axisfactor=1.0/Nplots
+    
     for i in range(Nplots):
-        myplot.axes.append(myplot.thisFigure.add_subplot(subplotstring+str(i+1),title=titlestrings[i],xlabel=xstring,ylabel=ystrings[i]))
-        s="myplot.axes[%d].%s(data[%d][0],data[%d][1],'ro-')" % (i,plotcommand,i,i)
-        print s
+
+        leftcorner=0.2
+        width=0.6
+        bottom=(0.2+float(i))*axisfactor
+        top=0.6*axisfactor
+
+        font={'fontname':'Times','fontsize':fontsize+2}
+        
+        myplot.axes.append(myplot.thisFigure.add_axes([leftcorner,bottom,width,top],title=titlestrings[i],xlabel=xstring,ylabel=ystrings[i]))
+        s="myplot.axes[%d].%s(data[%d][0],data[%d][1]" % (i,plotcommand,i,i)
+        s=s+addstr+')'
         eval(s)
+
+        myplot.axes[i].set_title(titlestrings[i],**font)
+        
+        for tick in myplot.axes[i].get_xticklabels():
+            tick.set_fontsize(fontsize)
+            tick.set_fontname(fontname)
+                                    
+        for tick in myplot.axes[i].get_yticklabels():
+            tick.set_fontsize(fontsize)
+            tick.set_fontname(fontname)
+
+        labels = [myplot.axes[i].get_xaxis().get_label(), myplot.axes[i].get_yaxis().get_label()]
+        for label in labels:
+            label.set_size( labelMultiplier*fontsize )
+
+        
 
     myplot.thisFigure.subplots_adjust(hspace=0.5)
 
     return myplot
 
-# --------------------------------------        
-
-class Myplot(object):
-    '''empty container'''
-    pass
-
-# ---------------------------------------
 
 def normalizeWeight(value,weightLimits):
     # Transforms a weight to the range (0,1). It is intended that the
@@ -204,7 +244,7 @@ def plot_node(plotobject,x,y,color='w',size=8.0):
     plotobject.plot([x],[y],'yo',markerfacecolor=color,markersize=size)
 
 
-def VisualizeNet(net,xy,coloredvertices=False,equalsize=False,labels={},showAllNodes=True,vcolor=[1.0,1.0,1.0],vsize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits='none'): 
+def VisualizeNet(net,xy,figsize=(6,6),coloredvertices=False,equalsize=False,labels={},showAllNodes=True,vcolor=[1.0,1.0,1.0],vsize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits='none'): 
 
         '''
         Visualizes a network. Inputs:
@@ -214,6 +254,8 @@ def VisualizeNet(net,xy,coloredvertices=False,equalsize=False,labels={},showAllN
         xy = coordinates (usually originating from visuals.Himmeli,
         e.g. h=visuals.Himmeli(net,...,...) followed by
         xy=h.getCoordinates()
+
+        figsize=(x,y) (default (6,6)) Size of the figure produced by VisualizeNet
 
         coloredvertices = (True/False). If True, i) IF dict nodeColors
         was given, these colors are used, ii) IF NOT, vcolor is used
@@ -293,8 +335,17 @@ def VisualizeNet(net,xy,coloredvertices=False,equalsize=False,labels={},showAllN
             .eps files?)
             
         '''
+
+        # the following is for the EDEN software, where "nets" or nets
+        # derived from matrices can have edge distances instead of weights 
+
+        if hasattr(net,'matrixtype'):
+
+            if net.matrixtype==0:
+
+                net=transforms.dist_to_weights(net)
         
-        thisfigure=Figure(figsize=(6,6),dpi=100,facecolor=bgcolor)
+        thisfigure=Figure(figsize=figsize,dpi=100,facecolor=bgcolor)
         axes=thisfigure.add_subplot(111)
         axes.set_axis_bgcolor(bgcolor)
 
@@ -303,8 +354,6 @@ def VisualizeNet(net,xy,coloredvertices=False,equalsize=False,labels={},showAllN
         fontcolor='w'
         if bgcolor=='white':
             fontcolor='k'
-        
-
 
         # first draw all edges
 
@@ -382,14 +431,18 @@ def VisualizeNet(net,xy,coloredvertices=False,equalsize=False,labels={},showAllN
 
                 if node in net:
 
-                    nodestrength=strengths[node]
-
                     nodesize=A*strengths[node]+B
 
                 else:
 
-                    nodestrength=mins
                     nodesize=minnode
+
+            if node in net:
+                nodestrength=strengths[node]
+            else:
+                nodestrength=mins     # this is for nodes which appear in MST coords (i.e. have zero links)
+                                      # and are thus not included in net, but should yet be displayed when
+                                      # visualizing a thresholded network
 
             # then determine color
 
@@ -543,6 +596,15 @@ class Himmeli:
             raise AttributeError("Unknown net type "+str(inputnet.__class__))
         if len(inputnet._nodes)==0:
             raise AttributeError("The net cannot be empty")
+
+        # another EDEN-specific piece of code: if the network is a distance matrix/network,
+        # first transform distances to weights
+
+        if hasattr(inputnet,'matrixtype'):
+
+            if inputnet.matrixtype==0:
+
+                inputnet=dist_to_weights(inputnet)
 
         if wmin==None:
             # finds out smallest and largest weight
