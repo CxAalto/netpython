@@ -19,8 +19,16 @@
   *graphXML-format and others
   *make gml-io stable
 """
+
+#   LIST OF CHANGES
+#
+#
+# 24.06.JS fixed loadNodeProperties (nodelabels to int if numbers)
+# 24.06.JS fixed & documented loadNodeProperties (checks if input file node exists in the network)
+
+
 import pynet,netext
-#from eden import MicrosatelliteData
+
 from matplotlib.mlab import norm
 knownFiletypes=["edg","gml","mat","net"]
 
@@ -32,17 +40,7 @@ def getFiletype(filename):
     filetype=sfn[len(sfn)-1]
     return filetype
 
-#def loadNet_microsatellite(input,removeClones=True):
-#    """
-#    Reads microsatellite data as full net from iterable object
-#    containing strings (opened file). Look eden.MicrosatelliteData for
-#    the format the data is read. This function also removes the clones by default.
-#    """
-#    msData=MicrosatelliteData(input)
-#    if removeClones:
-#        msData=msData.getUniqueSubset()
-#    msNet=msData.getDistanceMatrix()
-#    return msNet
+
 
 def loadNet_gml(input):
     """
@@ -275,31 +273,121 @@ def loadNet(filename, mutualEdges = False, splitterChar = None,symmetricNet=True
     inputfile.close()
     return newNet
     
-
-
 def loadNodeProperties(net,filename,splitterChar=None):
-    #todo: see if the node names are strings, ints or floats
-    f=open(filename,'r')
+    '''Reads metadata (properties for nodes) from a file. Usage:
+    loadNodeProperties(net,filename,splitterChar=None).
+    The metadata file can contain any number of columns;
+    first row is reserved for headers. The first column header
+    should be node_label, and the column should contain similar labels
+    for nodes as used in the network, i.e. each label should be a node
+    of net. Other columns contain user-defined properties, and the
+    column headers are automatically appended to the property list.
+    Example input file format:
+    node_label node_color node_class
+    node1      blue       class1
+    '''
+
+    #todo: see if the node names are strings, ints or floats [DONE/JS/2605]
+    # loadNet converts numerical node labels to ints, has been taken into account here.
+    #todo: check if node is in the network [DONE/JS/2705]
+
+    #todo: how to deal with FullNets???[DONE|JS/2705]
+    #todo: check that there are no non-existing nodes/too many input lines [DONE|JS/2705]
+
+    #todo: write a check that all nodes get properties!!!
+
+    #tested for i) SymmNet with string node labels, ii) -"- with integer labels,
+    # iii) FullNet, iv) the above cases with too many lines / non-existing nodes
+    # in input metadata file
+
+    def isanum(str):
+
+        # simply checks if a string contains only digits
+        
+        from string import digits
+        for c in str:
+            if not c in digits: return 0
+        return 1
+
+    
+    f=open(filename,'rU')   # NOTE: the 'U' flag means "Universal Newlines" - guarantees that
+                            # newlines are recognized as newlines independent of exact EOL character
+                            # and operating system. USE THIS EVERYWHERE FROM NOW ON
+    
 
     #Read in the fields
     line=f.readline()
     fieldNames=line.strip().split(splitterChar)
     nfields=len(fieldNames)
-    if fieldNames[0]!="name":
-        raise Exception("The properties file should define the first field as \"name\".")
 
-    #Add the property names to the net
-    for field in range(1,nfields):
-        netext.addNodeProperty(net,fieldNames[field])
+    if not(net.isFull()):
 
-    #Add the properties for each node
-    for i,line in enumerate(f):
-        fields=line.strip().split(splitterChar)
-        if len(fields)!=nfields:
-            raise Exception("Invalid number of fields on row: "+str(i+2))
-        nodeName=fields[0] #todo: see if node is in net
+        # for "ordinary" networks, node properties are "matched" based on first column of
+        # input file, containing node labels
+    
+        if fieldNames[0]!="node_label":
+            raise Exception("The properties file should define the first field as \"node_label\".")
+
+        #Add the property names to the net
         for field in range(1,nfields):
-            net.nodeProperty[fieldNames[field]][nodeName]=fields[field]
+            netext.addNodeProperty(net,fieldNames[field])
+
+        #Add the properties for each node
+        for i,line in enumerate(f):
+        
+            fields=line.strip().split(splitterChar)
+        
+            if len(fields)!=nfields:
+                raise Exception("Invalid number of fields on row: "+str(i+2))
+        
+            if isanum(fields[0]):
+                nodeName=int(fields[0]) # if node name/label is a number, convert to int
+            else:
+                nodeName=fields[0]
+
+
+            if nodeName in net:
+        
+                for field in range(1,nfields):
+                    net.nodeProperty[fieldNames[field]][nodeName]=fields[field]
+
+            else:
+                raise Exception("Node"+str(nodeName)+" in input file doesn't exist in the network!")
+
+    else:
+
+        netsize=len(net)
+
+        # for FullNets and SymmFullNets, where nodes are just indexed (0..(N-1)), properties are
+        # added to nodes in this order.
+        #
+        # if node_labels are used, these will be inserted as regular property fields   
+        #
+        # todo: check that input file has to have N-1 rows
+
+        for field in range(0,nfields):
+
+            netext.addNodeProperty(net,fieldNames[field])
+
+        #Add the properties for each node
+        for i,line in enumerate(f):
+        
+            fields=line.strip().split(splitterChar)
+        
+            if len(fields)!=nfields:
+                raise Exception("Invalid number of fields on row: "+str(i+2))
+
+            if i<netsize:
+            
+                for field in range(0,nfields):
+                    net.nodeProperty[fieldNames[field]][(i)]=fields[field]
+
+            else:
+
+                raise Exception("Too many lines, network size is "+str(netsize))
+
+        
+
 
 def saveNodeProperties(net,filename):
     plist=list(net.nodeProperty)
