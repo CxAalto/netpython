@@ -203,7 +203,7 @@ def collapseBipartiteNet(net,nodesToRemove):
                 if node1.__hash__()>node2.__hash__():
                     newNet[node1,node2]=newNet[node1,node2]+1.0/degree
 
-    netext.copyNodeProperties(net,newnet)
+    netext.copyNodeProperties(net,newNet)
     return newNet
 
 
