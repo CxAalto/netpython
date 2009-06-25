@@ -10,6 +10,8 @@ import Image
 
 
 ### LIST OF CHANGES
+# Riitta 2506:
+#  - added option 'fontsize' to VisualizeNet 
 #
 # Jari 2406 :
 # - updated ReturnPlotObject (used primarily for EDEN toolbox)
@@ -282,6 +284,8 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredvertices=False,equalsize=False,labe
         dict labels ({nodename:labelstring}) are always shown; use
         this dict to show labels next to your chosen nodes of
         interest. 
+        
+        fontsize=size  Sets font size for labels. Default is 7. 
 
         edgeColorMap=myMap allows the user to set color scheme for
         edges.  Edges are always colored according to edge weights,
