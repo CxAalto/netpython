@@ -244,7 +244,7 @@ def plot_node(plotobject,x,y,color='w',size=8.0):
     plotobject.plot([x],[y],'yo',markerfacecolor=color,markersize=size)
 
 
-def VisualizeNet(net,xy,figsize=(6,6),coloredvertices=False,equalsize=False,labels={},showAllNodes=True,vcolor=[1.0,1.0,1.0],vsize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits='none'): 
+def VisualizeNet(net,xy,figsize=(6,6),coloredvertices=False,equalsize=False,labels={},fontsize=7,showAllNodes=True,vcolor=[1.0,1.0,1.0],vsize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits='none'): 
 
         '''
         Visualizes a network. Inputs:
@@ -519,9 +519,9 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredvertices=False,equalsize=False,labe
 
             plot_node(axes,x=xy[node][0],y=xy[node][1],color=color,size=nodesize)
             if uselabels=='all':
-                axes.annotate(str(node),(xy[node][0],xy[node][1]),color=fontcolor,size=7)
+                axes.annotate(str(node),(xy[node][0],xy[node][1]),color=fontcolor,size=fontsize)
             elif node in labels:
-                axes.annotate(labels[node],(xy[node][0],xy[node][1]),color=fontcolor,size=7)
+                axes.annotate(labels[node],(xy[node][0],xy[node][1]),color=fontcolor,size=fontsize)
 
                     
 
