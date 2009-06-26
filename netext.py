@@ -2,31 +2,28 @@
 
     Extensions
     ----------
-        Net.edges        
-        Node.edges
-        Net.add(net)
+    Net.edges        
+    Node.edges
+    Net.add(net)
 
     Functions
     ---------
-        getSubnet(net,nodes) (to be moved to extensions?)
-        collapseIndices(net)
-        deg(net)
-        degMap(net)
-        clustering(net)
-        snowball(net,startingnodeindex,depth)
-        drawNet(net)
-        mst(net)
-        mst_kruskal(net)
-        makeER(n,p)
-        fullNet(nodes,weight=1)
-        collapseBiNet(net,nodes)
+    Net_add(self, net)
+    addNodeProperty(net, propertyName)
+    collapseBiNet(net, nodesToRemove)
+    copyNodeProperties(fromNet, toNet)
+    deg(net)
+    fullNet(nodes, weight=1)
+    getMeanDistance(theSet, distanceFunction)
+    getPathLengths(net, startingNode)
+    getStrength(node)
+    getSubnet(net, nodes)
+    strengths(net, nodes=None)
 
-    Other
+    Classes
     -----
-        Enumerator        
-        NodeFamily
-        communityTree
-        Himmeli
+    Enumerator        
+
 """
 import pynet,os,netio
 import random
