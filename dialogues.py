@@ -750,6 +750,7 @@ class VisualizationDialog(MySimpleDialog):
         for text, value in [('None','none'),('All','all'),('Top 10','top10')]:
             rowcount=rowcount+1
             Radiobutton(masterwindow,text=text,value=value,variable=masterclass.showlabels).grid(row=rowcount,column=1,sticky=W)
+            masterclass.showlabels.set('all')
         return self.c1
 
     def applyme(self):
