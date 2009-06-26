@@ -77,7 +77,7 @@ def snowball(net,startingnodeindex,depth):
         toVisit=newToVisit
         newToVisit=set()
 
-    netext.copyNodeProperties(net,newnet)
+    netext.copyNodeProperties(net,newNet)
 
     return newNet
 
