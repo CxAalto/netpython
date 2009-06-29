@@ -10,6 +10,11 @@ import Image
 
 
 ### LIST OF CHANGES
+# 
+# Riitta 29.6.2009
+#  - added a function for translating the coordinates of given nodes:
+#     shiftCoordinates(xy,nodelist,xshift=0,yshift=0,zshift=0)
+#
 # Riitta 2506:
 #  - added option 'fontsize' to VisualizeNet 
 #
