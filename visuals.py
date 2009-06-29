@@ -216,6 +216,8 @@ def setEdgeColorMap(edgeColorMap):
     return myMap
 
 
+# ---------------------------------------
+
 def setEdgeColor(value,weightLimits,edgeColorMap):
     # Set edge color by weight (no other option implemented thus far)
     if not (weightLimits[0]-weightLimits[1])==0: 
@@ -245,6 +247,8 @@ def plot_node(plotobject,x,y,color='w',size=8.0):
     
     plotobject.plot([x],[y],'yo',markerfacecolor=color,markersize=size)
 
+
+# ---------------------------------------
 
 def VisualizeNet(net,xy,figsize=(6,6),coloredvertices=False,equalsize=False,labels={},fontsize=7,showAllNodes=True,vcolor=[1.0,1.0,1.0],vsize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits='none'): 
 
@@ -551,9 +555,9 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredvertices=False,equalsize=False,labe
 
         return thisfigure
 
+
             
-
-
+# ---------------------------------------
               
 class Himmeli:
         
@@ -961,14 +965,52 @@ class Himmeli:
                 file.write("\t"+str(coordinates[i][1]))
             file.write("\n")
 
-
+            
+# ---------------------------------------
     
 def drawNet(net,labels={},coordinates=None,showAllNodes=False):
     """Display a picture of the network using Himmeli
     """
     h=Himmeli(net,labels=labels,coordinates=coordinates,showAllNodes=showAllNodes)
     h.draw()
+
+
+# ---------------------------------------        
+
+# def shiftCoordinates(xy,nodelist,shift):
+def shiftCoordinates(xy,nodelist,xshift=0,yshift=0,zshift=0):
+    """ Translates coordinates of given nodes. 
+    
+        Takes in:
         
+               xy, a dictionary in which item 'node' is a tuple
+               containing the coordinates of 'node'. They must contain
+               either two or three elements, as in (xcoord,ycoord) or
+               (xcoord,ycoord,zcoord).
+
+               nodelist, listing the subset of keys in xy that need to be translated
+
+               xshift, yshift, zshift, whose values indicate how much
+               to shift the coordinates. Each defaults to zero. If the
+               coordinate list contains tuples of length two, zshift
+               will be ignored.
+
+        Works for tuples containing two or three coordinates.
+        Returns the modified coordinates. """
+    
+    for node in nodelist:
+        coords=xy[node]
+        if len(coords)==2:
+            xy[node]=(coords[0]+xshift,coords[1]+yshift)
+        elif len(coords)==3:
+            xy[node]=(coords[0]+xshift,coords[1]+yshift,coords[2]+zshift)
+        else:
+            raise ValueError('\nThe coordinate tuples should contain two or three elements.\n') 
+        
+
+    return xy
+
+# ---------------------------------------  
 
 
 if __name__ == '__main__':
