@@ -262,5 +262,22 @@ def collapseBipartiteNet(net,nodesToRemove):
     netext.copyNodeProperties(net,newNet)
     return newNet
 
+def local_threshold_by_value(net,threshold):
+    '''Generates a new network by thresholding the input network.
+       Inputs: net = network, threshold = threshold value,
+       mode = 0 (accept weights < threshold), 1 (accept weights > threshold)
+       Returns a network.'''
+
+    newnet=pynet.SymmNet()
+    for node in net:
+        s=net[node].strength()
+        k=net[node].deg()
+        for neigh in net[node]:
+            w=net[node,neigh]
+            if (1-w/s)**(k-1)<threshold:
+                newnet[node,neigh]=w
+    netext.copyNodeProperties(net,newnet)
+
+    return newnet
 
     
