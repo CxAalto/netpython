@@ -181,3 +181,8 @@ try:
 except ImportError:
 	print "Loading C interface failed."
 
+
+if __name__ == '__main__':
+    """Run unit tests if called."""
+    from tests.test_pynet import *
+    unittest.main()
