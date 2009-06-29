@@ -10,7 +10,43 @@ import Image
 
 
 ### LIST OF CHANGES
+#
+#
+# Riitta 29.6.2009
+#
+# I changed the option 'coloredvertices' to 'coloredNodes', 'vcolor'
+# to 'nodeColor', and 'vsize' to 'nodeSize' to accord with other
+# options. I also changed 'vertex' to node in the usage info where
+# possible, as it adds unnecessary confusion to a user not familiar
+# with networks if both terms are used. 
+#
+# I also slightly modified the behavior produced by the option coloredNodes,
+# because I find it more logical that all white nodes will 
+# be produced by the option coloredNodes='False' than with coloredNodes='True'.
 # 
+# Old usage info:
+#        coloredvertices = (True/False). If True, i) IF dict nodeColors
+#        was given, these colors are used, ii) IF NOT, vcolor is used
+#        if given, and if not, nodes are white. If False, node colors
+#        are based on strength.
+# Current usage info:
+#        coloredNodes = (True/False),
+#        nodeColors = dictionary of node colors by node index, and 
+#        nodeColor = an RGB color tuple with three values between 0 and 1
+#         If coloredNodes='False', nodes are plotted white.
+#         If coloredNodes='True', 
+#          a) if dictionary 'nodeColors' is given, it is used.
+#             If it does not contain a color for every node,
+#             the rest are colored with 'nodeColor' if it is given,
+#             or white if it is not. 
+#          b) if dictionary 'nodeColors' is not given, but 'nodeColor'
+#             is given, all nodes are colored with 'nodeColor'.
+#          c) if neither dictionary 'nodeColors' nor 'nodeColor' is given,
+#             nodes are colored by strength using the colormap 'EdgeColorMap'. 
+#              (Please see below for information on 'EdgeColorMap'.)
+# 
+# I also removed the unused option vsizes=0 from the function writeVertexFile.
+#  
 # Riitta 29.6.2009
 #  - added a function for translating the coordinates of given nodes:
 #     shiftCoordinates(xy,nodelist,xshift=0,yshift=0,zshift=0)
@@ -255,7 +291,7 @@ def plot_node(plotobject,x,y,color='w',size=8.0):
 
 # ---------------------------------------
 
-def VisualizeNet(net,xy,figsize=(6,6),coloredvertices=False,equalsize=False,labels={},fontsize=7,showAllNodes=True,vcolor=[1.0,1.0,1.0],vsize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits='none'): 
+def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=False,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor='None',nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits='none'): 
 
         '''
         Visualizes a network. Inputs:
@@ -268,13 +304,24 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredvertices=False,equalsize=False,labe
 
         figsize=(x,y) (default (6,6)) Size of the figure produced by VisualizeNet
 
-        coloredvertices = (True/False). If True, i) IF dict nodeColors
-        was given, these colors are used, ii) IF NOT, vcolor is used
-        if given, and if not, nodes are white. If False, node colors
-        are based on strength.
 
-        equalsize = (True/False) True: all vertices are of same size,
-        input as vsize, default 1.0. False: sizes are based on vertex
+        coloredNodes = (True/False),
+        nodeColors = dictionary of node colors by node index, and 
+        nodeColor = an RGB color tuple with three values between 0 and 1
+         If coloredNodes='False', nodes are plotted white.
+         If coloredNodes='True', 
+          a) if dictionary 'nodeColors' is given, it is used.
+             If it does not contain a color for every node,
+             the rest are colored with 'nodeColor' if it is given,
+             or white if it is not. 
+          b) if dictionary 'nodeColors' is not given, but 'nodeColor'
+             is given, all nodes are colored with 'nodeColor'.
+          c) if neither dictionary 'nodeColors' nor 'nodeColor' is given,
+              nodes are colored by strength using the colormap 'EdgeColorMap'. 
+              (Please see below for information on 'EdgeColorMap'.)
+
+        equalsize = (True/False) True: all nodes are of same size,
+        input as nodeSize, default 1.0. False: sizes are based on node
         strength.
 
         showAllNodes = (True/False) something of a quick hack; if
@@ -339,7 +386,7 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredvertices=False,equalsize=False,labe
             f=FigureCanvasBase(visuals.VisualizeNet(m,xy,edgeColorMap='orange'))
             f.print_eps("tmp2.eps",dpi=80.0)
 
-            f=FigureCanvasBase(visuals.VisualizeNet(m,xy,edgeColorMap='orange',equalsize=True,vsize=16))
+            f=FigureCanvasBase(visuals.VisualizeNet(m,xy,edgeColorMap='orange',equalsize=True,nodeSize=16))
             f.print_eps("tmp3.eps",dpi=80.0)
 
             (General questions: Is there a neater way to output the
@@ -436,7 +483,7 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredvertices=False,equalsize=False,labe
 
             if equalsize:
 
-                nodesize=vsize
+                nodesize=nodeSize
                 if (nodesize<1.0):          # hack: Himmeli wants size <1.0
                     nodesize=nodesize*maxnode  # if Himmeli-type size used, scale up
 
@@ -459,49 +506,53 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredvertices=False,equalsize=False,labe
 
             # then determine color
 
-            if coloredvertices:
+            if coloredNodes:
 
-                if len(nodeColors)>0:
+                if len(nodeColors)>0: # if dict nodeColors is given
 
-                    ctemp=nodeColors[node]
+                    if not nodeColors.get(node): # if node is not contained in dict nodeColors 
+                        if not nodeColor=='None':
+                            color=nodeColor # use nodeColor if given
+                        else:
+                            color=(1,1,1) # white if not
+                    else:  # if node IS contained in dict nodeColors, use nodeColors[node]   
+                        ctemp=nodeColors[node]
 
-                    if len(ctemp)==6: # recognize as Himmeli-type string ('999999')
+                        if len(ctemp)==6: # recognize as Himmeli-type string ('999999')
 
-                        rc=float(ctemp[0:2])/99.0
-                        gc=float(ctemp[2:4])/99.0
-                        bc=float(ctemp[4:6])/99.0
+                            rc=float(ctemp[0:2])/99.0
+                            gc=float(ctemp[2:4])/99.0
+                            bc=float(ctemp[4:6])/99.0
 
-                        # this is a stupid hack; sometimes rounding errors result
-                        # in rc=1.0 + epsilon and matplotlib complains...
+                            # this is a stupid hack; sometimes rounding errors result
+                            # in rc=1.0 + epsilon and matplotlib complains...
 
-                        if (rc<0.0):
-                            rc=0.0
-                        elif rc>1.0:
-                            rc=1.0
+                            if (rc<0.0):
+                                rc=0.0
+                            elif rc>1.0:
+                                rc=1.0
 
-                        if (bc<0.0):
-                            bc=0.0
-                        elif bc>1.0:
-                            bc=1.0
+                            if (bc<0.0):
+                                bc=0.0
+                            elif bc>1.0:
+                                bc=1.0
 
-                        if (gc<0.0):
-                            gc=0.0
-                        elif gc>1.0:
-                            gc=1.0
+                            if (gc<0.0):
+                                gc=0.0
+                            elif gc>1.0:
+                                gc=1.0
 
-                        color=(rc,gc,bc)
+                            color=(rc,gc,bc)
 
-                    else:
+                        else:
+                            color=nodeColors[node] #otherwise assume it is an RGB tuple
 
-                        color=nodeColors[node] #othrwise assume it is a RGB tuple
+                elif not nodeColor=='None': # if dict nodeColors is not given but nodeColor is
+                    if len(nodeColor)==6:
 
-                else:
-
-                    if len(vcolor)==6:
-
-                        rc=float(vcolor[0:2])/99.0
-                        gc=float(vcolor[2:4])/99.0
-                        bc=float(vcolor[4:6])/99.0
+                        rc=float(nodeColor[0:2])/99.0
+                        gc=float(nodeColor[2:4])/99.0
+                        bc=float(nodeColor[4:6])/99.0
                         
                         if (rc<0.0):
                             rc=0.0
@@ -522,13 +573,15 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredvertices=False,equalsize=False,labe
 
                     else:
 
-                        color=vcolor         
+                        color=nodeColor         
 
+                else:
+                    
+                    color=setEdgeColor(nodestrength,(mins,maxs),myEdgeColorMap) # use the same colormap for nodes as for edges (now the name edgeColorMap is a bit misleading... Could change it to just colorMap, or alternatively add another input option, 'nodeColorMap') 
+                     #color=colortuple(nodestrength,mins,maxs)
             else:
-
-                color=setEdgeColor(nodestrength,(mins,maxs),myEdgeColorMap) # use the same colormap for nodes as for edges (now the name edgeColorMap is a bit misleading... Could change it to just colorMap, or alternatively add another input option, 'nodeColorMap') 
-                #color=colortuple(nodestrength,mins,maxs)
-                
+                color=(1.0,1.0,1.0)  # if coloredNodes=True, use white 
+                     
 
             plot_node(axes,x=xy[node][0],y=xy[node][1],color=color,size=nodesize)
             if uselabels=='all':
@@ -602,7 +655,7 @@ class Himmeli:
 
     epsilon=0.0001 #hack, find the real thing
 
-    def __init__(self,inputnet,time=20,configFile=None,threshold=None,useMST=False,wmin=None,wmax=None,coloredvertices=True,equalsize=True,vcolor="999999",vsize="1.0",coordinates=None,labels={},distanceUnit=1,showAllNodes=True,edgeLabels=False,nodeColors={},treeMode=False,saveFileName=None):
+    def __init__(self,inputnet,time=20,configFile=None,threshold=None,useMST=False,wmin=None,wmax=None,coloredNodes=True,equalsize=True,nodeColor="999999",nodeSize="1.0",coordinates=None,labels={},distanceUnit=1,showAllNodes=True,edgeLabels=False,nodeColors={},treeMode=False,saveFileName=None):
         #Checking that the given net is valid and not empty
         #if net.__class__!=pynet.Net and net.__class__!=pynet.SymmNet:
         if not isinstance(inputnet,pynet.Net):
@@ -724,7 +777,7 @@ class Himmeli:
         config+="VertexNameVariable\tVNAME"+"\n"
         config+="VertexLabelVariable\tVLABEL"+"\n"
 
-        if coloredvertices:
+        if coloredNodes:
             config+="VertexColorVariable\tVCOLOR"+"\n"
         if equalsize:
             config+="VertexSizeVariable\tVSIZE\n"
@@ -744,7 +797,7 @@ class Himmeli:
         netio.writeNet(net,edgFileName,headers=True)
 
         #Vertex file:
-        self.writeVertexFile(net,vtxFileName,coloredvertices,equalsize,vcolor,vsize,coordinates=coordinates,labels=labels,nodeColors=nodeColors)
+        self.writeVertexFile(net,vtxFileName,coloredNodes,equalsize,nodeColor,nodeSize,coordinates=coordinates,labels=labels,nodeColors=nodeColors)
         #Config file:
         confFile=open(confFileName,'w')
         confFile.write(config)
@@ -919,7 +972,7 @@ class Himmeli:
                         newnet[ghostsource][ghosttarget]=wmin/epsilon_factor
 
         # next, if useMST=True, use keys of coordinates to insert all
-        # original vertices to the net, again with epsilon weights
+        # original nodes to the net, again with epsilon weights
 
         else:
 
@@ -936,15 +989,15 @@ class Himmeli:
         return newnet
 
 
-    def writeVertexFile(self,net,filename,coloredvertices=True,equalsize=True,singlecolor="999999",vcolors=0,singlesize="0.3",vsizes=0,coordinates=None,labels={},nodeColors={}):
+    def writeVertexFile(self,net,filename,coloredNodes=True,equalsize=True,singlecolor="999999",vcolors=0,singlesize="0.3",coordinates=None,labels={},nodeColors={}):
         file=open(filename,'w')
 
         if len(nodeColors)>0:
-            coloredvertices=True
+            coloredNodes=True
 
         file.write("VNAME")
         file.write("\tVLABEL")
-        if coloredvertices:
+        if coloredNodes:
             file.write("\tVCOLOR")
         if equalsize:
             file.write("\tVSIZE")
@@ -958,7 +1011,7 @@ class Himmeli:
                 file.write("\t"+str(labels[i]))
             except KeyError:
                 file.write("\t"+str(i))
-            if coloredvertices:
+            if coloredNodes:
                 if len(nodeColors)>0:
                     file.write("\t"+str(nodeColors[i]))
                 else:
