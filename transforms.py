@@ -281,3 +281,7 @@ def local_threshold_by_value(net,threshold):
     return newnet
 
     
+if __name__ == '__main__':
+    """Run unit tests if called."""
+    from tests.test_transforms import *
+    unittest.main()
