@@ -1,26 +1,28 @@
 import unittest
 from operator import itemgetter
-from netpython import visuals_R as visuals
+from netpython import visuals
 from netpython import pynet
-# import visuals_R
 import Image
 import pylab
 from pylab import *
+import sys,os
 
 # This file contains tests for the visualization code.  Some very
 # simple tests are created for starters, more to be added later.
 #
-# Visualizations are tricky to test automatically. The solution was to
+# Visualizations are tricky to test automatically. The solution is to
 # print out some .eps files that can be compared with earlier
 # versions. If the new .eps files don't come out neat, something is
 # broken in the code.
 #
-# The automatic tests should however notice if the code stumbles
-# altogether and is unable to produce output.
+# The automatized tests can be used to make sure that the code can
+# handle various input combinations, and that the correct exceptions
+# are raised when input is erroneous.
 # 
-#   - Jun 23 2009  Riitta 
-
-
+#   - June 23 2009  Riitta 
+#
+# Changes: 
+# 
 
 class TestVisuals(unittest.TestCase):
     
@@ -40,7 +42,8 @@ class TestVisuals(unittest.TestCase):
         self.goodEdgeColorMapName='winter'
         self.wrongEdgeColorMapName='wint'
         
-        
+        self.labels={0: 'FirstNode', 1: 'SecondNode', 2: 'ThirdNode'}        
+        self.folder=os.path.dirname(visuals.__file__)+'/tests/visuals/figures/current/'
 
     def test_missing_input(self):
         # TypeErrors should be raised if less than two input values
@@ -56,15 +59,23 @@ class TestVisuals(unittest.TestCase):
     def test_simplePlot1(self):
         """ Test that a very simple plot without any parameters can be created """
         f=FigureCanvasBase(visuals.VisualizeNet(self.m,self.xy))
-        #f.print_eps("figures/current/test_simplePlot1.eps",dpi=80.0)
+        f.print_eps(self.folder+'test_simplePlot1.eps',dpi=80.0)
 
     def test_input_combinations(self):
-        # Note: this test detects a known bug, Jari plans to fix the bug - June 23 2009
         """ Testing different combinations of inputs """
-        f=FigureCanvasBase(visuals.VisualizeNet(self.m,self.xy,equalsize=True))
-        f.print_eps("figures/current/test_simplePlot1.eps",dpi=80.0)
+        
+        # Equally sized nodes. Note: this test detects a bug that was fixed in version 1.4 
+        f=FigureCanvasBase(visuals.VisualizeNet(self.m,self.xy,equalsize=True,nodeSize=8))
+        f.print_eps(self.folder+'test_equalsize.eps',dpi=80.0)
+        # Labeling nodes by their indices. 
+        f=FigureCanvasBase(visuals.VisualizeNet(self.m,self.xy,uselabels='all'))
+        f.print_eps(self.folder+'test_nodelabels1.eps',dpi=80.0)
+        # Labeling nodes by their indices. 
+        f=FigureCanvasBase(visuals.VisualizeNet(self.m,self.xy,labels=self.labels))
+        f.print_eps(self.folder+'test_nodelabels2.eps',dpi=80.0)
 
         
+
 
 if __name__ == '__main__':
     if True:
@@ -74,7 +85,7 @@ if __name__ == '__main__':
         suite.addTest(TestVisuals("test_simplePlot1"))
         suite.addTest(TestVisuals("test_missing_input"))
         suite.addTest(TestVisuals("test_unacceptable_input"))
-        # suite.addTest(TestVisuals("test_input_combinations"))
+        suite.addTest(TestVisuals("test_input_combinations"))
         unittest.TextTestRunner().run(suite)
     else:
         # Run all tests.
