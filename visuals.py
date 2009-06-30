@@ -294,7 +294,7 @@ def plot_node(plotobject,x,y,color='w',size=8.0):
 
 # ---------------------------------------
 
-def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor='None',nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits='none'): 
+def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor=None,nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits=None): 
 
         '''
         Visualizes a network. Inputs:
@@ -435,7 +435,7 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
         # the minimum weights would be transformed to zero and the
         # edges not visible at all.  - Riitta
         
-        if weightLimits=='none':
+        if weightLimits==None:
             if wmin==0:
                 weightLimits=(wmin,wmax)
             else:
@@ -550,7 +550,7 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
                         else:
                             color=nodeColors[node] #otherwise assume it is an RGB tuple
 
-                elif not nodeColor=='None': # if dict nodeColors is not given but nodeColor is
+                elif not nodeColor==None: # if dict nodeColors is not given but nodeColor is
                     if len(nodeColor)==6:
 
                         rc=float(nodeColor[0:2])/99.0
