@@ -10,11 +10,14 @@ import Image
 
 
 ### LIST OF CHANGES
-#
+# Riitta 30.6.2009
+# In VisualizeNet, changed default to coloredNodes=True, such that giving nodeColors or
+# nodeColor as input will be sufficient for nodes to be plotted in
+# color.
 #
 # Riitta 29.6.2009
 #
-# I changed the option 'coloredvertices' to 'coloredNodes', 'vcolor'
+# In VisualizeNet, I changed the option 'coloredvertices' to 'coloredNodes', 'vcolor'
 # to 'nodeColor', and 'vsize' to 'nodeSize' to accord with other
 # options. I also changed 'vertex' to node in the usage info where
 # possible, as it adds unnecessary confusion to a user not familiar
@@ -291,7 +294,7 @@ def plot_node(plotobject,x,y,color='w',size=8.0):
 
 # ---------------------------------------
 
-def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=False,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor='None',nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits='none'): 
+def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor='None',nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits='none'): 
 
         '''
         Visualizes a network. Inputs:
