@@ -1073,5 +1073,5 @@ def shiftCoordinates(xy,nodelist,xshift=0,yshift=0,zshift=0):
 
 if __name__ == '__main__':
     """Run unit tests if called."""
-    from tests.visuals.test_visuals import *
+    from tests.test_visuals import *
     unittest.main()
