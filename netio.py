@@ -20,14 +20,23 @@
   *make gml-io stable
 """
 
-#   LIST OF CHANGES
-#
-#
+#   LIST OF CHANGES 
+# 1.7. RT
+#   - fixed loadNodeProperties such that decimal numbers are
+#     interpreted as floats, not strings (it's still a hack
+#     though... and it cannot handle exponential notation, for example)
+#   - modified function isanum and added function isint that can
+#     handle negative numbers too
+#   - earlier, if the node property file contained nodes that are not
+#     present in the network, the function was aborted; now only a
+#     warning is issued.
+# 30.06.RT - modified loadNodeProperties such that the property file does not need
+#            to have headers. Now, each property name can be given as an argument.
 # 24.06.JS fixed loadNodeProperties (nodelabels to int if numbers)
 # 24.06.JS fixed & documented loadNodeProperties (checks if input file node exists in the network)
 
 
-import pynet,netext
+import pynet,netext,warnings
 
 from matplotlib.mlab import norm
 knownFiletypes=["edg","gml","mat","net"]
@@ -273,19 +282,27 @@ def loadNet(filename, mutualEdges = False, splitterChar = None,symmetricNet=True
     inputfile.close()
     return newNet
     
-def loadNodeProperties(net,filename,splitterChar=None):
-    '''Reads metadata (properties for nodes) from a file. Usage:
-    loadNodeProperties(net,filename,splitterChar=None).
-    The metadata file can contain any number of columns;
-    first row is reserved for headers. The first column header
-    should be node_label, and the column should contain similar labels
-    for nodes as used in the network, i.e. each label should be a node
-    of net. Other columns contain user-defined properties, and the
-    column headers are automatically appended to the property list.
+def loadNodeProperties(net,filename,splitterChar=None,propertyNames=None):
+    """Reads metadata (properties for nodes) from a file. Usage:
+    loadNodeProperties(net,filename,splitterChar=None,propertyNames=None).
+    The metadata file can contain any number of columns. The first column
+    should contain names of nodes contained in 'net', and the other
+    columns contain user-defined properties.
+    
+    If a list 'propertyNames' is not given, the first row must
+    contain headers. The first column header should be node_label,
+    and the other column headers are names of the user-defined properties.
+    They are automatically appended to the property list in 'net'.
+    Alternatively, you can provide a list 'propertyNames' containing
+    a label for each column. In this case, your file should not
+    contain a header. The function 'loadNodeProperties' checks whether
+    'propertyNames' contains 'node_label' as the first element, and adds
+    it if it doesn't, so you do not need to give it explicitly. 
+
     Example input file format:
     node_label node_color node_class
     node1      blue       class1
-    '''
+    """
 
     #todo: see if the node names are strings, ints or floats [DONE/JS/2605]
     # loadNet converts numerical node labels to ints, has been taken into account here.
@@ -302,11 +319,21 @@ def loadNodeProperties(net,filename,splitterChar=None):
 
     def isanum(str):
 
-        # simply checks if a string contains only digits
+        # checks if a string contains only digits, decimal points "." or minus signs "-"
         
         from string import digits
         for c in str:
-            if not c in digits: return 0
+            if not c in digits and c!="." and c!="-": return 0
+        return 1
+
+
+    def isint(str):
+
+        # checks if a string contains only digits or minus signs "-"
+        
+        from string import digits
+        for c in str:
+            if not c in digits and c!="-": return 0
         return 1
 
     
@@ -317,10 +344,23 @@ def loadNodeProperties(net,filename,splitterChar=None):
 
     #Read in the fields
     line=f.readline()
-    fieldNames=line.strip().split(splitterChar)
-    nfields=len(fieldNames)
-
-    if not(net.isFull()):
+    
+    if propertyNames==None: 
+        fieldNames=line.strip().split(splitterChar)  # field names are taken from first line (header)
+        nfields=len(fieldNames)
+    else:
+        fieldNames=propertyNames    # fieldNames are given
+        if type(fieldNames)==str:
+            fieldNames=[fieldNames] # if only a single field name string was given, convert it into a list (this makes it easier for the user if only one property is added, as he only needs to type 'property' and not ['property'] )
+        if fieldNames[0]=="node_label":  # the first element is node_label
+            nfields=len(fieldNames)
+        else:
+            fieldNames=["node_label"]+ fieldNames[:]  # if the first element is NOT node_label, add it
+            nfields=len(fieldNames)
+            
+    #if not(net.isFull()):
+    # SymmNet has no module isFull, so I replaced the test with checking whether the net is one of the Full types.
+    if type(net)!=pynet.FullNet and type(net)!=pynet.SymmFullNet:
 
         # for "ordinary" networks, node properties are "matched" based on first column of
         # input file, containing node labels
@@ -332,28 +372,40 @@ def loadNodeProperties(net,filename,splitterChar=None):
         for field in range(1,nfields):
             netext.addNodeProperty(net,fieldNames[field])
 
+
         #Add the properties for each node
+        someNodesNotInNetwork=False
         for i,line in enumerate(f):
         
             fields=line.strip().split(splitterChar)
         
             if len(fields)!=nfields:
-                raise Exception("Invalid number of fields on row: "+str(i+2))
+                raise Exception("The number of fields on a row does not match the header line or given list of properties: "+str(i+2))
         
-            if isanum(fields[0]):
-                nodeName=int(fields[0]) # if node name/label is a number, convert to int
+            if isint(fields[0]):
+                nodeName=int(fields[0]) # if node name/label is an integer, convert to int
             else:
                 nodeName=fields[0]
 
 
             if nodeName in net:
-        
                 for field in range(1,nfields):
-                    net.nodeProperty[fieldNames[field]][nodeName]=fields[field]
+                    tmp=fields[field]
+                    if isanum(tmp):  # if it is a number 
+                        net.nodeProperty[fieldNames[field]][nodeName]=float(tmp)
+                        if isint(tmp):  # if it is integer 
+                            net.nodeProperty[fieldNames[field]][nodeName]=int(tmp)
+                    else: # if it is a string
+                        net.nodeProperty[fieldNames[field]][nodeName]=tmp 
 
             else:
-                raise Exception("Node"+str(nodeName)+" in input file doesn't exist in the network!")
+                someNodesNotInNetwork=True
+                #warnings.warn("Node \'"+str(nodeName)+"\' in input file doesn't exist in the network!")
 
+
+        if someNodesNotInNetwork:
+            warnings.warn("Some of the nodes in the property file do not exist in the network!")
+            
     else:
 
         netsize=len(net)
@@ -363,7 +415,7 @@ def loadNodeProperties(net,filename,splitterChar=None):
         #
         # if node_labels are used, these will be inserted as regular property fields   
         #
-        # todo: check that input file has to have N-1 rows
+        # todo: check that input file has N-1 rows
 
         for field in range(0,nfields):
 
