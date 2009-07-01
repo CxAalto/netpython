@@ -10,10 +10,21 @@ import Image
 
 
 ### LIST OF CHANGES
+# Riitta 1.7.2009 
+# 
+# In VisualizeNet, added the option that nodes can be colored by node
+# property.
+#
+# Added input arguments: nodeColorMap, setNodeColorsByProperty,
+# nodePropertyLimits (a tuple). If 'setNodeColorsByProperty' is
+# specified, any node not appearing in the dictionary 'nodeColors'
+# will be colored according to the given property (using 'nodeColorMap'
+# and 'nodePropertyLimits').  Option 'nodeColors' overrides the
+# 'setNodeColorsByProperty' option. 
+# 
 # Riitta 30.6.2009
-# In VisualizeNet, changed default to coloredNodes=True, such that giving nodeColors or
-# nodeColor as input will be sufficient for nodes to be plotted in
-# color.
+# In VisualizeNet, changed default to coloredNodes=True, such that giving nodeColors
+# or nodeColor as input will be sufficient for nodes to be plotted in color.
 #
 # Riitta 29.6.2009
 #
@@ -138,7 +149,7 @@ class Myplot(object):
 
 def ReturnPlotObject(data,plotcommand='plot',titlestring='',xstring='',ystring='',figsize=(5,4),fontsize=14,fontname='Times',addstr='',labelMultiplier=1.2,plotcolor='r',facecolor="#cacfbe",edgecolor=None):
 
-    '''Input: data [[xseries1,yseries1],[xseries2,yseries2],...] (float,int, whatever)
+    """Input: data [[xseries1,yseries1],[xseries2,yseries2],...] (float,int, whatever)
     plotcommand = matplotlib's plot command (default 'plot', could
     also be 'loglog' etc), titlestring=plot title, xstring=x-axis label, ystring=y-axis label.
     Outputs a container object, corresponding to a matplotlib plot. This can be displayed
@@ -149,7 +160,7 @@ def ReturnPlotObject(data,plotcommand='plot',titlestring='',xstring='',ystring='
     where plotbody is a Frame object.
 
 
-    quick hack: addstr takes in arguments for plotting command, e.g. ",'ro'","width=0.1", etc. To be fixed.'''
+    quick hack: addstr takes in arguments for plotting command, e.g. ",'ro'","width=0.1", etc. To be fixed."""
 
     Nplots=len(data)
 
@@ -230,12 +241,12 @@ def normalizeWeight(value,weightLimits):
     return normalizedWeight 
 
 
-def setEdgeColorMap(edgeColorMap):
+def setColorMap(colorMap):
     # Sets a colormap for edges. Two options of our own are available
     # ('orange' and 'primary'), in addition to the 150 pylab readymade
     # colormaps. 
     
-    if edgeColorMap=='primary':
+    if colorMap=='primary':
         # Jari's map: yellow->blue->red 
         myMap=get_cmap()
         myMap._segmentdata={
@@ -244,7 +255,7 @@ def setEdgeColorMap(edgeColorMap):
             'blue': ( (0,0,0), (0.5,1,1), (1,0,0) ),
             }
 
-    elif edgeColorMap=='orange':
+    elif colorMap=='orange':
         # Riitta's color map from white through yellow and orange to red 
         myMap=get_cmap()
         myMap._segmentdata = { 'red'  : ( (0.,.99,.99), (0.2,.98,.98), (0.4,.99,.99), (0.6,.99,.99), (0.8,.99,.99), (1.0,.92,.92) ),
@@ -253,20 +264,20 @@ def setEdgeColorMap(edgeColorMap):
 
     else:
         try:
-            myMap=get_cmap(edgeColorMap)
+            myMap=get_cmap(colorMap)
         except AssertionError:
-            comment='\nCould not recognize given edgeColorMap name \''+ edgeColorMap+'\' \n\n'
+            comment='\nCould not recognize given colorMap name \''+ colorMap+'\' \n\n'
             raise AssertionError(comment)            
     return myMap
 
 
 # ---------------------------------------
 
-def setEdgeColor(value,weightLimits,edgeColorMap):
+def setColor(value,weightLimits,colorMap):
     # Set edge color by weight (no other option implemented thus far)
     if not (weightLimits[0]-weightLimits[1])==0: 
         normalizedWeight=normalizeWeight(value,weightLimits) 
-        color=edgeColorMap(normalizedWeight) 
+        color=colorMap(normalizedWeight) 
     else:
         color=(0.5,0.5,0.5)  # gray if all weights are equal
     return color
@@ -281,7 +292,7 @@ def setEdgeWidth(value,weightLimits,minwidth,maxwidth):
     else:
         width=minwidth # if given minwidth and maxwidth are the same, simply use that width
     return width
-    
+   
 
 def plot_edge(plotobject,xcoords,ycoords,width=1.0,colour='k'):
     
@@ -292,9 +303,11 @@ def plot_node(plotobject,x,y,color='w',size=8.0):
     plotobject.plot([x],[y],'yo',markerfacecolor=color,markersize=size)
 
 
+
+
 # ---------------------------------------
 
-def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor=None,nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits=None): 
+def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor=None,nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits=None,setNodeColorsByProperty=None,nodeColorMap='winter',nodePropertyLimits=None): 
 
         '''
         Visualizes a network. Inputs:
@@ -311,17 +324,29 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
         coloredNodes = (True/False),
         nodeColors = dictionary of node colors by node index, and 
         nodeColor = an RGB color tuple with three values between 0 and 1
+        setNodeColorByProperty
+        nodeColorMap
+        nodePropertyLimits
+
+        If 'setNodeColorsByProperty' is specified, any node not appearing
+        in the dictionary 'nodeColors' will be colored according to the
+        given property (using'nodeColorMap' and 'nodePropertyLimits').
+        Option 'nodeColors' overrides the 'setNodeColorsByProperty' option.
+
          If coloredNodes='False', nodes are plotted white.
-         If coloredNodes='True', 
+         If coloredNodes='True' (default),
           a) if dictionary 'nodeColors' is given, it is used.
              If it does not contain a color for every node,
-             the rest are colored with 'nodeColor' if it is given,
-             or white if it is not. 
+             the rest are colored 1) according to property
+             'setNodeColorsByProperty', if it is given, or else
+             2) by 'nodeColor' if it is given, or
+             3) white if neither of the above is given. 
           b) if dictionary 'nodeColors' is not given, but 'nodeColor'
              is given, all nodes are colored with 'nodeColor'.
-          c) if neither dictionary 'nodeColors' nor 'nodeColor' is given,
-              nodes are colored by strength using the colormap 'EdgeColorMap'. 
-              (Please see below for information on 'EdgeColorMap'.)
+          c) if neither 'setNodeColorsByProperty' nor dictionary 'nodeColors'
+              or 'nodeColor' is given, nodes are colored by strength
+              using the colormap 'nodeColorMap' (by default 'winter'). 
+          
 
         equalsize = (True/False) True: all nodes are of same size,
         input as nodeSize, default 1.0. False: sizes are based on node
@@ -441,13 +466,13 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
             else:
                 weightLimits=(wmin-0.00001,wmax) 
         
-        myEdgeColorMap=setEdgeColorMap(edgeColorMap)
+        myEdgeColorMap=setColorMap(edgeColorMap)
         
         for edge in edges:
 
             width=setEdgeWidth(edge[2],weightLimits,minwidth,maxwidth)
 
-            colour=setEdgeColor(edge[2],weightLimits,myEdgeColorMap)
+            colour=setColor(edge[2],weightLimits,myEdgeColorMap)
 
             xcoords=[xy[edge[0]][0],xy[edge[1]][0]]
 
@@ -480,6 +505,16 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
             A=(maxnode-minnode)/(maxs-mins)
             B=maxnode-A*maxs    
 
+        myNodeColorMap=setColorMap(nodeColorMap)
+
+        # If nodePropertyLimits were not given, use the true min and
+        # max property values in the network. Note: unlike with
+        # weights, there is no problem with zero values, as the nodes
+        # will be plotted in any case. 
+        if nodePropertyLimits==None:
+            nodePropertyLimits=(wmin,wmax)
+
+        
         for node in nodelist:
 
             # first define size
@@ -510,14 +545,19 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
             # then determine color
 
             if coloredNodes:
+                if setNodeColorsByProperty!=None: # if setNodeColorsByProperty is given, use it initially
+                    value=net.nodeProperty[setNodeColorsByProperty][node]
+                    color=setColor(value,nodePropertyLimits,myNodeColorMap)
 
-                if len(nodeColors)>0: # if dict nodeColors is given
+                if len(nodeColors)>0: # if dict nodeColors is given, it overrides setNodeColorsByProperty 
 
                     if not nodeColors.get(node): # if node is not contained in dict nodeColors 
-                        if not nodeColor=='None':
-                            color=nodeColor # use nodeColor if given
-                        else:
-                            color=(1,1,1) # white if not
+                        if setNodeColorsByProperty==None: # use setNodeColorsByProperty if it was given, but otherwise...
+                            if nodeColor!='None': 
+                                color=nodeColor # ...use nodeColor if given, ...
+                            else:
+                                color=(1,1,1) # ...and finally white if not
+                                
                     else:  # if node IS contained in dict nodeColors, use nodeColors[node]   
                         ctemp=nodeColors[node]
 
@@ -550,7 +590,7 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
                         else:
                             color=nodeColors[node] #otherwise assume it is an RGB tuple
 
-                elif not nodeColor==None: # if dict nodeColors is not given but nodeColor is
+                elif  setNodeColorsByProperty==None and nodeColor!=None: # if neither setNodeColorsByProperty or dict nodeColors is given, but nodeColor is, use nodeColor
                     if len(nodeColor)==6:
 
                         rc=float(nodeColor[0:2])/99.0
@@ -580,10 +620,10 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
 
                 else:
                     
-                    color=setEdgeColor(nodestrength,(mins,maxs),myEdgeColorMap) # use the same colormap for nodes as for edges (now the name edgeColorMap is a bit misleading... Could change it to just colorMap, or alternatively add another input option, 'nodeColorMap') 
+                    color=setColor(nodestrength,(mins,maxs),myNodeColorMap) # use the same colormap for nodes as for edges (now the name edgeColorMap is a bit misleading... Could change it to just colorMap, or alternatively add another input option, 'nodeColorMap') 
                      #color=colortuple(nodestrength,mins,maxs)
             else:
-                color=(1.0,1.0,1.0)  # if coloredNodes=True, use white 
+                color=(1.0,1.0,1.0)  # if coloredNodes=False, use white ??
                      
 
             plot_node(axes,x=xy[node][0],y=xy[node][1],color=color,size=nodesize)
