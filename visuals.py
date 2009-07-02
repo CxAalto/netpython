@@ -318,7 +318,7 @@ def plot_node(plotobject,x,y,color='w',size=8.0):
 
 # ---------------------------------------
 
-def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor=None,nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits=None,setNodeColorsByProperty=None,nodeColorMap='winter',nodePropertyLimits=None,nodeLabel_xOffset=None): 
+def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor=None,nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits=None,setNodeColorsByProperty=None,nodeColorMap='winter',nodePropertyLimits=None,nodeLabel_xOffset=None,coloredvertices=None,vcolor=None,vsize=None): 
 
         '''
         Visualizes a network. Inputs:
@@ -439,6 +439,17 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
             .eps files?)
             
         '''
+
+        #warn about obsolete input arguments
+        if coloredvertices!=None or vcolor!=None or vsize!=None:
+            warnings.warn("\n\n The options \n \t coloredvertices, vcolor, and vsize \n are now obsolete. Please use instead \n \t coloredNodes, nodeColor, and nodeSize.\n")
+        if coloredvertices!=None:
+            coloredNodes=coloredvertices
+        if vcolor!=None and nodeColor==None:
+            nodeColor=vcolor 
+        if vsize!=None:
+            nodeSize=vsize
+            
 
         # the following is for the EDEN software, where "nets" or nets
         # derived from matrices can have edge distances instead of weights 
