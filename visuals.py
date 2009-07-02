@@ -262,6 +262,13 @@ def setColorMap(colorMap):
                                'green': ( (0,0.99,0.99), (0.2,.89,.89),  (0.4,.80,.80), (0.6,.50,.50), (0.8,.33,.33), (1.0,.10,.10) ),
                                'blue' : ( (0,.99,.99), (0.2,.59,.59), (0.4,.20,.20), (0.6,0.0,0.0), (0.8,0.0,0.0), (1.0,.03,.03) )  }
 
+    elif colorMap=='bluered':
+        myMap=get_cmap()
+        myMap._segmentdata={
+            'red':  ( (0,0,0), (0.17,0.25,0.25), (0.33,0.7,0.7), (0.5,.87,.87), (0.67,.97,.97),  (0.83,.93,.93), (1,.85,.85) ),    
+            'green': ( (0,0,0), (0.1667,0.53,0.53), (0.3333,.8,.8), (0.5,.9,.9), (0.6667,.7,.7), (0.8333,.32,.32), (1,.07,.07) ),
+            'blue': ( (0,.6,.6),  (0.1667,.8,.8),    (0.3333,1,1),    (0.5,.8,.8),    (0.6667,.33,.33),    (0.8333,.12,.12),   (1,.05,.05) ) }
+
     else:
         try:
             myMap=get_cmap(colorMap)
@@ -543,10 +550,12 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
                                       # visualizing a thresholded network
 
             # then determine color
-
+            print setNodeColorsByProperty # REMOVE
             if coloredNodes:
                 if setNodeColorsByProperty!=None: # if setNodeColorsByProperty is given, use it initially
                     value=net.nodeProperty[setNodeColorsByProperty][node]
+                    print node  # REMOVE 
+                    print value # REMOVE
                     color=setColor(value,nodePropertyLimits,myNodeColorMap)
 
                 if len(nodeColors)>0: # if dict nodeColors is given, it overrides setNodeColorsByProperty 
@@ -618,12 +627,11 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
 
                         color=nodeColor         
 
-                else:
+                elif setNodeColorsByProperty==None:
                     
-                    color=setColor(nodestrength,(mins,maxs),myNodeColorMap) # use the same colormap for nodes as for edges (now the name edgeColorMap is a bit misleading... Could change it to just colorMap, or alternatively add another input option, 'nodeColorMap') 
-                     #color=colortuple(nodestrength,mins,maxs)
+                    color=setColor(nodestrength,(mins,maxs),myNodeColorMap) # set color by node strength
             else:
-                color=(1.0,1.0,1.0)  # if coloredNodes=False, use white ??
+                color=(1.0,1.0,1.0)  # if coloredNodes=False, use white
                      
 
             plot_node(axes,x=xy[node][0],y=xy[node][1],color=color,size=nodesize)
