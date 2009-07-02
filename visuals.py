@@ -10,8 +10,12 @@ import Image
 
 
 ### LIST OF CHANGES
-# Riitta 1.7.2009 
+# Riitta 2.7.2009
+#   Added option nodeLabel_xOffset for shifting node labels slightly
+#   to the right. This keeps the text from falling on the nodes,
+#   which makes it difficult to read.
 # 
+# Riitta 1.7.2009 
 # In VisualizeNet, added the option that nodes can be colored by node
 # property.
 #
@@ -314,7 +318,7 @@ def plot_node(plotobject,x,y,color='w',size=8.0):
 
 # ---------------------------------------
 
-def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor=None,nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits=None,setNodeColorsByProperty=None,nodeColorMap='winter',nodePropertyLimits=None): 
+def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor=None,nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits=None,setNodeColorsByProperty=None,nodeColorMap='winter',nodePropertyLimits=None,nodeLabel_xOffset=None): 
 
         '''
         Visualizes a network. Inputs:
@@ -401,6 +405,11 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
         reasonable however for the user to provide limits that can
         accommodate all weights, this is just a necessary precaution
         for the case where the given limits are too tight.
+
+        nodeLabel_xOffset (if none is given, nodeSize/40 will be used)
+        amount for moving node labels the right so that the text does
+        not fall on the nodes
+
 
 
         Usage examples:
@@ -630,12 +639,13 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
             else:
                 color=(1.0,1.0,1.0)  # if coloredNodes=False, use white
                      
-
+            if nodeLabel_xOffset==None:
+                nodeLabel_xOffset=float(nodesize)/40 # move node labels slightly to the right so that they don't coincide on the nodes
             plot_node(axes,x=xy[node][0],y=xy[node][1],color=color,size=nodesize)
             if uselabels=='all':
-                axes.annotate(str(node),(xy[node][0],xy[node][1]),color=fontcolor,size=fontsize)
+                axes.annotate(str(node),(xy[node][0]+nodeLabel_xOffset,xy[node][1]),color=fontcolor,size=fontsize)
             elif node in labels:
-                axes.annotate(labels[node],(xy[node][0],xy[node][1]),color=fontcolor,size=fontsize)
+                axes.annotate(labels[node],(xy[node][0]+nodeLabel_xOffset,xy[node][1]),color=fontcolor,size=fontsize)
 
                     
 
