@@ -550,12 +550,9 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
                                       # visualizing a thresholded network
 
             # then determine color
-            print setNodeColorsByProperty # REMOVE
             if coloredNodes:
                 if setNodeColorsByProperty!=None: # if setNodeColorsByProperty is given, use it initially
                     value=net.nodeProperty[setNodeColorsByProperty][node]
-                    print node  # REMOVE 
-                    print value # REMOVE
                     color=setColor(value,nodePropertyLimits,myNodeColorMap)
 
                 if len(nodeColors)>0: # if dict nodeColors is given, it overrides setNodeColorsByProperty 
