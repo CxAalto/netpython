@@ -21,6 +21,7 @@
 """
 
 #   LIST OF CHANGES 
+# 15.7. RT fixed a bug in loadNodeProperties (the first line of the file was lost if the file did not contain headers)
 # 1.7. RT
 #   - fixed loadNodeProperties such that decimal numbers are
 #     interpreted as floats, not strings (it's still a hack
@@ -343,9 +344,9 @@ def loadNodeProperties(net,filename,splitterChar=None,propertyNames=None):
     
 
     #Read in the fields
-    line=f.readline()
     
-    if propertyNames==None: 
+    if propertyNames==None:
+        line=f.readline() 
         fieldNames=line.strip().split(splitterChar)  # field names are taken from first line (header)
         nfields=len(fieldNames)
     else:
