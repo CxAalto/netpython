@@ -1,20 +1,10 @@
 """
-This module contains percolators and needed datatypes for them.
-This contains general framework for all percolation studies:
-*KtreeInteger
-*Ktree
-*EvaluationList
-*EvaluationEvent
-
-Edge percolation can be done using Percolator and
-getComponents 
-
-K-clique percolations are done by KCliquePercolator and
-getKCliqueComponents
-
+This module contains percolator functions and some related data structures.
+This contains general framework for edge and node percolation studies, but
+also functions for k-clique percolation.
 """
 
-import pynet,netext,array,math,netio,communities, numpy
+import pynet,netext,array,math,netio,communities, numpy,transforms
 from operator import mul
 
 
@@ -26,7 +16,9 @@ class KtreeInteger_new:
         self.mappingOn=False
         self.sizeDistribution={}
         self.sizeDistribution[1]=size
-
+        if size!=0:
+            for index in xrange(0,size):
+                self.ktree[index]=index;
         
     def __getRealParent(self,node):
         """
@@ -59,7 +51,7 @@ class KtreeInteger_new:
         set_of_node1=self.getSetIndex(node1)
         set_of_node2=self.getSetIndex(node2)
         if set_of_node1!=set_of_node2:
-            if subTreeWeight[set_of_node1]>subTreeWeight[set_of_node2]:
+            if self.subTreeWeight[set_of_node1]>self.subTreeWeight[set_of_node2]:
                 large_set,small_set=set_of_node1,set_of_node2
             else:
                 large_set,small_set=set_of_node2,set_of_node1 
@@ -68,8 +60,13 @@ class KtreeInteger_new:
             large_set_size=self.subTreeWeight[large_set]
             self.sizeDistribution[small_set_size]-=1
             self.sizeDistribution[large_set_size]-=1
-            #we should remove empty elements
-            self.sizeDistribution[small_set_size+large_set_size]=self.sizeDistribution.get(small_set_size+large_set_size,0)+1#check if 0
+            #we remove empty elements
+            if self.sizeDistribution[small_set_size]==0:
+                self.sizeDistribution.__delitem__(small_set_size)
+            if self.sizeDistribution[large_set_size]==0:
+                self.sizeDistribution.__delitem__(large_set_size)
+            
+            self.sizeDistribution[small_set_size+large_set_size]=self.sizeDistribution.get(small_set_size+large_set_size,0)+1
             self.subTreeWeight[large_set]+=self.subTreeWeight[small_set]
 
             self.__setRealParent(small_set,large_set)
@@ -430,10 +427,12 @@ def kcliquesWeight(net,k,weightFunction):
 def communitiesByKCliques(kcliques):
     # Calculate the neighboring relations
     krTree=Ktree()
-    for kclique in kcliques:
+    for kcliqueNumber,kclique in enumerate(kcliques):
         if isinstance(kclique,EvaluationEvent):
             communityStructure=krTree.getCommStruct().getCollapsed()
             communityStructure.threshold=kclique.threshold
+            communityStructure.numberOfEdges=kclique.addedElements
+            communityStructure.numberOfKCliques=kcliqueNumber+1
             yield communityStructure
         else:
             #for fewer operations at ktree, names of new cliques should be saved
@@ -473,15 +472,15 @@ def getKCliqueBipartiteNet(net,k):
         for krclique in kclique.getSubcliques():
             krcliques.add(krclique)
             kbinet[kclique,krclique]=1
-    return kbinet,kclqiues,krcliques
+    return kbinet,kcliques,krcliques
 
 def getKCliqueNet(net,k):
     """
     Returns a network of k-cliques in the network given as a parameter.
     Two k-cliques are adjacent if they share a (k-1)-clique.
     """
-    kbinet,kclqiues,krcliques=getKCliqueBipartiteNet(net,k)
-    return transforms.collapseBipartiteNet(net,krcliques)
+    kbinet,kcliques,krcliques=getKCliqueBipartiteNet(net,k)
+    return transforms.collapseBipartiteNet(kbinet,krcliques)
 
 def getKRCliqueNet(net,k):
     """
