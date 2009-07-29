@@ -10,6 +10,12 @@ import Image
 
 
 ### LIST OF CHANGES
+# Riitta 29.7.2009
+# Removed the figure frame as default. It can still be included with
+# the option  frame=True
+# Added possibility of plotting a network that does not contain any links. 
+# Fixed a bug related to node coloring when all nodes are equal strength. 
+#
 # Riitta 2.7.2009
 #   Added option nodeLabel_xOffset for shifting node labels slightly
 #   to the right. This keeps the text from falling on the nodes,
@@ -183,7 +189,6 @@ def ReturnPlotObject(data,plotcommand='plot',titlestring='',xstring='',ystring='
 
     myplot=Myplot()
     myplot.thisFigure=Figure(figsize=figsize,dpi=100,facecolor=facecolor,edgecolor=edgecolor)
-
     myplot.axes=[]
 
 
@@ -318,7 +323,7 @@ def plot_node(plotobject,x,y,color='w',size=8.0):
 
 # ---------------------------------------
 
-def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor=None,nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits=None,setNodeColorsByProperty=None,nodeColorMap='winter',nodePropertyLimits=None,nodeLabel_xOffset=None,coloredvertices=None,vcolor=None,vsize=None): 
+def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor=None,nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits=None,setNodeColorsByProperty=None,nodeColorMap='winter',nodePropertyLimits=None,nodeLabel_xOffset=None,coloredvertices=None,vcolor=None,vsize=None,frame=False): 
 
         '''
         Visualizes a network. Inputs:
@@ -357,7 +362,7 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
           c) if neither 'setNodeColorsByProperty' nor dictionary 'nodeColors'
               or 'nodeColor' is given, nodes are colored by strength
               using the colormap 'nodeColorMap' (by default 'winter'). 
-          
+
 
         equalsize = (True/False) True: all nodes are of same size,
         input as nodeSize, default 1.0. False: sizes are based on node
@@ -410,6 +415,7 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
         amount for moving node labels the right so that the text does
         not fall on the nodes
 
+        frame=True or False (default False) adds or removes a box around the figure
 
 
         Usage examples:
@@ -463,6 +469,9 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
         thisfigure=Figure(figsize=figsize,dpi=100,facecolor=bgcolor)
         axes=thisfigure.add_subplot(111)
         axes.set_axis_bgcolor(bgcolor)
+        if frame==False:
+            axes.set_axis_off()
+            
 
         # sets the color for node labels
         
@@ -470,42 +479,44 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
         if bgcolor=='white':
             fontcolor='k'
 
-        # first draw all edges
-
+        # first draw all edges, if there are any
+        print "number of edges in net: " # REMOVE
+        print len(list(net.edges)) # REMOVE
         edges=list(net.edges)
+        if len(edges)>0:
+            wlist=[]
+            for edge in edges:
+                wlist.append(edge[2])
 
-        wlist=[]
-        for edge in edges:
-            wlist.append(edge[2])
+            wmin=min(wlist)
+            wmax=max(wlist)
 
-        wmin=min(wlist)
-        wmax=max(wlist)
-
-        # If weightLimits were not given, use (almost) the true min
-        # and max weights in the network. Note: using a value slightly
-        # below wmin, because otherwise when normalizing the weights,
-        # the minimum weights would be transformed to zero and the
-        # edges not visible at all.  - Riitta
+            # If weightLimits were not given, use (almost) the true min
+            # and max weights in the network. Note: using a value slightly
+            # below wmin, because otherwise when normalizing the weights,
+            # the minimum weights would be transformed to zero and the
+            # edges not visible at all.  - Riitta
         
-        if weightLimits==None:
-            if wmin==0:
-                weightLimits=(wmin,wmax)
-            else:
-                weightLimits=(wmin-0.00001,wmax) 
+            if weightLimits==None:
+                if wmin==0:
+                    weightLimits=(wmin,wmax)
+                else:
+                    weightLimits=(wmin-0.00001,wmax) 
         
-        myEdgeColorMap=setColorMap(edgeColorMap)
+            myEdgeColorMap=setColorMap(edgeColorMap)
         
-        for edge in edges:
+            for edge in edges:
+                
+                width=setEdgeWidth(edge[2],weightLimits,minwidth,maxwidth)
 
-            width=setEdgeWidth(edge[2],weightLimits,minwidth,maxwidth)
+                colour=setColor(edge[2],weightLimits,myEdgeColorMap)
+                
+                xcoords=[xy[edge[0]][0],xy[edge[1]][0]]
+                
+                ycoords=[xy[edge[0]][1],xy[edge[1]][1]]
 
-            colour=setColor(edge[2],weightLimits,myEdgeColorMap)
+                plot_edge(axes,xcoords,ycoords,width=width,colour=colour)
 
-            xcoords=[xy[edge[0]][0],xy[edge[1]][0]]
-
-            ycoords=[xy[edge[0]][1],xy[edge[1]][1]]
-
-            plot_edge(axes,xcoords,ycoords,width=width,colour=colour)
 
         # then draw nodes, depending on given options
         # showAllNodes displays also nodes who do not have any edges
@@ -522,24 +533,37 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
         minnode=2.0
         maxnode=6.0
 
+        print "number of nodes in net: " # REMOVE
+        print len(net) # REMOVE
         strengths=netext.strengths(net)
-   
+
+        print "strengths of the nodes in net: " # REMOVE
+        print strengths # REMOVE
         maxs=max(strengths.values())
-        mins=min(strengths.values())
+        mins=min(strengths.values())           
 
         if not(equalsize):
-        
-            A=(maxnode-minnode)/(maxs-mins)
+            if maxs==mins:
+                A=0
+            else:
+                A=(maxnode-minnode)/(maxs-mins)
+                
             B=maxnode-A*maxs    
 
         myNodeColorMap=setColorMap(nodeColorMap)
 
-        # If nodePropertyLimits were not given, use the true min and
-        # max property values in the network. Note: unlike with
-        # weights, there is no problem with zero values, as the nodes
-        # will be plotted in any case. 
-        if nodePropertyLimits==None:
-            nodePropertyLimits=(wmin,wmax)
+
+        # If nodes will be colored by setNodeColorsByProperty but
+        # nodePropertyLimits were not given, use the true min and max
+        # property values in the network.
+        if setNodeColorsByProperty!=None:
+            if nodePropertyLimits==None:
+                np=[]
+                for node in net: 
+                    value=net.nodeProperty[setNodeColorsByProperty][node]
+                    nodeProperties.append(value)
+
+                nodePropertyLimits=(min(np),max(np))
 
         
         for node in nodelist:
@@ -678,7 +702,6 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
         ydelta=0.05*(maxy-miny)
 
         setp(axes,'xlim',(minx-xdelta,maxx+xdelta),'ylim',(miny-ydelta,maxy+ydelta))
-
 
         return thisfigure
 
