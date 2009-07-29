@@ -480,8 +480,6 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
             fontcolor='k'
 
         # first draw all edges, if there are any
-        print "number of edges in net: " # REMOVE
-        print len(list(net.edges)) # REMOVE
         edges=list(net.edges)
         if len(edges)>0:
             wlist=[]
@@ -533,12 +531,8 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
         minnode=2.0
         maxnode=6.0
 
-        print "number of nodes in net: " # REMOVE
-        print len(net) # REMOVE
         strengths=netext.strengths(net)
 
-        print "strengths of the nodes in net: " # REMOVE
-        print strengths # REMOVE
         maxs=max(strengths.values())
         mins=min(strengths.values())           
 
