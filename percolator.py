@@ -355,7 +355,7 @@ class KClique(object):
     def getEdges(self):
 	for node in self.nodes:
 	    for othernode in self.nodes:
-		if node!=othernode:
+		if node!= othernode:
 		   yield (node,othernode)
     def getK(self):
 	return len(self.nodes)
@@ -372,11 +372,26 @@ class EvaluationEvent:
         self.addedElements=addedElements
 
 def kcliquesAtSubnet(nodes,net,k):
-    """
-    List all k-cliques at a given network. Any implementation is fine,
-    but as this routine is a part of a clique percolator anyway we
-    will use itself to find cliques larger than 2. Cliques of size 1 and
-    2 are trivial.
+    """List all k-cliques in a subnet induced by given nodes.
+
+    Any implementation is fine, but as this routine is a part of a
+    clique percolator anyway we will use itself to find cliques larger
+    than 2. Cliques of size 1 and 2 are trivial.
+
+    Parameters
+    ----------
+    nodes : iterable
+        Nodes that induces the subnet.
+    net : pynet.SymmNet object
+        The full networks where we look for the subnet induced by
+        nodes.
+    k : int, >= 1
+        The number of nodes in the cliques.
+
+    Yield
+    -----
+    kclique : KClique object
+        The k-cliques found in the subnet of net induced by nodes.
     """
     if len(nodes)>=k:
         if k==1:
@@ -391,24 +406,41 @@ def kcliquesAtSubnet(nodes,net,k):
 	    for kclique in kcliquesByEdges(subnet.edges,k):
 		yield kclique
 
-def kcliquesByEdges(edges,k):
+def kcliquesByEdges(edges, k):
+    """Generate k-cliques from edges.
+
+    Generator function that generates a list of cliques of size k in
+    the order they are formed when edges are added in the order
+    defined by the 'edges' argument.  If many cliques are formed by
+    adding one edge, the order of the cliques is arbitrary.
+    
+    This generator will pass through any EvaluationEvent objects that
+    are passed to it in the 'edges' generator.
+
+    Parameters
+    ----------
+    edges : iterable with elements (node_1, node_2, weight)
+        The edges that form the network. 'edges' may also contain
+        EvaluationEvent objects, which are simply passed through.
+    k : int
+        The function returns k-cliques, that is, induced full subnets
+        of k nodes.
+
+    Yield
+    -----
+    kclique : KClique object
+        When a new k-clique is formed, it is returned as a KClique
+        object.
     """
-    Generator function that generates a list of cliques of size k in the order they
-    are formed when edges are added in the order defined by the 'edges' argument.
-    If many cliques is formed by adding one edge, the order of the cliques is
-    arbitrary.
-    This generator will pass through any EvaluationEvent objects that are passed to
-    it in the 'edges' generator.
-    """
-    newNet=pynet.SymmNet() # Edges are added to a empty network one by one
+    newNet=pynet.SymmNet() # Edges are added to an empty network one by one
     for edge in edges:
-        if isinstance(edge,EvaluationEvent):
+        if isinstance(edge, EvaluationEvent):
             yield edge
         else:
             # First we find all new triangles that are born when the new edge is added
             triangleEnds=set() # We keep track of the tip nodes of the new triangles
             for adjacentNode in newNet[edge[0]]: # Neighbor of one node of the edge ...
-                if newNet[adjacentNode,edge[1]]!=0: #...is a neighbor of the other node of the edge...
+                if newNet[adjacentNode,edge[1]] != 0: #...is a neighbor of the other node of the edge...
                     triangleEnds.add(adjacentNode) #...then the neighbor is a tip of a new triangle
 
             # New k-cliques are now (k-2)-cliques at the triangle end points plus
