@@ -63,8 +63,9 @@ class KtreeInteger_new:
             #we remove empty elements
             if self.sizeDistribution[small_set_size]==0:
                 self.sizeDistribution.__delitem__(small_set_size)
-            if self.sizeDistribution[large_set_size]==0:
-                self.sizeDistribution.__delitem__(large_set_size)
+            if small_set_size!=large_set_size: #if sets are equal size, "larger" set size is already removed
+                if self.sizeDistribution[large_set_size]==0:
+                    self.sizeDistribution.__delitem__(large_set_size)
             
             self.sizeDistribution[small_set_size+large_set_size]=self.sizeDistribution.get(small_set_size+large_set_size,0)+1
             self.subTreeWeight[large_set]+=self.subTreeWeight[small_set]
@@ -185,7 +186,7 @@ class KtreeInteger:
 
 
 #class KtreeMapping(KtreeInteger):
-class Ktree(KtreeInteger):
+class Ktree(KtreeInteger): 
     """
     A Kruskal tree with mapping frontend. This means that node names can be any
     hashable objects.
@@ -372,7 +373,7 @@ class EvaluationEvent:
         self.addedElements=addedElements
 
 def kcliquesAtSubnet(nodes,net,k):
-    """List all k-cliques in a subnet induced by given nodes.
+    """List all k-cliques in a subnet of `net` induced by `nodes`.
 
     Any implementation is fine, but as this routine is a part of a
     clique percolator anyway we will use itself to find cliques larger
@@ -384,14 +385,14 @@ def kcliquesAtSubnet(nodes,net,k):
         Nodes that induces the subnet.
     net : pynet.SymmNet object
         The full networks where we look for the subnet induced by
-        nodes.
+        `nodes`.
     k : int, >= 1
         The number of nodes in the cliques.
 
     Yield
     -----
     kclique : KClique object
-        The k-cliques found in the subnet of net induced by nodes.
+        The k-cliques found in the subnet of `net` induced by `nodes`.
     """
     if len(nodes)>=k:
         if k==1:
@@ -411,26 +412,33 @@ def kcliquesByEdges(edges, k):
 
     Generator function that generates a list of cliques of size k in
     the order they are formed when edges are added in the order
-    defined by the 'edges' argument.  If many cliques are formed by
+    defined by the `edges` argument.  If many cliques are formed by
     adding one edge, the order of the cliques is arbitrary.
     
     This generator will pass through any EvaluationEvent objects that
-    are passed to it in the 'edges' generator.
+    are passed to it in the `edges`.
 
     Parameters
     ----------
     edges : iterable with elements (node_1, node_2, weight)
-        The edges that form the network. 'edges' may also contain
+        The edges that form the network. `edges` may also contain
         EvaluationEvent objects, which are simply passed through.
     k : int
-        The function returns k-cliques, that is, induced full subnets
-        of k nodes.
+        The function returns `k`-cliques, that is, induced full subnets
+        of `k` nodes.
 
     Yield
     -----
     kclique : KClique object
         When a new k-clique is formed, it is returned as a KClique
         object.
+
+    Notes
+    -----
+    If an edge is included in `edges` multiple times, the all
+    k-cliques in the network constructed do far will be returned every
+    time. Most of the time this is not what is wanted, so take care
+    not the supply multiple edges. (LK 31.7.2009)
     """
     newNet=pynet.SymmNet() # Edges are added to an empty network one by one
     for edge in edges:
