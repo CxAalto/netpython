@@ -251,9 +251,13 @@ def normalizeWeight(value,weightLimits):
 
 
 def setColorMap(colorMap):
-    # Sets a colormap for edges. Two options of our own are available
-    # ('orange' and 'primary'), in addition to the 150 pylab readymade
-    # colormaps. 
+    """
+    Sets a colormap for edges. Two options of our own ('orange' and 'primary')
+    are available in addition to the 150 pylab readymade colormaps
+    (which can be listed with  help matplotlib.cm ).
+
+    Use as: myMap=setColorMap('bone')
+    """
     
     if colorMap=='primary':
         # Jari's map: yellow->blue->red 
@@ -323,7 +327,7 @@ def plot_node(plotobject,x,y,color='w',size=8.0):
 
 # ---------------------------------------
 
-def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor=None,nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits=None,setNodeColorsByProperty=None,nodeColorMap='winter',nodePropertyLimits=None,nodeLabel_xOffset=None,coloredvertices=None,vcolor=None,vsize=None,frame=False): 
+def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor=None,nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits=None,setNodeColorsByProperty=None,nodeColorMap='winter',nodePropertyLimits=None,nodeLabel_xOffset=None,coloredvertices=None,vcolor=None,vsize=None,frame=False,showTicks=False,axisLimits=None): 
 
         '''
         Visualizes a network. Inputs:
@@ -417,6 +421,10 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
 
         frame=True or False (default False) adds or removes a box around the figure
 
+        showTicks=True or False (default False) adds or removes ticks in the frame
+        Setting showTicks=True will override the option frame, setting it to frame=True.
+            
+        axisLimits=((minx,max),(miny,maxy)) (default None) sets tickLimits
 
         Usage examples:
             m=pynet.SymmNet()
@@ -469,9 +477,8 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
         thisfigure=Figure(figsize=figsize,dpi=100,facecolor=bgcolor)
         axes=thisfigure.add_subplot(111)
         axes.set_axis_bgcolor(bgcolor)
-        if frame==False:
+        if frame==False and showTicks==False: 
             axes.set_axis_off()
-            
 
         # sets the color for node labels
         
@@ -545,7 +552,6 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
             B=maxnode-A*maxs    
 
         myNodeColorMap=setColorMap(nodeColorMap)
-
 
         # If nodes will be colored by setNodeColorsByProperty but
         # nodePropertyLimits were not given, use the true min and max
@@ -676,9 +682,6 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
             elif node in labels:
                 axes.annotate(labels[node],(xy[node][0]+nodeLabel_xOffset,xy[node][1]),color=fontcolor,size=fontsize)
 
-                    
-
-        setp(axes,'xticks','','xticklabels','','yticks','','yticklabels','')
 
         xylist=xy.values()
         xlist=[]
@@ -695,7 +698,15 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
         xdelta=0.05*(maxx-minx)
         ydelta=0.05*(maxy-miny)
 
-        setp(axes,'xlim',(minx-xdelta,maxx+xdelta),'ylim',(miny-ydelta,maxy+ydelta))
+                
+        if frame==True and showTicks==False:
+            setp(axes,'xticks','','xticklabels','','yticks','','yticklabels','')            
+        if not axisLimits==None: # if limits are given, use them, whatever the values of showTicks or frame ... 
+            setp(axes,'xlim',(axisLimits[0][0],axisLimits[0][1]),'ylim',(axisLimits[1][0],axisLimits[1][1]))
+        else:  # otherwise: 
+            setp(axes,'xlim',(minx-xdelta,maxx+xdelta),'ylim',(miny-ydelta,maxy+ydelta))
+
+
 
         return thisfigure
 
