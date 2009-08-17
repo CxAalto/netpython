@@ -314,9 +314,13 @@ def setEdgeWidth(value,weightLimits,minwidth,maxwidth):
     return width
    
 
-def plot_edge(plotobject,xcoords,ycoords,width=1.0,colour='k'):
-    
-    plotobject.plot(xcoords,ycoords,'-',lw=width,color=colour)
+def plot_edge(plotobject,xcoords,ycoords,width=1.0,colour='k',symmetric=True):
+    if symmetric:
+        plotobject.plot(xcoords,ycoords,'-',lw=width,color=colour)
+    else:
+        arr = Arrow(xcoords[0], ycoords[0], xcoords[1]-xcoords[0], ycoords[1]-ycoords[0],edgecolor='none',facecolor=colour,linewidth=width)
+        plotobject.add_patch(arr)
+
 
 def plot_node(plotobject,x,y,color='w',size=8.0):
     
@@ -520,7 +524,7 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
                 
                 ycoords=[xy[edge[0]][1],xy[edge[1]][1]]
 
-                plot_edge(axes,xcoords,ycoords,width=width,colour=colour)
+                plot_edge(axes,xcoords,ycoords,width=width,colour=colour,symmetric=net.isSymmetric())
 
 
         # then draw nodes, depending on given options
