@@ -331,7 +331,7 @@ def plot_node(plotobject,x,y,color='w',size=8.0):
 
 # ---------------------------------------
 
-def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor=None,nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits=None,setNodeColorsByProperty=None,nodeColorMap='winter',nodePropertyLimits=None,nodeLabel_xOffset=None,coloredvertices=None,vcolor=None,vsize=None,frame=False,showTicks=False,axisLimits=None): 
+def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor=None,nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits=None,setNodeColorsByProperty=None,nodeColorMap='winter',nodePropertyLimits=None,nodeLabel_xOffset=None,coloredvertices=None,vcolor=None,vsize=None,frame=False,showTicks=False,axisLimits=None,baseFig=None): 
 
         '''
         Visualizes a network. Inputs:
@@ -430,6 +430,9 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
             
         axisLimits=((minx,max),(miny,maxy)) (default None) sets tickLimits
 
+        baseFig=If None (default), the network is drawn on an empty figure, otherwise
+        basFig of type FigureCanvasBase is used as a starting point.
+
         Usage examples:
             m=pynet.SymmNet()
             m[0][1]=1.0
@@ -478,8 +481,12 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
 
                 net=transforms.dist_to_weights(net)
         
-        thisfigure=Figure(figsize=figsize,dpi=100,facecolor=bgcolor)
-        axes=thisfigure.add_subplot(111)
+        if baseFig==None:
+            thisfigure=Figure(figsize=figsize,dpi=100,facecolor=bgcolor)
+            axes=thisfigure.add_subplot(111)
+        else:
+            thisfigure=baseFig.figure
+            axes=thisfigure.gca()
         axes.set_axis_bgcolor(bgcolor)
         if frame==False and showTicks==False: 
             axes.set_axis_off()
