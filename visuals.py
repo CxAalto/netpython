@@ -116,7 +116,7 @@ import Image
 # case where the given limits are too tight.
 # 
 # 3) To do the above, I added these methods to VisualizeNet:
-#    normalizeWeight(value,weightLimits)
+#    normalizeValue(value,valueLimits)
 #    setEdgeColorMap(edgeColorMap)
 #    setEdgeColor(value,weightLimits,edgeColorMap)
 #    setEdgeWidth(value,weightLimits,minwidth,maxwidth)
@@ -229,25 +229,25 @@ def ReturnPlotObject(data,plotcommand='plot',titlestring='',xstring='',ystring='
     return myplot
 
 
-def normalizeWeight(value,weightLimits):
-    # Transforms a weight to the range (0,1). It is intended that the
-    # user should set weightLimits such that the true weights in the
-    # network fall between the limits. If this is not the case,
-    # weights above given maxweight or below given minweight are
-    # truncated. The rest of the values are transformed linearly, such
-    # that the range (given minweight, given maxweight) becomes (0,1).
+def normalizeValue(value,valueLimits):
+    # Transforms a numerical value to the range (0,1). It is intended
+    # that the user should set valueLimits such that the true values
+    # fall between the limits. If this is not the case, values above
+    # given maxval or below given minval are truncated. The rest of
+    # the values are transformed linearly, such that the range (given
+    # minval, given maxval) becomes (0,1).
     # 
-    #     normalizedWeight= (true weight - given minweight) / (given maxweight - given minweight )
+    #     normalizedValue= (true val - given minval) / (given maxval - given minval )
     # 
-    if (weightLimits[0]-weightLimits[1])==0: # if given minweight and maxweight are the same, all weights will be equal
-        normalizedWeight=1
-    elif value<weightLimits[0]: # if weight is smaller than given minweight
-        normalizedWeight=0
-    elif value>weightLimits[1]: # if weight is larger than given maxweight
-        normalizedWeight=1
+    if (valueLimits[0]-valueLimits[1])==0: # if given minval and maxval are the same, all values will be equal
+        normalizedValue=1
+    elif value<valueLimits[0]: # if value is smaller than given minval
+        normalizedValue=0
+    elif value>valueLimits[1]: # if value is larger than given maxval
+        normalizedValue=1
     else:
-        normalizedWeight=(value-weightLimits[0])/float(weightLimits[1]-weightLimits[0])
-    return normalizedWeight 
+        normalizedValue=(value-valueLimits[0])/float(valueLimits[1]-valueLimits[0])
+    return normalizedValue 
 
 
 def setColorMap(colorMap):
@@ -293,13 +293,21 @@ def setColorMap(colorMap):
 
 # ---------------------------------------
 
-def setColor(value,weightLimits,colorMap):
-    # Set edge color by weight (no other option implemented thus far)
-    if not (weightLimits[0]-weightLimits[1])==0: 
-        normalizedWeight=normalizeWeight(value,weightLimits) 
-        color=colorMap(normalizedWeight) 
+def setColor(value,valueLimits,colorMap):
+    """
+    Converts a numerical value to a color. The value is scaled
+    linearly to the range (0...1) using the function normalizeValue
+    and the limits valueLimits. This scaled value is used to pick a
+    color from the given colormap. The colormap should take in values
+    in the range (0...1) and produce a three-tuple containing an RGB
+    color, as in (r,g,b).
+    
+    """
+    if not (valueLimits[0]-valueLimits[1])==0: 
+        normalizedValue=normalizeValue(value,valueLimits) 
+        color=colorMap(normalizedValue) 
     else:
-        color=(0.5,0.5,0.5)  # gray if all weights are equal
+        color=(0.5,0.5,0.5)  # gray if all values are equal
     return color
 
 
@@ -307,7 +315,7 @@ def setEdgeWidth(value,weightLimits,minwidth,maxwidth):
     # Transforms edge weights to widths in the range  (minwidth,maxwidth).
     # If given minwidth and maxwidth are the same, simply use that given width.
     if not(weightLimits[0]-weightLimits[1])==0:
-        normalizedWeight=normalizeWeight(value,weightLimits)  # normalizes the weight linearly to the range (0,1)
+        normalizedWeight=normalizeValue(value,weightLimits)  # normalizes the weight linearly to the range (0,1)
         width=minwidth+normalizedWeight*(maxwidth-minwidth)   # transforms the normalized weight linearly to the range (minwidth,maxwidth)     
     else:
         width=minwidth # if given minwidth and maxwidth are the same, simply use that width
