@@ -10,6 +10,9 @@ import Image
 
 
 ### LIST OF CHANGES
+# Riitta 20.8.2009 drawing edges in order by weight, so that strong links will be on top.
+#   Also changed the boundary of nodes from black to white. 
+#
 # Riitta 29.7.2009
 # Removed the figure frame as default. It can still be included with
 # the option  frame=True
@@ -332,7 +335,7 @@ def plot_edge(plotobject,xcoords,ycoords,width=1.0,colour='k',symmetric=True):
 
 def plot_node(plotobject,x,y,color='w',size=8.0):
     
-    plotobject.plot([x],[y],'yo',markerfacecolor=color,markersize=size)
+    plotobject.plot([x],[y],'yo',markerfacecolor=color,markeredgecolor='w',markersize=size)
 
 
 
@@ -528,8 +531,11 @@ def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={
                     weightLimits=(wmin-0.00001,wmax) 
         
             myEdgeColorMap=setColorMap(edgeColorMap)
-        
-            for edge in edges:
+
+            # Plot edges according to weight, beginning with small weight
+            sortedEdges=list(net.edges)
+            sortedEdges.sort(key=lambda x: x[2])
+            for edge in sortedEdges:
                 
                 width=setEdgeWidth(edge[2],weightLimits,minwidth,maxwidth)
 
