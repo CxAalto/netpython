@@ -38,18 +38,30 @@
 
 
 import pynet,netext,warnings
-
-from matplotlib.mlab import norm
+import sys
 knownFiletypes=["edg","gml","mat","net"]
 
-def getFiletype(filename):
-    """
-    Gets filename as input and returns its type
-    """
-    sfn=filename.split('.')
-    filetype=sfn[len(sfn)-1]
-    return filetype
+def getFiletype(fileName):
+    """Infer the type of a file.
 
+    (Current behaviour is to just return the file name suffix after
+    the last dot in fileName.)
+
+    Parameters
+    ----------
+    filename : string
+        The filename whose type you want to know.
+
+    Return
+    ------
+    filetype : string
+        A string literal depicting the file type.
+    """
+
+    # Return the file identifier after the last dot.
+    # Examples: mynet.edg     ==>   edg
+    #           mynet.old.mat ==>   mat
+    return fileName.split('.')[-1]
 
 
 def loadNet_gml(input):
@@ -96,11 +108,11 @@ def loadNet_gml(input):
 
     return net
 
-def loadNet_edg(input, mutualEdges = False, splitterChar = None,symmetricNet=True):
-    """
-    Reads a network data from input in edg format.
+def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
+                numerical=None):
+    """Read network data from input in edg format.
 
-    If mutualEdges is set to True, an edge is added between nodes i
+    If `mutualEdges` is set to True, an edge is added between nodes i
     and j only if both edges (i,j) and (j,i) are listed. The weight of
     the edge is the average of the weights of the original edges.
     """
@@ -115,8 +127,9 @@ def loadNet_edg(input, mutualEdges = False, splitterChar = None,symmetricNet=Tru
 	input.seek(0)
 	return True
 
-    numerical=isNumerical(input)
-	
+    if numerical is None:
+        numerical = isNumerical(input)
+    
     if symmetricNet:
         newNet=pynet.SymmNet()
     else:
@@ -208,33 +221,33 @@ def writeNet_edg(net,filename,headers=False):
     for edge in edges:
         file.write(str(edge[0])+"\t"+str(edge[1])+"\t"+str(edge[2])+"\n")
 
-def writeNet_net(net,filename):
+def writeNet_net(net, output):
     """
     Write network files in Pajek format.
 
     Todo: add writing metadata to the vertices rows
     """
-    file=open(filename,'w')
-
+    if not hasattr(output, 'write'):
+        raise ValueError("Parameter 'output' must be a file object.")
+        
     #Writing vertices to the disk.
-    numberOfNodes=len(net)
-    nodeNameToIndex={}
-    file.write("*Vertices "+str(numberOfNodes)+"\n")
+    numberOfNodes = len(net)
+    nodeNameToIndex = {}
+    output.write("*Vertices "+str(numberOfNodes)+"\n")
     for index,node in enumerate(net):
-        file.write(str(index+1)+" "+str(node)+"\n")
+        output.write(str(index+1)+' "'+str(node)+'"\n')
         nodeNameToIndex[node]=index+1
 
     #Writing edges to the disk
-    file.write("*Arcs\n")
+    #output.write("*Arcs\n")
     if net.isSymmetric():
-        file.write("*Edges\n")
+        output.write("*Edges\n")
     for edge in net.edges:
-        file.write(str(nodeNameToIndex[edge[0]])+"\t"+str(nodeNameToIndex[edge[1]])+"\t"+str(edge[2])+"\n")
-    if not net.isSymmetric():
-        file.write("*Edges\n")
+        output.write(str(nodeNameToIndex[edge[0]])+"\t"+str(nodeNameToIndex[edge[1]])+"\t"+str(edge[2])+"\n")
+    #if not net.isSymmetric():
+    #    output.write("*Edges\n")
 
     del nodeNameToIndex
-
 
 def writeNet_mat(net,filename):
     file=open(filename,'w')
@@ -252,40 +265,103 @@ def writeNet_mat(net,filename):
     return nodes
 
 
+def writeNet(net, outputFile, headers=False, fileType=None):
+    """Write network to disk.
 
-def writeNet(net,filename,headers=False):
-    filetype=getFiletype(filename)
-    if filetype=='edg':
-        writeNet_edg(net,filename,headers)
-    elif filetype=='gml':
-        writeNet_gml(net,filename)
-    elif filetype=='mat':
-        writeNet_mat(net,filename)
-    elif filetype=='net':
-        writeNet_net(net,filename)
-    else:
-        print "Unknown filetype, use writeNet_[filetype]"
+    Parameters
+    ----------
+    net : pynet network object
+        The network to write.
+    outputFile : str or file
+        Name of the file to be opened.
+    headers : bool
+        If true, print headers before the actual network data (affects
+        only edg format).
+    fileType : str
+        Type of the output file. In None, the suffix of fileName will
+        be used to guess the file type.
 
+    Exceptions
+    ----------
+    ValueError : If file type is unknown.
+    """
+    # If outputFile is a string, we assume it is a file name and open
+    # it. Otherwise if it implements 'write'-method we assume it is a
+    # file object.
+    fileOpened = False
+    if isinstance(outputFile, str):
+        outputFile = open(outputFile, 'w')
+        fileOpened = True
+    elif not hasattr(outputFile, 'write'):
+        raise ValueError("'outputFile' must be a string or an object "
+                         "with a 'write'-method.")
 
-def loadNet(filename, mutualEdges = False, splitterChar = None,symmetricNet=True):
-    inputfile=open(filename)
-    filetype=getFiletype(filename)
-    if filetype=='edg':
-        newNet=loadNet_edg(inputfile, mutualEdges, splitterChar,symmetricNet)
-    elif filetype=='gml':
-        newNet=loadNet_gml(inputfile)
-    elif filetype=='mat':
-        newNet=loadNet_mat(inputfile)
-    elif filetype=='net':
-        newNet=loadNet_net(inputfile)
-    else:
-        print "Unknown filetype, use loadNet_[filetype]"
-    inputfile.close()
+    try:
+        # Infer file type if not explicitely given.
+        if fileType is None and hasattr(outputFile, 'name'):
+            fileType = getFiletype(outputFile.name)
+
+        # Write out the network.
+        if fileType == 'edg':
+            writeNet_edg(net, outputFile, headers)
+        elif fileType in ('gml', 'mat', 'net'):
+            eval("writeNet_%s(net,outputFile)" % fileType)
+        else:
+            raise ValueError("Unknown file type, use writeNet_[filetype].")
+    finally:
+        if fileOpened:
+            outputFile.close()
+
+def loadNet(inputFile, mutualEdges=False, splitterChar=None, symmetricNet=True, numerical=None, fileType=None):
+    """Write network to disk.
+
+    Parameters
+    ----------
+    inputFile : str or file
+        Name of the file to be opened.
+    fileType : str
+        Type of the output file. In None, the suffix of fileName will
+        be used to guess the file type.
+
+    Exceptions
+    ----------
+    ValueError : If file type is unknown.
+    """
+    # If inputFile is a string, we assume it is a file name and open
+    # it. Otherwise if it implements 'write'-method we assume it is a
+    # file object.
+    fileOpened = False
+    if isinstance(inputFile, str):
+        inputFile = open(inputFile, 'r')
+        fileOpened = True
+    elif not isinstance(inputFile, file):
+        raise ValueError("'inputFile' must be a string or a file object")
+
+    # Infer file type if not explicitely given.
+    if fileType is None and hasattr(inputFile, 'name'):
+        fileType = getFiletype(inputFile.name)
+
+    # Read in the network.
+    try:
+        # edg-files need different behaviour.
+        if fileType == 'edg':
+            newNet = loadNet_edg(inputFile, mutualEdges, splitterChar, symmetricNet, numerical)
+        elif fileType in ('gml', 'mat', 'net'):
+            newNet = eval("loadNet_%s(inputFile)" % fileType)
+        else:
+            raise ValueError("Unknown file type '%s', use loadNet_[filetype]." % fileType)
+    finally:
+        if fileOpened:
+            inputFile.close()
+
     return newNet
     
 def loadNodeProperties(net,filename,splitterChar=None,propertyNames=None):
-    """Reads metadata (properties for nodes) from a file. Usage:
-    loadNodeProperties(net,filename,splitterChar=None,propertyNames=None).
+    """Read metadata (properties for nodes) from a file.
+
+    Usage:
+       loadNodeProperties(net,filename,splitterChar=None,propertyNames=None).
+
     The metadata file can contain any number of columns. The first column
     should contain names of nodes contained in 'net', and the other
     columns contain user-defined properties.
@@ -381,8 +457,9 @@ def loadNodeProperties(net,filename,splitterChar=None,propertyNames=None):
             fields=line.strip().split(splitterChar)
         
             if len(fields)!=nfields:
-                raise Exception("The number of fields on a row does not match the header line or given list of properties: "+str(i+2))
-        
+                raise Exception("The number of fields on a row does not match"
+                                " the header line or given list of properties: "
+                                +str(i+2))
             if isint(fields[0]):
                 nodeName=int(fields[0]) # if node name/label is an integer, convert to int
             else:
@@ -408,9 +485,7 @@ def loadNodeProperties(net,filename,splitterChar=None,propertyNames=None):
             warnings.warn("Some of the nodes in the property file do not exist in the network!")
             
     else:
-
         netsize=len(net)
-
         # for FullNets and SymmFullNets, where nodes are just indexed (0..(N-1)), properties are
         # added to nodes in this order.
         #
@@ -419,29 +494,20 @@ def loadNodeProperties(net,filename,splitterChar=None,propertyNames=None):
         # todo: check that input file has N-1 rows
 
         for field in range(0,nfields):
-
             netext.addNodeProperty(net,fieldNames[field])
 
         #Add the properties for each node
         for i,line in enumerate(f):
-        
             fields=line.strip().split(splitterChar)
-        
             if len(fields)!=nfields:
                 raise Exception("Invalid number of fields on row: "+str(i+2))
-
             if i<netsize:
-            
                 for field in range(0,nfields):
                     net.nodeProperty[fieldNames[field]][(i)]=fields[field]
-
             else:
-
                 raise Exception("Too many lines, network size is "+str(netsize))
 
         
-
-
 def saveNodeProperties(net,filename):
     plist=list(net.nodeProperty)
     f=open(filename,'w')
