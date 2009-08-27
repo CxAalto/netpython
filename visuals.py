@@ -546,6 +546,10 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     # derived from matrices can have edge distances instead of weights.
     if hasattr(net,'matrixtype'):
         if net.matrixtype==0:
+            # BUG! This will fail if tried, because the function
+            # dist_to_weights doesn't seem to exist. Luckily the rest
+            # of the code works fine if this is never used.
+            # (LK 27.8.2009)
             net=transforms.dist_to_weights(net)
 
     if baseFig==None:
@@ -778,16 +782,16 @@ class Himmeli:
         # directory), then add the rest of the path
         #himmeliExecutable = (os.path.dirname(netext.__file__)
         #                     +"/Himmeli/himmeli.exe")
-        himmeliExecutable = (os.path.dirname(netext.__file__) 
-                             + "/../himmeli_3.0.1/himmeli.exe")
+        netext_path = os.path.dirname(netext.__file__) 
+        himmeliExecutable = ("%s%s../himmeli_3.0.1/himmeli.exe" % 
+                             (netext_path, ("/" if netext_path else "")))
 
         if not(os.path.isfile(himmeliExecutable)):
-            # Just in case Himmeli was compiled without the .exe...
+            # Just in case Himmeli was compiled without the .exe:
             #himmeliExecutable = (os.path.dirname(netext.__file__)
             #                     + "/Himmeli/himmeli")
-            himmeliExecutable = (os.path.dirname(netext.__file__)
-                                 + "/../himmeli_3.0.1/himmeli")
-
+            himmeliExecutable = ("%s%s../himmeli_3.0.1/himmeli" % 
+                                 (netext_path, ("/" if netext_path else "")))
 
     # Directly complain if Himmeli not found.
     if not(os.path.isfile(himmeliExecutable)):
@@ -814,7 +818,7 @@ class Himmeli:
         # weights.
         if hasattr(inputnet,'matrixtype'):
             if inputnet.matrixtype==0:
-                inputnet=dist_to_weights(inputnet)
+                inputnet = dist_to_weights(inputnet)
 
         if wmin is None:
             # Finds out smallest and largest weight
@@ -972,7 +976,7 @@ class Himmeli:
         shutil.copyfile(self.netName+"_0001.eps",filename)
 
     def draw(self):
-        im=Image.open(self.netName+"_0001.eps")
+        im = Image.open(self.netName+"_0001.eps")
         im.show()
 
     def _parseCoordinates(self, coordFileName):
@@ -982,9 +986,9 @@ class Himmeli:
         for line in coordFile:
             columns=line.split("\t")
             if len(columns) == 13:
-                # old version:
-                # [comp,tail,head,weight,tree,name,x,y,z,degree,treedg,strengt,treestg,dummy]=line.split("\t")
-                #[comp,name,x,y,z,degree_in,dg_out,strengt_in,strength_out,color,shape,size,label]=line.split("\t")
+                # Previous version:
+                #[comp,name,x,y,z,degree_in,dg_out,strengt_in,strength_out,
+                # color,shape,size,label]=line.split("\t")
                 name, x, y, z = line.split("\t")[1:5]
                 if len(name) > 0:
                     try:
@@ -999,14 +1003,14 @@ class Himmeli:
         network with the epsilon edges directly added. No need for
         rewriting to any file; EdgeWeightFilter is always used.
         """
-        file=open(fileName,'a')
-        last=None
-        for node in net:
-            if last!=None:
-               if net[last,node]==0:
-                   file.write(str(node)+"\t"+str(last)+"\t"+str(self.epsilon)+"\n")
-            last=node
-        file.close()
+        with open(fileName,'a') as f:
+            last=None
+            for node in net:
+                if last!=None:
+                   if net[last,node]==0:
+                       file.write(str(node)+"\t"+str(last)+"\t"
+                                  +str(self.epsilon)+"\n")
+                last=node
 
     def __del__(self):
         if os.path.isfile(self.netName+"_0001.eps"):
@@ -1081,7 +1085,8 @@ class Himmeli:
                 for index,c in enumerate(init_comp):
                     if index != maxcomponent_index:
                         ghostsource = c.pop()
-                        tindex = int(math.ceil(random.random()*float(len(giantmembers)-1)))
+                        tindex = int(math.ceil(random.random()*
+                                               float(len(giantmembers)-1)))
                         ghosttarget = giantmembers[tindex]
                         newnet[ghostsource][ghosttarget] = wmin/epsilon_factor
 
@@ -1149,8 +1154,8 @@ def drawNet(net,labels={},coordinates=None,showAllNodes=False):
 
 # ---------------------------------------        
 
-# def shiftCoordinates(coords,nodelist,shift):
-def shiftCoordinates(coords,nodelist, xshift=0, yshift=0, zshift=0):
+# def shiftCoordinates(xy,nodelist,shift):
+def shiftCoordinates(xy,nodelist, xshift=0, yshift=0, zshift=0):
     """Translate coordinates of given nodes. 
     
     Parameters
