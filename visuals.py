@@ -160,45 +160,51 @@ class Myplot(object):
 
 # ---------------------------------------
 
-def ReturnPlotObject(data,plotcommand='plot',titlestring='',xstring='',ystring='',figsize=(5,4),fontsize=14,fontname='Times',addstr='',labelMultiplier=1.2,plotcolor='r',facecolor="#cacfbe",edgecolor=None):
+def ReturnPlotObject(data,plotcommand='plot',titlestring='',xstring='',
+                     ystring='',figsize=(5,4),fontsize=14,fontname='Times',
+                     addstr='',labelMultiplier=1.2,plotcolor='r',
+                     facecolor="#cacfbe",edgecolor=None):
+    """Input: data [[xseries1,yseries1],[xseries2,yseries2],...]
+    (float,int, whatever)
 
-    """Input: data [[xseries1,yseries1],[xseries2,yseries2],...] (float,int, whatever)
     plotcommand = matplotlib's plot command (default 'plot', could
-    also be 'loglog' etc), titlestring=plot title, xstring=x-axis label, ystring=y-axis label.
-    Outputs a container object, corresponding to a matplotlib plot. This can be displayed
-    in various ways, eg. on a TkInter canvas:
+    also be 'loglog' etc), titlestring=plot title, xstring=x-axis
+    label, ystring=y-axis label.
+
+    Outputs a container object, corresponding to a matplotlib
+    plot. This can be displayed in various ways, eg. on a TkInter
+    canvas:
     myplot.canvas=FigureCanvasTkAgg(myplot.thisFigure,master=plotbody)
-    myplot.canvas.show()
-    plotbody.pack()
-    where plotbody is a Frame object.
+    myplot.canvas.show() plotbody.pack() where plotbody is a Frame
+    object.
 
 
-    quick hack: addstr takes in arguments for plotting command, e.g. ",'ro'","width=0.1", etc. To be fixed."""
-
-    Nplots=len(data)
+    quick hack: addstr takes in arguments for plotting command,
+    e.g. ",'ro'","width=0.1", etc. To be fixed.
+    """
+    Nplots = len(data)
 
     ystrings=ystring.split(':')
     
-    if len(ystrings)<Nplots:
-        for i in range(0,Nplots-1):
+    if len(ystrings) < Nplots:
+        for i in range(0, Nplots-1):
             ystrings.append(ystrings[0])
 
-    titlestrings=titlestring.split(':')
-    if len(titlestrings)<Nplots:
-        for i in range(0,Nplots-1):
+    titlestrings = titlestring.split(':')
+    if len(titlestrings) < Nplots:
+        for i in range(0, Nplots-1):
             titlestrings.append(titlestrings[0])
 
-    subplotstring=str(Nplots)+'1'
+    subplotstring = str(Nplots)+'1'
 
-    myplot=Myplot()
-    myplot.thisFigure=Figure(figsize=figsize,dpi=100,facecolor=facecolor,edgecolor=edgecolor)
+    myplot = Myplot()
+    myplot.thisFigure = Figure(figsize=figsize,dpi=100,facecolor=facecolor,
+                               edgecolor=edgecolor)
     myplot.axes=[]
-
 
     axisfactor=1.0/Nplots
     
     for i in range(Nplots):
-
         leftcorner=0.2
         width=0.6
         bottom=(0.2+float(i))*axisfactor
@@ -206,9 +212,13 @@ def ReturnPlotObject(data,plotcommand='plot',titlestring='',xstring='',ystring='
 
         font={'fontname':'Times','fontsize':fontsize+2}
         
-        myplot.axes.append(myplot.thisFigure.add_axes([leftcorner,bottom,width,top],title=titlestrings[i],xlabel=xstring,ylabel=ystrings[i]))
-        s="myplot.axes[%d].%s(data[%d][0],data[%d][1]" % (i,plotcommand,i,i)
-        s=s+addstr+')'
+        myplot.axes.append(myplot.thisFigure.add_axes([leftcorner,bottom,
+                                                       width,top],
+                                                      title=titlestrings[i],
+                                                      xlabel=xstring,
+                                                      ylabel=ystrings[i]))
+        s = "myplot.axes[%d].%s(data[%d][0],data[%d][1]" % (i,plotcommand,i,i)
+        s += addstr + ')'
         eval(s)
 
         myplot.axes[i].set_title(titlestrings[i],**font)
@@ -221,45 +231,50 @@ def ReturnPlotObject(data,plotcommand='plot',titlestring='',xstring='',ystring='
             tick.set_fontsize(fontsize)
             tick.set_fontname(fontname)
 
-        labels = [myplot.axes[i].get_xaxis().get_label(), myplot.axes[i].get_yaxis().get_label()]
-        for label in labels:
-            label.set_size( labelMultiplier*fontsize )
-
-        
+        labels = [myplot.axes[i].get_xaxis().get_label(),
+                  myplot.axes[i].get_yaxis().get_label()]
+        [lb.set_size(labelMultiplier*fontsize) for lb in labels]
 
     myplot.thisFigure.subplots_adjust(hspace=0.5)
 
     return myplot
 
-
 def normalizeValue(value,valueLimits):
-    # Transforms a numerical value to the range (0,1). It is intended
-    # that the user should set valueLimits such that the true values
-    # fall between the limits. If this is not the case, values above
-    # given maxval or below given minval are truncated. The rest of
-    # the values are transformed linearly, such that the range (given
-    # minval, given maxval) becomes (0,1).
-    # 
-    #     normalizedValue= (true val - given minval) / (given maxval - given minval )
-    # 
-    if (valueLimits[0]-valueLimits[1])==0: # if given minval and maxval are the same, all values will be equal
+    """Transforms a numerical value to the range (0,1).
+
+    It is intended that the user should set valueLimits such that the
+    true values fall between the limits. If this is not the case,
+    values above given maxval or below given minval are truncated. The
+    rest of the values are transformed linearly, such that the range
+    (given minval, given maxval) becomes (0,1).
+     
+    normalizedValue= (true_val-given minval)/(given_maxval-given_minval)
+    """ 
+    if (valueLimits[0]-valueLimits[1]) == 0: 
+        # If given minval and maxval are the same, all values will be
+        # equal.
         normalizedValue=1
-    elif value<valueLimits[0]: # if value is smaller than given minval
+    elif value < valueLimits[0]:
+        # If value is smaller than given minval
         normalizedValue=0
-    elif value>valueLimits[1]: # if value is larger than given maxval
+    elif value>valueLimits[1]:
+        # If value is larger than given maxval
         normalizedValue=1
     else:
-        normalizedValue=(value-valueLimits[0])/float(valueLimits[1]-valueLimits[0])
+        normalizedValue=(value-valueLimits[0])/float(valueLimits[1] -
+                                                     valueLimits[0])
     return normalizedValue 
 
 
 def setColorMap(colorMap):
-    """
-    Sets a colormap for edges. Two options of our own ('orange' and 'primary')
-    are available in addition to the 150 pylab readymade colormaps
-    (which can be listed with  help matplotlib.cm ).
+    """Set a colormap for edges.
 
-    Use as: myMap=setColorMap('bone')
+    Two options of our own ('orange' and 'primary') are available in
+    addition to the 150 pylab readymade colormaps (which can be listed
+    with help matplotlib.cm ).
+
+    Usage:
+        myMap = setColorMap('bone')
     """
     
     if colorMap=='primary':
@@ -274,37 +289,68 @@ def setColorMap(colorMap):
     elif colorMap=='orange':
         # Riitta's color map from white through yellow and orange to red 
         myMap=get_cmap()
-        myMap._segmentdata = { 'red'  : ( (0.,.99,.99), (0.2,.98,.98), (0.4,.99,.99), (0.6,.99,.99), (0.8,.99,.99), (1.0,.92,.92) ),
-                               'green': ( (0,0.99,0.99), (0.2,.89,.89),  (0.4,.80,.80), (0.6,.50,.50), (0.8,.33,.33), (1.0,.10,.10) ),
-                               'blue' : ( (0,.99,.99), (0.2,.59,.59), (0.4,.20,.20), (0.6,0.0,0.0), (0.8,0.0,0.0), (1.0,.03,.03) )  }
-
+        myMap._segmentdata = { 'red'  : ( (0.,.99,.99), 
+                                          (0.2,.98,.98), 
+                                          (0.4,.99,.99), 
+                                          (0.6,.99,.99), 
+                                          (0.8,.99,.99), 
+                                          (1.0,.92,.92) ),
+                               'green': ( (0,0.99,0.99), 
+                                          (0.2,.89,.89),  
+                                          (0.4,.80,.80), 
+                                          (0.6,.50,.50), 
+                                          (0.8,.33,.33), 
+                                          (1.0,.10,.10) ),
+                               'blue' : ( (0,.99,.99), 
+                                          (0.2,.59,.59), 
+                                          (0.4,.20,.20), 
+                                          (0.6,0.0,0.0), 
+                                          (0.8,0.0,0.0), 
+                                          (1.0,.03,.03) )  }
     elif colorMap=='bluered':
         myMap=get_cmap()
         myMap._segmentdata={
-            'red':  ( (0,0,0), (0.17,0.25,0.25), (0.33,0.7,0.7), (0.5,.87,.87), (0.67,.97,.97),  (0.83,.93,.93), (1,.85,.85) ),    
-            'green': ( (0,0,0), (0.1667,0.53,0.53), (0.3333,.8,.8), (0.5,.9,.9), (0.6667,.7,.7), (0.8333,.32,.32), (1,.07,.07) ),
-            'blue': ( (0,.6,.6),  (0.1667,.8,.8),    (0.3333,1,1),    (0.5,.8,.8),    (0.6667,.33,.33),    (0.8333,.12,.12),   (1,.05,.05) ) }
+            'red':  ( (0,0,0), 
+                      (0.17,0.25,0.25), 
+                      (0.33,0.7,0.7), 
+                      (0.5,.87,.87), 
+                      (0.67,.97,.97),  
+                      (0.83,.93,.93), 
+                      (1,.85,.85) ),
+            'green': ( (0,0,0), 
+                       (0.1667,0.53,0.53), 
+                       (0.3333,.8,.8), 
+                       (0.5,.9,.9), 
+                       (0.6667,.7,.7),
+                       (0.8333,.32,.32), 
+                       (1,.07,.07) ),
+            'blue': ( (0,.6,.6),  
+                      (0.1667,.8,.8),    
+                      (0.3333,1,1),    
+                      (0.5,.8,.8),    
+                      (0.6667,.33,.33),    
+                      (0.8333,.12,.12),   
+                      (1,.05,.05) ) }
 
     else:
         try:
             myMap=get_cmap(colorMap)
         except AssertionError:
-            comment='\nCould not recognize given colorMap name \''+ colorMap+'\' \n\n'
-            raise AssertionError(comment)            
+            comment = "Could not recognize given colorMap name '%s'" % colorMap
+            raise AssertionError(comment)
     return myMap
 
 
 # ---------------------------------------
 
 def setColor(value,valueLimits,colorMap):
-    """
-    Converts a numerical value to a color. The value is scaled
-    linearly to the range (0...1) using the function normalizeValue
-    and the limits valueLimits. This scaled value is used to pick a
-    color from the given colormap. The colormap should take in values
-    in the range (0...1) and produce a three-tuple containing an RGB
-    color, as in (r,g,b).
-    
+    """Converts a numerical value to a color.
+
+    The value is scaled linearly to the range (0...1) using the
+    function normalizeValue and the limits valueLimits. This scaled
+    value is used to pick a color from the given colormap. The
+    colormap should take in values in the range (0...1) and produce a
+    three-tuple containing an RGB color, as in (r,g,b).
     """
     if not (valueLimits[0]-valueLimits[1])==0: 
         normalizedValue=normalizeValue(value,valueLimits) 
@@ -315,626 +361,597 @@ def setColor(value,valueLimits,colorMap):
 
 
 def setEdgeWidth(value,weightLimits,minwidth,maxwidth):
-    # Transforms edge weights to widths in the range  (minwidth,maxwidth).
-    # If given minwidth and maxwidth are the same, simply use that given width.
+    """Transforms edge weights to widths in the range (minwidth,
+    maxwidth). If given minwidth and maxwidth are the same, simply use
+    that given width.
+    """
     if not(weightLimits[0]-weightLimits[1])==0:
-        normalizedWeight=normalizeValue(value,weightLimits)  # normalizes the weight linearly to the range (0,1)
-        width=minwidth+normalizedWeight*(maxwidth-minwidth)   # transforms the normalized weight linearly to the range (minwidth,maxwidth)     
+        # Normalizes the weight linearly to the range (0,1)
+        normalizedWeight=normalizeValue(value,weightLimits)  
+        # Transforms the normalized weight linearly to the range
+        # (minwidth,maxwidth)
+        width=minwidth+normalizedWeight*(maxwidth-minwidth)   
     else:
-        width=minwidth # if given minwidth and maxwidth are the same, simply use that width
+        # If given minwidth and maxwidth are the same, simply use that width.
+        width=minwidth 
     return width
    
-
-def plot_edge(plotobject,xcoords,ycoords,width=1.0,colour='k',symmetric=True):
+def plot_edge(plotobject, xcoords, ycoords, width=1.0, colour='k',
+              symmetric=True):
     if symmetric:
         plotobject.plot(xcoords,ycoords,'-',lw=width,color=colour)
     else:
-        arr = Arrow(xcoords[0], ycoords[0], xcoords[1]-xcoords[0], ycoords[1]-ycoords[0],edgecolor='none',facecolor=colour,linewidth=width)
+        arr = Arrow(xcoords[0], ycoords[0], xcoords[1]-xcoords[0], 
+                    ycoords[1]-ycoords[0], edgecolor='none',
+                    facecolor=colour,linewidth=width)
         plotobject.add_patch(arr)
 
 
 def plot_node(plotobject,x,y,color='w',size=8.0):
-    
-    plotobject.plot([x],[y],'yo',markerfacecolor=color,markeredgecolor='w',markersize=size)
-
-
+    plotobject.plot([x], [y], 'yo', markerfacecolor=color,
+                    markeredgecolor='w',markersize=size)
 
 
 # ---------------------------------------
 
-def VisualizeNet(net,xy,figsize=(6,6),coloredNodes=True,equalsize=False,labels={},fontsize=7,showAllNodes=True,nodeColor=None,nodeSize=1.0,nodeColors={},bgcolor='white',maxwidth=2.0,minwidth=0.2,uselabels='none',edgeColorMap='winter',weightLimits=None,setNodeColorsByProperty=None,nodeColorMap='winter',nodePropertyLimits=None,nodeLabel_xOffset=None,coloredvertices=None,vcolor=None,vsize=None,frame=False,showTicks=False,axisLimits=None,baseFig=None): 
+def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
+                 labels={}, fontsize=7, showAllNodes=True, nodeColor=None,
+                 nodeSize=1.0, nodeColors={}, bgcolor='white', maxwidth=2.0,
+                 minwidth=0.2, uselabels='none', edgeColorMap='winter', 
+                 weightLimits=None, setNodeColorsByProperty=None,
+                 nodeColorMap='winter', nodePropertyLimits=None,
+                 nodeLabel_xOffset=None, coloredvertices=None, vcolor=None,
+                 vsize=None, frame=False, showTicks=False, axisLimits=None,
+                 baseFig=None): 
+    """Visualizes a network. Inputs:
 
-        '''
-        Visualizes a network. Inputs:
+    net = network to be visualized (of type SymmNet() ).
 
-        net = network to be visualized (of type SymmNet() ).
+    xy = coordinates (usually originating from visuals.Himmeli,
+    e.g. h=visuals.Himmeli(net,...,...) followed by
+    xy=h.getCoordinates()
 
-        xy = coordinates (usually originating from visuals.Himmeli,
-        e.g. h=visuals.Himmeli(net,...,...) followed by
-        xy=h.getCoordinates()
-
-        figsize=(x,y) (default (6,6)) Size of the figure produced by VisualizeNet
-
-
-        coloredNodes = (True/False),
-        nodeColors = dictionary of node colors by node index, and 
-        nodeColor = an RGB color tuple with three values between 0 and 1
-        setNodeColorByProperty
-        nodeColorMap
-        nodePropertyLimits
-
-        If 'setNodeColorsByProperty' is specified, any node not appearing
-        in the dictionary 'nodeColors' will be colored according to the
-        given property (using'nodeColorMap' and 'nodePropertyLimits').
-        Option 'nodeColors' overrides the 'setNodeColorsByProperty' option.
-
-         If coloredNodes='False', nodes are plotted white.
-         If coloredNodes='True' (default),
-          a) if dictionary 'nodeColors' is given, it is used.
-             If it does not contain a color for every node,
-             the rest are colored 1) according to property
-             'setNodeColorsByProperty', if it is given, or else
-             2) by 'nodeColor' if it is given, or
-             3) white if neither of the above is given. 
-          b) if dictionary 'nodeColors' is not given, but 'nodeColor'
-             is given, all nodes are colored with 'nodeColor'.
-          c) if neither 'setNodeColorsByProperty' nor dictionary 'nodeColors'
-              or 'nodeColor' is given, nodes are colored by strength
-              using the colormap 'nodeColorMap' (by default 'winter'). 
+    figsize=(x,y) (default (6,6)) Size of the figure produced by VisualizeNet
 
 
-        equalsize = (True/False) True: all nodes are of same size,
-        input as nodeSize, default 1.0. False: sizes are based on node
-        strength.
+    coloredNodes = (True/False),
+    nodeColors = dictionary of node colors by node index, and 
+    nodeColor = an RGB color tuple with three values between 0 and 1
+    setNodeColorByProperty
+    nodeColorMap
+    nodePropertyLimits
 
-        showAllNodes = (True/False) something of a quick hack; if
-        True, displays disconnected components and nodes which have no
-        edges left after e.g. thresholding
+    If 'setNodeColorsByProperty' is specified, any node not appearing
+    in the dictionary 'nodeColors' will be colored according to the
+    given property (using'nodeColorMap' and 'nodePropertyLimits').
+    Option 'nodeColors' overrides the 'setNodeColorsByProperty' option.
 
-        bgcolor = [r g b], r/g/b between 0.0 and 1.0. Background
-        color, default is black.
+     If coloredNodes='False', nodes are plotted white.
+     If coloredNodes='True' (default),
+      a) if dictionary 'nodeColors' is given, it is used.
+         If it does not contain a color for every node,
+         the rest are colored 1) according to property
+         'setNodeColorsByProperty', if it is given, or else
+         2) by 'nodeColor' if it is given, or
+         3) white if neither of the above is given. 
+      b) if dictionary 'nodeColors' is not given, but 'nodeColor'
+         is given, all nodes are colored with 'nodeColor'.
+      c) if neither 'setNodeColorsByProperty' nor dictionary 'nodeColors'
+          or 'nodeColor' is given, nodes are colored by strength
+          using the colormap 'nodeColorMap' (by default 'winter'). 
 
-        maxwidth = max width of edges as plotted, default 2.0
 
-        minwidth = min width of edges as plotted, default 0.2
+    equalsize = (True/False) True: all nodes are of same size,
+    input as nodeSize, default 1.0. False: sizes are based on node
+    strength.
 
-        uselabels = ('none','all') Determines if node labels are shown.
-        'none' shows none, 'all' shows all. Note: any labels input in
-        dict labels ({nodename:labelstring}) are always shown; use
-        this dict to show labels next to your chosen nodes of
-        interest. 
+    showAllNodes = (True/False) something of a quick hack; if
+    True, displays disconnected components and nodes which have no
+    edges left after e.g. thresholding
+
+    bgcolor = [r g b], r/g/b between 0.0 and 1.0. Background
+    color, default is black.
+
+    maxwidth = max width of edges as plotted, default 2.0
+
+    minwidth = min width of edges as plotted, default 0.2
+
+    uselabels = ('none','all') Determines if node labels are shown.
+    'none' shows none, 'all' shows all. Note: any labels input in
+    dict labels ({nodename:labelstring}) are always shown; use
+    this dict to show labels next to your chosen nodes of
+    interest. 
+
+    fontsize=size  Sets font size for labels. Default is 7. 
+
+    edgeColorMap=myMap allows the user to set color scheme for
+    edges.  Edges are always colored according to edge weights,
+    which are first normalized to the range (0,1) and then
+    transformed to colors using edgeColorMap. There are 150
+    colormaps available in pylab; for a full listing, please see
+    help(pylab.cm) (and look for DATA). Or try, for example,
+    edgeColorMap='orange' or edgeColorMap='primary', two colormaps
+    of our own that are not available in pylab.
+
+    weightLimits=(0,5) The tuple (minWeight, maxWeight) provides
+    the minimum and maximum value for weights. If none are given,
+    (nearly) the true min and max weights in the network will be
+    used. The weightLimits are used for setting edge colors and
+    width. They enable the user to plot several networks (which
+    may have different min and max weights) such that a certain
+    color and width always correspond to a certain edge
+    weight. Thus, the color and width in the visualization can be
+    used to infer edge weight. If the network turns out to contain
+    weights above the given maxWeight (below minWeight) these will
+    be rounded downwards (upwards) to the given limit. It is more
+    reasonable however for the user to provide limits that can
+    accommodate all weights, this is just a necessary precaution
+    for the case where the given limits are too tight.
+
+    nodeLabel_xOffset (if none is given, nodeSize/40 will be used)
+    amount for moving node labels the right so that the text does
+    not fall on the nodes
+
+    frame=True or False (default False) adds or removes a box around the figure
+
+    showTicks=True or False (default False) adds or removes ticks in the frame
+    Setting showTicks=True will override the option frame, setting it to frame=True.
+
+    axisLimits=((minx,max),(miny,maxy)) (default None) sets tickLimits
+
+    baseFig=If None (default), the network is drawn on an empty figure, otherwise
+    basFig of type FigureCanvasBase is used as a starting point.
+
+    Usage examples:
+        m=pynet.SymmNet()
+        m[0][1]=1.0
+        m[1][2]=3.5
+        m[0][2]=5.0
+
+        Here are the coordinates, a dictionary that contains 2-tuples 
+        xy={}
+        xy[0]=(0,0)
+        xy[1]=(4,0)
+        xy[2]=(2,3) 
+
+        f=FigureCanvasBase(visuals.VisualizeNet(m,xy))
+        f.print_eps("tmp.eps",dpi=80.0)
+
+        f=FigureCanvasBase(visuals.VisualizeNet(m,xy,edgeColorMap='orange'))
+        f.print_eps("tmp2.eps",dpi=80.0)
+
+        f=FigureCanvasBase(visuals.VisualizeNet(m,xy,edgeColorMap='orange',equalsize=True,nodeSize=16))
+        f.print_eps("tmp3.eps",dpi=80.0)
+
+        (General questions: Is there a neater way to output the
+        figures than using FigureCanvasBase? How can I have a look
+        at the figures from within python, without saving them to
+        .eps files?)
+    """
+
+    # Warn about obsolete input arguments
+    if coloredvertices!=None or vcolor!=None or vsize!=None:
+        warnings.warn("\n\n The options \n"
+                      "\t coloredvertices, vcolor, and vsize \n"
+                      "are now obsolete. Please use instead \n"
+                      "\t coloredNodes, nodeColor, and nodeSize.\n")
+    if coloredvertices != None:
+        coloredNodes = coloredvertices
+    if vcolor != None and nodeColor == None:
+        nodeColor = vcolor 
+    if vsize != None:
+        nodeSize = vsize
+
+    # The following is for the EDEN software, where "nets" or nets
+    # derived from matrices can have edge distances instead of weights.
+    if hasattr(net,'matrixtype'):
+        if net.matrixtype==0:
+            net=transforms.dist_to_weights(net)
+
+    if baseFig==None:
+        thisfigure=Figure(figsize=figsize,dpi=100,facecolor=bgcolor)
+        axes=thisfigure.add_subplot(111)
+    else:
+        thisfigure=baseFig.figure
+        axes=thisfigure.gca()
+    axes.set_axis_bgcolor(bgcolor)
+    if frame == False and showTicks == False: 
+        axes.set_axis_off()
+
+    # Set the color for node labels
+    fontcolor='w'
+    if bgcolor=='white':
+        fontcolor='k'
         
-        fontsize=size  Sets font size for labels. Default is 7. 
+    # First draw all edges, if there are any
+    edges=list(net.edges)
+    if len(edges)>0:
+        wlist=[]
+        for edge in edges:
+            wlist.append(edge[2])
 
-        edgeColorMap=myMap allows the user to set color scheme for
-        edges.  Edges are always colored according to edge weights,
-        which are first normalized to the range (0,1) and then
-        transformed to colors using edgeColorMap. There are 150
-        colormaps available in pylab; for a full listing, please see
-        help(pylab.cm) (and look for DATA). Or try, for example,
-        edgeColorMap='orange' or edgeColorMap='primary', two colormaps
-        of our own that are not available in pylab.
+        wmin=min(wlist)
+        wmax=max(wlist)
 
-        weightLimits=(0,5) The tuple (minWeight, maxWeight) provides
-        the minimum and maximum value for weights. If none are given,
-        (nearly) the true min and max weights in the network will be
-        used. The weightLimits are used for setting edge colors and
-        width. They enable the user to plot several networks (which
-        may have different min and max weights) such that a certain
-        color and width always correspond to a certain edge
-        weight. Thus, the color and width in the visualization can be
-        used to infer edge weight. If the network turns out to contain
-        weights above the given maxWeight (below minWeight) these will
-        be rounded downwards (upwards) to the given limit. It is more
-        reasonable however for the user to provide limits that can
-        accommodate all weights, this is just a necessary precaution
-        for the case where the given limits are too tight.
-
-        nodeLabel_xOffset (if none is given, nodeSize/40 will be used)
-        amount for moving node labels the right so that the text does
-        not fall on the nodes
-
-        frame=True or False (default False) adds or removes a box around the figure
-
-        showTicks=True or False (default False) adds or removes ticks in the frame
-        Setting showTicks=True will override the option frame, setting it to frame=True.
-            
-        axisLimits=((minx,max),(miny,maxy)) (default None) sets tickLimits
-
-        baseFig=If None (default), the network is drawn on an empty figure, otherwise
-        basFig of type FigureCanvasBase is used as a starting point.
-
-        Usage examples:
-            m=pynet.SymmNet()
-            m[0][1]=1.0
-            m[1][2]=3.5
-            m[0][2]=5.0
-
-            Here are the coordinates, a dictionary that contains 2-tuples 
-            xy={}
-            xy[0]=(0,0)
-            xy[1]=(4,0)
-            xy[2]=(2,3) 
-
-            f=FigureCanvasBase(visuals.VisualizeNet(m,xy))
-            f.print_eps("tmp.eps",dpi=80.0)
-
-            f=FigureCanvasBase(visuals.VisualizeNet(m,xy,edgeColorMap='orange'))
-            f.print_eps("tmp2.eps",dpi=80.0)
-
-            f=FigureCanvasBase(visuals.VisualizeNet(m,xy,edgeColorMap='orange',equalsize=True,nodeSize=16))
-            f.print_eps("tmp3.eps",dpi=80.0)
-
-            (General questions: Is there a neater way to output the
-            figures than using FigureCanvasBase? How can I have a look
-            at the figures from within python, without saving them to
-            .eps files?)
-            
-        '''
-
-        #warn about obsolete input arguments
-        if coloredvertices!=None or vcolor!=None or vsize!=None:
-            warnings.warn("\n\n The options \n \t coloredvertices, vcolor, and vsize \n are now obsolete. Please use instead \n \t coloredNodes, nodeColor, and nodeSize.\n")
-        if coloredvertices!=None:
-            coloredNodes=coloredvertices
-        if vcolor!=None and nodeColor==None:
-            nodeColor=vcolor 
-        if vsize!=None:
-            nodeSize=vsize
-            
-
-        # the following is for the EDEN software, where "nets" or nets
-        # derived from matrices can have edge distances instead of weights 
-
-        if hasattr(net,'matrixtype'):
-
-            if net.matrixtype==0:
-
-                net=transforms.dist_to_weights(net)
-        
-        if baseFig==None:
-            thisfigure=Figure(figsize=figsize,dpi=100,facecolor=bgcolor)
-            axes=thisfigure.add_subplot(111)
-        else:
-            thisfigure=baseFig.figure
-            axes=thisfigure.gca()
-        axes.set_axis_bgcolor(bgcolor)
-        if frame==False and showTicks==False: 
-            axes.set_axis_off()
-
-        # sets the color for node labels
-        
-        fontcolor='w'
-        if bgcolor=='white':
-            fontcolor='k'
-
-        # first draw all edges, if there are any
-        edges=list(net.edges)
-        if len(edges)>0:
-            wlist=[]
-            for edge in edges:
-                wlist.append(edge[2])
-
-            wmin=min(wlist)
-            wmax=max(wlist)
-
-            # If weightLimits were not given, use (almost) the true min
-            # and max weights in the network. Note: using a value slightly
-            # below wmin, because otherwise when normalizing the weights,
-            # the minimum weights would be transformed to zero and the
-            # edges not visible at all.  - Riitta
-        
-            if weightLimits==None:
-                if wmin==0:
-                    weightLimits=(wmin,wmax)
-                else:
-                    weightLimits=(wmin-0.00001,wmax) 
-        
-            myEdgeColorMap=setColorMap(edgeColorMap)
-
-            # Plot edges according to weight, beginning with small weight
-            sortedEdges=list(net.edges)
-            sortedEdges.sort(key=lambda x: x[2])
-            for edge in sortedEdges:
-                
-                width=setEdgeWidth(edge[2],weightLimits,minwidth,maxwidth)
-
-                colour=setColor(edge[2],weightLimits,myEdgeColorMap)
-                
-                xcoords=[xy[edge[0]][0],xy[edge[1]][0]]
-                
-                ycoords=[xy[edge[0]][1],xy[edge[1]][1]]
-
-                plot_edge(axes,xcoords,ycoords,width=width,colour=colour,symmetric=net.isSymmetric())
-
-
-        # then draw nodes, depending on given options
-        # showAllNodes displays also nodes who do not have any edges
-        # left after e.g. thresholding
-
-        nodelist=[]
-        if showAllNodes:
-            for node in xy.keys():
-                nodelist.append(node)
-        else:
-            for node in net:
-                nodelist.append(node)
-
-        minnode=2.0
-        maxnode=6.0
-
-        strengths=netext.strengths(net)
-
-        maxs=max(strengths.values())
-        mins=min(strengths.values())           
-
-        if not(equalsize):
-            if maxs==mins:
-                A=0
+        # If weightLimits were not given, use (almost) the true min
+        # and max weights in the network. Note: using a value slightly
+        # below wmin, because otherwise when normalizing the weights,
+        # the minimum weights would be transformed to zero and the
+        # edges not visible at all.  - Riitta
+        if weightLimits==None:
+            if wmin==0:
+                weightLimits=(wmin,wmax)
             else:
-                A=(maxnode-minnode)/(maxs-mins)
-                
-            B=maxnode-A*maxs    
+                weightLimits=(wmin-0.00001,wmax) 
 
-        myNodeColorMap=setColorMap(nodeColorMap)
+        myEdgeColorMap=setColorMap(edgeColorMap)
 
-        # If nodes will be colored by setNodeColorsByProperty but
-        # nodePropertyLimits were not given, use the true min and max
-        # property values in the network.
-        if setNodeColorsByProperty!=None:
-            if nodePropertyLimits==None:
-                np=[]
-                for node in net: 
-                    value=net.nodeProperty[setNodeColorsByProperty][node]
-                    nodeProperties.append(value)
+        # Plot edges according to weight, beginning with small weight
+        sortedEdges=list(net.edges)
+        sortedEdges.sort(key=lambda x: x[2])
+        for edge in sortedEdges:
 
-                nodePropertyLimits=(min(np),max(np))
+            width=setEdgeWidth(edge[2],weightLimits,minwidth,maxwidth)
+            colour=setColor(edge[2],weightLimits,myEdgeColorMap)
+            xcoords=[xy[edge[0]][0],xy[edge[1]][0]]
+            ycoords=[xy[edge[0]][1],xy[edge[1]][1]]
+            plot_edge(axes, xcoords, ycoords, width=width, colour=colour,
+                      symmetric=net.isSymmetric())
 
-        
-        for node in nodelist:
 
-            # first define size
+    # Then draw nodes, depending on given options showAllNodes
+    # displays also nodes who do not have any edges left after
+    # e.g. thresholding
+    nodelist=[]
+    if showAllNodes:
+        nodelist = [node for node in xy.keys()]
+    else:
+        nodelist = [node for node in net]
 
-            if equalsize:
+    minnode = 2.0
+    maxnode = 6.0
 
-                nodesize=nodeSize
-                if (nodesize<1.0):          # hack: Himmeli wants size <1.0
-                    nodesize=nodesize*maxnode  # if Himmeli-type size used, scale up
+    strengths = netext.strengths(net)
+    maxs = max(strengths.values())
+    mins = min(strengths.values())           
 
-            else:
+    if not(equalsize):
+        if maxs==mins:
+            A=0
+        else:
+            A=(maxnode-minnode)/(maxs-mins)
 
-                if node in net:
+        B=maxnode-A*maxs    
 
-                    nodesize=A*strengths[node]+B
+    myNodeColorMap=setColorMap(nodeColorMap)
 
-                else:
+    # If nodes will be colored by setNodeColorsByProperty but
+    # nodePropertyLimits were not given, use the true min and max
+    # property values in the network.
+    if setNodeColorsByProperty != None:
+        if nodePropertyLimits == None:
+            np=[net.nodeProperty[setNodeColorsByProperty][node] for node in net]
+            nodePropertyLimits=(min(np),max(np))
 
-                    nodesize=minnode
+    for node in nodelist:
+        # First define size
 
+        if equalsize:
+            nodesize=nodeSize
+            if (nodesize<1.0):          # hack: Himmeli wants size <1.0
+                nodesize=nodesize*maxnode  # if Himmeli-type size used, scale up
+        else:
             if node in net:
-                nodestrength=strengths[node]
+                nodesize=A*strengths[node]+B
             else:
-                nodestrength=mins     # this is for nodes which appear in MST coords (i.e. have zero links)
-                                      # and are thus not included in net, but should yet be displayed when
-                                      # visualizing a thresholded network
+                nodesize=minnode
 
-            # then determine color
-            if coloredNodes:
-                if setNodeColorsByProperty!=None: # if setNodeColorsByProperty is given, use it initially
-                    value=net.nodeProperty[setNodeColorsByProperty][node]
-                    color=setColor(value,nodePropertyLimits,myNodeColorMap)
+        if node in net:
+            nodestrength=strengths[node]
+        else:
+            # This is for nodes which appear in MST coords (i.e. have
+            # zero links) and are thus not included in net, but should
+            # yet be displayed when visualizing a thresholded network
+            nodestrength=mins     
 
-                if len(nodeColors)>0: # if dict nodeColors is given, it overrides setNodeColorsByProperty 
+        # Then determine color
+        if coloredNodes:
+            if setNodeColorsByProperty != None:
+                # If setNodeColorsByProperty is given, use it initially
+                value = net.nodeProperty[setNodeColorsByProperty][node]
+                color = setColor(value,nodePropertyLimits,myNodeColorMap)
 
-                    if not nodeColors.get(node): # if node is not contained in dict nodeColors 
-                        if setNodeColorsByProperty==None: # use setNodeColorsByProperty if it was given, but otherwise...
-                            if nodeColor!='None': 
-                                color=nodeColor # ...use nodeColor if given, ...
-                            else:
-                                color=(1,1,1) # ...and finally white if not
-                                
-                    else:  # if node IS contained in dict nodeColors, use nodeColors[node]   
-                        ctemp=nodeColors[node]
+            if len(nodeColors)>0: 
+                # If dict nodeColors is given, it overrides
+                # setNodeColorsByProperty
+                if not nodeColors.get(node): 
+                    # If node is not contained in dict nodeColors 
+                    if setNodeColorsByProperty == None:
+                        # Use setNodeColorsByProperty if it was given,
+                        # otherwise use nodeColor and if it is not
+                        # given use white.
+                        color = (nodeColor or (1,1,1))
 
-                        if len(ctemp)==6: # recognize as Himmeli-type string ('999999')
+                else:
+                    # If node IS contained in dict nodeColors, use
+                    # nodeColors[node]
+                    ctemp = nodeColors[node]
+                    if len(ctemp)==6: 
+                        # Recognize as Himmeli-type string ('999999')
+                        rc=float(ctemp[0:2])/99.0
+                        gc=float(ctemp[2:4])/99.0
+                        bc=float(ctemp[4:6])/99.0
 
-                            rc=float(ctemp[0:2])/99.0
-                            gc=float(ctemp[2:4])/99.0
-                            bc=float(ctemp[4:6])/99.0
+                        # this is a stupid hack; sometimes rounding
+                        # errors result in rc=1.0 + epsilon and
+                        # matplotlib complains...
+                        rc = max(0.0, min(rc, 1.0))
+                        bc = max(0.0, min(bc, 1.0))
+                        gc = max(0.0, min(gc, 1.0))
 
-                            # this is a stupid hack; sometimes rounding errors result
-                            # in rc=1.0 + epsilon and matplotlib complains...
-
-                            if (rc<0.0):
-                                rc=0.0
-                            elif rc>1.0:
-                                rc=1.0
-
-                            if (bc<0.0):
-                                bc=0.0
-                            elif bc>1.0:
-                                bc=1.0
-
-                            if (gc<0.0):
-                                gc=0.0
-                            elif gc>1.0:
-                                gc=1.0
-
-                            color=(rc,gc,bc)
-
-                        else:
-                            color=nodeColors[node] #otherwise assume it is an RGB tuple
-
-                elif  setNodeColorsByProperty==None and nodeColor!=None: # if neither setNodeColorsByProperty or dict nodeColors is given, but nodeColor is, use nodeColor
-                    if len(nodeColor)==6:
-
-                        rc=float(nodeColor[0:2])/99.0
-                        gc=float(nodeColor[2:4])/99.0
-                        bc=float(nodeColor[4:6])/99.0
-                        
-                        if (rc<0.0):
-                            rc=0.0
-                        elif rc>1.0:
-                            rc=1.0
-
-                        if (bc<0.0):
-                            bc=0.0
-                        elif bc>1.0:
-                            bc=1.0
-
-                        if (gc<0.0):
-                            gc=0.0
-                        elif gc>1.0:
-                            gc=1.0
-
-                        color=(rc,gc,bc)
-
+                        color = (rc,gc,bc)
                     else:
+                        # Otherwise assume it is an RGB tuple
+                        color = nodeColors[node] 
 
-                        color=nodeColor         
+            elif setNodeColorsByProperty is None and nodeColor is not None:
+                # If neither setNodeColorsByProperty or dict
+                # nodeColors is given, but nodeColor is, use nodeColor.
+                if len(nodeColor)==6:
 
-                elif setNodeColorsByProperty==None:
-                    
-                    color=setColor(nodestrength,(mins,maxs),myNodeColorMap) # set color by node strength
-            else:
-                color=(1.0,1.0,1.0)  # if coloredNodes=False, use white
-                     
-            if nodeLabel_xOffset==None:
-                nodeLabel_xOffset=float(nodesize)/40 # move node labels slightly to the right so that they don't coincide on the nodes
-            plot_node(axes,x=xy[node][0],y=xy[node][1],color=color,size=nodesize)
-            if uselabels=='all':
-                axes.annotate(str(node),(xy[node][0]+nodeLabel_xOffset,xy[node][1]),color=fontcolor,size=fontsize)
-            elif node in labels:
-                axes.annotate(labels[node],(xy[node][0]+nodeLabel_xOffset,xy[node][1]),color=fontcolor,size=fontsize)
+                    rc=float(nodeColor[0:2])/99.0
+                    gc=float(nodeColor[2:4])/99.0
+                    bc=float(nodeColor[4:6])/99.0
 
+                    rc = max(0.0, min(rc, 1.0))
+                    bc = max(0.0, min(bc, 1.0))
+                    gc = max(0.0, min(gc, 1.0))
 
-        xylist=xy.values()
-        xlist=[]
-        ylist=[]
-        for elem in xylist:
-            xlist.append(elem[0])
-            ylist.append(elem[1])
+                    color=(rc,gc,bc)
+                else:
+                    color=nodeColor         
 
-        minx=min(xlist)
-        maxx=max(xlist)
-        miny=min(ylist)
-        maxy=max(ylist)
+            elif setNodeColorsByProperty == None:
+                # Set color by node strength
+                color = setColor(nodestrength,(mins,maxs),myNodeColorMap) 
+        else:
+            # If coloredNodes is False, use white.
+            color=(1.0,1.0,1.0)
 
-        xdelta=0.05*(maxx-minx)
-        ydelta=0.05*(maxy-miny)
+        if nodeLabel_xOffset == None:
+            # Move node labels slightly to the right so that they
+            # don't coincide on the nodes
+            nodeLabel_xOffset = float(nodesize)/40 
+        plot_node(axes, x=xy[node][0], y=xy[node][1],
+                  color=color, size=nodesize)
+        if uselabels == 'all':
+            axes.annotate(str(node),(xy[node][0]+nodeLabel_xOffset,xy[node][1]),
+                          color=fontcolor,size=fontsize)
+        elif node in labels:
+            axes.annotate(labels[node],(xy[node][0]+nodeLabel_xOffset,
+                                        xy[node][1]),
+                          color=fontcolor,size=fontsize)
 
-                
-        if frame==True and showTicks==False:
-            setp(axes,'xticks','','xticklabels','','yticks','','yticklabels','')            
-        if not axisLimits==None: # if limits are given, use them, whatever the values of showTicks or frame ... 
-            setp(axes,'xlim',(axisLimits[0][0],axisLimits[0][1]),'ylim',(axisLimits[1][0],axisLimits[1][1]))
-        else:  # otherwise: 
-            setp(axes,'xlim',(minx-xdelta,maxx+xdelta),'ylim',(miny-ydelta,maxy+ydelta))
+    xylist = xy.values()
+    xlist=[]
+    ylist=[]
+    for elem in xylist:
+        xlist.append(elem[0])
+        ylist.append(elem[1])
 
+    minx=min(xlist)
+    maxx=max(xlist)
+    miny=min(ylist)
+    maxy=max(ylist)
 
+    xdelta=0.05*(maxx-minx)
+    ydelta=0.05*(maxy-miny)
 
-        return thisfigure
+    if frame==True and showTicks==False:
+        setp(axes,'xticks',[],'xticklabels',[],'yticks',[],'yticklabels',[])
+    if not axisLimits==None:
+        # If limits are given, use them, whatever the values of
+        # showTicks or frame ...
+        setp(axes,
+             'xlim', (axisLimits[0][0],axisLimits[0][1]),
+             'ylim', (axisLimits[1][0],axisLimits[1][1]))
+    else:
+        setp(axes,
+             'xlim', (minx-xdelta,maxx+xdelta),
+             'ylim', (miny-ydelta,maxy+ydelta))
 
-
+    return thisfigure
             
 # ---------------------------------------
               
 class Himmeli:
-        
-    # this class uses the executable Himmeli, which produces an .eps file AND outputs x-y-coordinates of nodes for visualization
-    # first we have to find this executable
-
+    """ This class uses the executable Himmeli, which produces an .eps
+    file AND outputs x-y-coordinates of nodes for visualization.
+    """
+    # First we have to find this executable
     if sys.platform=='win32':
-
-        # for Win use direct path (probably works better with the executable network toolbox...)
-
+        # For Win use direct path (probably works better with the
+        # executable network toolbox...)
         himmeliExecutable="himmeli_3.0.1\himmeli.exe"
-
     else:
-
-        # trick: find out where netext.py is (must be in the netpython directory),
-        # then add the rest of the path
-
-        #himmeliExecutable=os.path.dirname(netext.__file__)+"/Himmeli/himmeli.exe"
-        himmeliExecutable=os.path.dirname(netext.__file__)+"/../himmeli_3.0.1/himmeli.exe"
+        # Trick: find out where netext.py is (must be in the netpython
+        # directory), then add the rest of the path
+        #himmeliExecutable = (os.path.dirname(netext.__file__)
+        #                     +"/Himmeli/himmeli.exe")
+        himmeliExecutable = (os.path.dirname(netext.__file__) 
+                             + "/../himmeli_3.0.1/himmeli.exe")
 
         if not(os.path.isfile(himmeliExecutable)):
+            # Just in case Himmeli was compiled without the .exe...
+            #himmeliExecutable = (os.path.dirname(netext.__file__)
+            #                     + "/Himmeli/himmeli")
+            himmeliExecutable = (os.path.dirname(netext.__file__)
+                                 + "/../himmeli_3.0.1/himmeli")
 
-            # just in case Himmeli was compiled without the .exe...
 
-            #himmeliExecutable=os.path.dirname(netext.__file__)+"/Himmeli/himmeli"
-            himmeliExecutable=os.path.dirname(netext.__file__)+"/../himmeli_3.0.1/himmeli"
-
-
-    # directly complain if Himmeli not found
-
+    # Directly complain if Himmeli not found.
     if not(os.path.isfile(himmeliExecutable)):
-
-        complaint="Cannot find Himmeli! This is where it should be: "+himmeliExecutable
-
+        complaint = ("Cannot find Himmeli! This is where it should be: "
+                     + himmeliExecutable)
         raise Exception(complaint)
-
 
     epsilon=0.0001 #hack, find the real thing
 
-    def __init__(self,inputnet,time=20,configFile=None,threshold=None,useMST=False,wmin=None,wmax=None,coloredNodes=True,equalsize=True,nodeColor="999999",nodeSize="1.0",coordinates=None,labels={},distanceUnit=1,showAllNodes=True,edgeLabels=False,nodeColors={},treeMode=False,saveFileName=None):
-        #Checking that the given net is valid and not empty
+    def __init__(self, inputnet, time=20, configFile=None, threshold=None,
+                 useMST=False, wmin=None, wmax=None, coloredNodes=True,
+                 equalsize=True, nodeColor="999999", nodeSize="1.0",
+                 coordinates=None, labels={}, distanceUnit=1, showAllNodes=True,
+                 edgeLabels=False, nodeColors={}, treeMode=False):
+        # Checking that the given net is valid and not empty
         #if net.__class__!=pynet.Net and net.__class__!=pynet.SymmNet:
         if not isinstance(inputnet,pynet.Net):
             raise AttributeError("Unknown net type "+str(inputnet.__class__))
-        if len(inputnet._nodes)==0:
-            raise AttributeError("The net cannot be empty")
+        if len(inputnet._nodes) == 0:
+            raise AttributeError("The net cannot be empty.")
 
-        # another EDEN-specific piece of code: if the network is a distance matrix/network,
-        # first transform distances to weights
-
+        # Another EDEN-specific piece of code: if the network is a
+        # distance matrix/network, first transform distances to
+        # weights.
         if hasattr(inputnet,'matrixtype'):
-
             if inputnet.matrixtype==0:
-
                 inputnet=dist_to_weights(inputnet)
 
-        if wmin==None:
-            # finds out smallest and largest weight
-            witer=inputnet.weights.__iter__()
-            wmin=99999999.0
-            wmax=0.0
+        if wmin is None:
+            # Finds out smallest and largest weight
+            witer = inputnet.weights.__iter__()
+            wmin = wmax = witer.next()
 
-            for eachitem in witer:
-                if eachitem<wmin:
-                    wmin=eachitem
-                if eachitem>wmax:
-                    wmax=eachitem
+            for wt in witer:
+                if wt < wmin:
+                    wmin = wt
+                if wt > wmax:
+                    wmax = wt
 
         if showAllNodes:
-
-            # this is especially designed for thresholded nets, where there may be nodes with zero
-            # links in addition to disconnected components. IF coordinates have been calculated
-            # for the network WITHOUT THRESHOLDING, augmentNet adds every node mentioned in coordinates
-            # to the network (with epsilon-weight "ghost" links). Furthermore, augmentNet joins all
-            # disconnected components to the largest component with ghost links. 
-
-            net=self.augmentNet(inputnet,useMST,coordinates,wmin)
+            # This is especially designed for thresholded nets, where
+            # there may be nodes with zero links in addition to
+            # disconnected components. IF coordinates have been
+            # calculated for the network WITHOUT THRESHOLDING,
+            # augmentNet adds every node mentioned in coordinates to
+            # the network (with epsilon-weight "ghost"
+            # links). Furthermore, augmentNet joins all disconnected
+            # components to the largest component with ghost links.
+            net = self.augmentNet(inputnet,useMST,coordinates,wmin)
 
         else:
-
             net=inputnet
 
         if (showAllNodes or useMST):
-
-            threshold2=[]
-
-            threshold2.append('abs')
-            threshold2.append(wmin)
-            threshold2.append(wmax)
+            threshold2 = ['abs', wmin, wmax]
 
         #First we need to generate names for this net and its files
-        rgen=random.Random()
-        netName=str(rgen.randint(1,10000))
-        edgFileName="himmeli_tmp"+netName+".edg"
-        confFileName="himmeli_tmp"+netName+".cfg"
-        vtxFileName="himmeli_tmp"+netName+".vtx"
-        coordFileName=netName+".vertices.txt"
-        legendFileName=netName+".legend.eps"
-        output_confFileName=netName+'.config.txt'
-        output_edgFileName=netName+'.edges.txt'
-        output_psFileName=netName+'.ps'
+        rgen = random.Random()
+        netName = str(rgen.randint(1,10000))
+        edgFileName = "himmeli_tmp"+netName+".edg"
+        confFileName = "himmeli_tmp"+netName+".cfg"
+        vtxFileName = "himmeli_tmp"+netName+".vtx"
+        coordFileName = netName+".vertices.txt"
+        legendFileName = netName+".legend.eps"
+        output_confFileName = netName+'.config.txt'
+        output_edgFileName = netName+'.edges.txt'
+        output_psFileName = netName+'.ps'
 
         #Then we make config for Himmeli or read it from a file
         if configFile==None:
-            config="EdgeHeadVariable\tHEAD\n"
-            config+="EdgeTailVariable\tTAIL\n"
-            config+="EdgeWeightVariable\tWEIGHT\n"
-
-            config+="FigureLimit\t1\n"
-            config+="DecorationMode\ton\n"
-            config+="IncrementMode\ton\n"
+            config = ("EdgeHeadVariable\tHEAD\n"
+                      "EdgeTailVariable\tTAIL\n"
+                      "EdgeWeightVariable\tWEIGHT\n"
+                      "FigureLimit\t1\n"
+                      "DecorationMode\ton\n"
+                      "IncrementMode\ton\n")
             if treeMode:
-                config+="TreeMode\ton\n"
+                config += "TreeMode\ton\n"
             else:
-                config+="TreeMode\toff\n"
+                config += "TreeMode\toff\n"
             if coordinates==None:
-                config+="TimeLimit\t"+str(time)+"\n"
+                config += "TimeLimit\t"+str(time)+"\n"
             else:
-                config+="TimeLimit\t0\n"
+                config += "TimeLimit\t0\n"
             if net.isSymmetric():
-                config+="ArrowMode\toff\n"
+                config += "ArrowMode\toff\n"
             else:
-                config+="ArrowMode\ton\n"
-            #config+="PageSize\tauto\tauto\n"
-            config+="PageSize\tauto\ta4\n"
-            config+="DistanceUnit\t"+str(distanceUnit)+"\n"
+                config += "ArrowMode\ton\n"
+            #config += "PageSize\tauto\tauto\n"
+            config += "PageSize\tauto\ta4\n"
+            config += "DistanceUnit\t"+str(distanceUnit)+"\n"
             if len(labels)>0 and edgeLabels==False:
-                config+="LabelMode\tvertex\n"
+                config += "LabelMode\tvertex\n"
             elif len(labels)>0 and edgeLabels==True:
-                config+="LabelMode\ton\n"
+                config += "LabelMode\ton\n"
             else:
-                config+="LabelMode\toff\n"
-            #config+="PageOrientation\tportrait\n"
-            if threshold!=None: #not tested properly           
+                config += "LabelMode\toff\n"
+            #config += "PageOrientation\tportrait\n"
+            if threshold != None:
+                # Not tested properly (and everything else is?)
                 filterType=threshold[0]
                 minedge=threshold[1]
                 maxedge=threshold[2]
-                config+="EdgeWeightFilter\t"+filterType+"\t"
-                config+=str(0.99*minedge)+"\t"+str(1.01*maxedge)+"\n"
-            if (useMST) or (showAllNodes):
+                config += "EdgeWeightFilter\t"+filterType+"\t"
+                config += str(0.99*minedge)+"\t"+str(1.01*maxedge)+"\n"
+            if useMST or showAllNodes:
                 filterType=threshold2[0]
                 minedge=threshold2[1]
                 maxedge=threshold2[2]
-                config+="EdgeWeightMask\t"+filterType+"\t"
-                config+=str(0.99*minedge)+"\t"+str(1.01*maxedge)+"\n"
-
-
+                config += "EdgeWeightMask\t"+filterType+"\t"
+                config += str(0.99*minedge)+"\t"+str(1.01*maxedge)+"\n"
 
         else:
-            configTemplate=open(configFile)
-            config=configTemplate.read()
+            configTemplate = open(configFile)
+            config = configTemplate.read()
             configTemplate.close()
 
         #---These are specific for this Himmeli run
-        config+="GraphName\t"+netName+"\n"
-        config+="EdgeFile\t"+edgFileName+"\n"
+        config += "GraphName\t"+netName+"\n"
+        config += "EdgeFile\t"+edgFileName+"\n"
 
-        config+="VertexFile\t"+vtxFileName+"\n"
-        config+="VertexNameVariable\tVNAME"+"\n"
-        config+="VertexLabelVariable\tVLABEL"+"\n"
+        config += "VertexFile\t"+vtxFileName+"\n"
+        config += "VertexNameVariable\tVNAME"+"\n"
+        config += "VertexLabelVariable\tVLABEL"+"\n"
 
         if coloredNodes:
-            config+="VertexColorVariable\tVCOLOR"+"\n"
+            config += "VertexColorVariable\tVCOLOR"+"\n"
         if equalsize:
-            config+="VertexSizeVariable\tVSIZE\n"
+            config += "VertexSizeVariable\tVSIZE\n"
         if coordinates!=None:
-            config+="VertexXVariable\tVX\n"
-            config+="VertexYVariable\tVY\n"
+            config += "VertexXVariable\tVX\n"
+            config += "VertexYVariable\tVY\n"
 
             #if showAllNodes:
-        #   config+="EdgeWeightMask\tabs\t"+str(2*self.epsilon)+"\t"+str(1/self.epsilon)+"\n"
-            #config+="EdgeWeightFilter\tabs\t"+str(2*self.epsilon)+"\t"+str(1/self.epsilon)+"\n"
+            #    config += ("EdgeWeightMask\tabs\t"+str(2*self.epsilon)+"\t"
+            #               +str(1/self.epsilon)+"\n")
+            #    config += ("EdgeWeightFilter\tabs\t"+str(2*self.epsilon)+"\t"
+            #               +str(1/self.epsilon)+"\n")
 
         #---
 
-        #Now we write all nessesary files for Himmeli to disk
-        #Edge file:
-
+        # Now we write all nessesary files for Himmeli to disk edge
+        # file:
         netio.writeNet(net,edgFileName,headers=True)
 
-        #Vertex file:
-        self.writeVertexFile(net,vtxFileName,coloredNodes,equalsize,nodeColor,nodeSize,coordinates=coordinates,labels=labels,nodeColors=nodeColors)
-        #Config file:
+        # Vertex file:
+        self.writeVertexFile(net, vtxFileName, coloredNodes, equalsize,
+                             nodeColor, nodeSize, coordinates=coordinates,
+                             labels=labels, nodeColors=nodeColors)
+        # Config file:
         confFile=open(confFileName,'w')
         confFile.write(config)
         confFile.close()
 
-        #All is set for running Himmeli
-        himmeli=os.popen(self.himmeliExecutable+' '+confFileName,'r')
+        # All is set for running Himmeli
+        himmeli = os.popen(self.himmeliExecutable+' '+confFileName,'r')
         #print string.join(himmeli.readlines()) #for long debug
         himmeli.close()
         #print himmeli #for short debug
 
-        #Save coordinates produced by Himmeli
-        self.coordinates=self._parseCoordinates(coordFileName)
+        # Save coordinates produced by Himmeli
+        self.coordinates = self._parseCoordinates(coordFileName)
 
-        #Remove files that are not needed anymore
+        # Remove files that are not needed anymore
         os.remove(edgFileName)
         os.remove(confFileName)
         os.remove(coordFileName)
@@ -945,10 +962,8 @@ class Himmeli:
         os.remove(output_psFileName)
         os.remove(vtxFileName)
 
-        #Finally we save all the information needed later
+        # Finally we save all the information needed later
         self.netName=netName
-        self.saveFileName = saveFileName
-
 
     def getCoordinates(self):
         return self.coordinates
@@ -960,34 +975,30 @@ class Himmeli:
         im=Image.open(self.netName+"_0001.eps")
         im.show()
 
-    def _parseCoordinates(self,coordFileName):
-        coordFile=open(coordFileName)
+    def _parseCoordinates(self, coordFileName):
+        coordFile = open(coordFileName, 'r')
         coordFile.readline()
         coordinates={}
         for line in coordFile:
             columns=line.split("\t")
-            if len(columns)==13:
-               #old version:
-               #[comp,tail,head,weight,tree,name,x,y,z,degree,treedg,strengt,treestg,dummy]=line.split("\t")
-               [comp,name,x,y,z,degree_in,dg_out,strengt_in,strength_out,color,shape,size,label]=line.split("\t")
-               if len(name)!=0:
-                   try:
-                       name=int(name)
-                   except ValueError:
-                       pass
-                   coordinates[name]=(float(x),float(y),float(z))
+            if len(columns) == 13:
+                # old version:
+                # [comp,tail,head,weight,tree,name,x,y,z,degree,treedg,strengt,treestg,dummy]=line.split("\t")
+                #[comp,name,x,y,z,degree_in,dg_out,strengt_in,strength_out,color,shape,size,label]=line.split("\t")
+                name, x, y, z = line.split("\t")[1:5]
+                if len(name) > 0:
+                    try:
+                        name = int(name)
+                    except ValueError:
+                        pass
+                    coordinates[name] = tuple(map(float, (x,y,z)))
         return coordinates
-
-
         
     def _writeEpsilonEdges(self,net,fileName):
-
-        # obsolete
-        # replaced by augmentNet, which generates a new network
-        # with the epsilon edges directly added. No need for
-        # rewriting to any file; EdgeWeightFilter is always
-        # used.
-
+        """Obsolete! Replaced by augmentNet, which generates a new
+        network with the epsilon edges directly added. No need for
+        rewriting to any file; EdgeWeightFilter is always used.
+        """
         file=open(fileName,'a')
         last=None
         for node in net:
@@ -998,152 +1009,132 @@ class Himmeli:
         file.close()
 
     def __del__(self):
-        if not self.saveFileName:
-            if os.path.isfile(self.netName+"_0001.eps"):
-                os.remove(self.netName+"_0001.eps")
-        else:
-            self.saveEps(self.saveFileName)
+        if os.path.isfile(self.netName+"_0001.eps"):
+            os.remove(self.netName+"_0001.eps")
         
-    def augmentNet(self,net,useMST=False, coords=None,wmin=None):
-        """Checks if the network is singly connected. If,
-        returns the network untouched. If not, connects
-        one node of each component to the giant component
-        with a very small weight and produces a list of
-        these ghost edges. Alternatively, if useMST=true,
-        all nodes which are keys in the coordinate list are
-        added to the network, joined with epsilon edges.
-        This is useful for thresholding
-        networks with various thresholds, so that
-        even all k=0 nodes are always visible.
-        Output augmented net with epsilon edges added"""
+    def augmentNet(self, net, useMST=False, coords=None, wmin=None):
+        """Make a network singly connected.
 
-        # if min weight not given, find it out
+        If the network is singly connected, returns the network
+        untouched. If not, connects one node of each component to the
+        giant component with a very small weight and produces a list
+        of these ghost edges. Alternatively, if `useMST` is True, all
+        nodes which are keys in the coordinate list are added to the
+        network, joined with epsilon edges.  This is useful for
+        thresholding networks with various thresholds, so that even
+        all k=0 nodes are always visible. 
 
-        if wmin==None:
-            # finds out smallest weight
+        Returns augmented net with epsilon edges added.
+        """
+        # If min weight not given, find it out
+        if wmin is None:
+            # Find out smallest weight
             witer=net.weights.__iter__()
-            wmin=99999999.0
+            wmin = witer.next()
+            for wt in witer:
+                if wt < wmin:
+                    wmin = wt
 
-            for eachitem in witer:
-                if eachitem<wmin:
-                    wmin=eachitem
+        epsilon_factor = 25.0
 
-        epsilon_factor=25.0
+        init_comp = percolator.getComponents(net)
+        sizelist = [len(c) for c in init_comp]
 
-        temp=percolator.getComponents(net)
-
-        sizelist=[]
-        for i in temp:
-            sizelist.append(len(i))
-
-        mc=max(sizelist)
-        maxcomponent_index=0
+        mc = max(sizelist)
+        maxcomponent_index = 0
         for i, v in enumerate(sizelist):
-            if v==mc:
-                maxcomponent_index=i
+            if v == mc:
+                maxcomponent_index = i
 
-        giantmembers=temp[maxcomponent_index]
+        giantmembers = init_comp[maxcomponent_index]
 
-        Ncomponents=len(temp)
-        maxcomponent=len(giantmembers)
+        Ncomponents = len(init_comp)
+        maxcomponent = len(giantmembers)
 
         # MAKE A COPY OF THE ORIGINAL NETWORK;
         #
         # deepcopy generated segfaults probably due to C++ interfacing
         # so this is simple and stupid (and slow). 
 
-        N=len(net._nodes)
+        N = len(net._nodes)
 
         if (isinstance(net,pynet.SymmFullNet)):
             newnet=pynet.SymmFullNet(N)
         else:
             newnet=pynet.SymmNet()
     
-        edges=list(net.edges)
+        for n_i, n_j, w_ij in net.edges:
+            newnet[n_i][n_j] = w_ij
 
-        for edge in edges:
-
-            newnet[edge[0]][edge[1]]=edge[2]
-
-        # newnet=copy.deepcopy(net)
-
-        # if MST not used, just connect all disjoint
-        # components
+        # If MST not used, just connect all disjoint components.
 
         if useMST==False:
+            if Ncomponents != 1:
+                # Find out which component is the giant one
+                # list its members for ghost edge targets.
+                gianttemp = copy.deepcopy(giantmembers)
 
-            if Ncomponents!=1:
-
-                # find out which component is the giant one
-                # list its members for ghost edge targets
-
-
-                gianttemp=copy.deepcopy(giantmembers)
-                giantmembers=[]
+                giantmembers = []
                 for i in range(0,len(gianttemp)):
                     giantmembers.append(gianttemp.pop())
 
-                for index,c in enumerate(temp):
+                for index,c in enumerate(init_comp):
+                    if index != maxcomponent_index:
+                        ghostsource = c.pop()
+                        tindex = int(math.ceil(random.random()*float(len(giantmembers)-1)))
+                        ghosttarget = giantmembers[tindex]
+                        newnet[ghostsource][ghosttarget] = wmin/epsilon_factor
 
-                    if index!=maxcomponent_index:
-
-                        ghostsource=c.pop()
-                        tindex=int(math.ceil(random.random()*float(len(giantmembers)-1)))
-                        ghosttarget=giantmembers[tindex]
-
-                        newnet[ghostsource][ghosttarget]=wmin/epsilon_factor
-
-        # next, if useMST=True, use keys of coordinates to insert all
+        # Next, if useMST=True, use keys of coordinates to insert all
         # original nodes to the net, again with epsilon weights
 
         else:
-
-            last=None
-
-            for newnode in coords.keys():
-
-                if last!=None:
-                   if newnet[last][newnode]==0:
-                          newnet[newnode][last]=wmin/epsilon_factor   # JS 290509 changes [newnode,last] to [newnode][last]
-
-                last=newnode
+            prevNode=None
+            for newNode in coords.keys():
+                if prevNode is not None:
+                   if newnet[prevNode][newNode] == 0:
+                       # JS 290509 changes [newNode,prevNode] to [newNode][prevNode]
+                       newnet[newNode][prevNode] = wmin/epsilon_factor   
+                prevNode = newNode
 
         return newnet
 
 
-    def writeVertexFile(self,net,filename,coloredNodes=True,equalsize=True,singlecolor="999999",vcolors=0,singlesize="0.3",coordinates=None,labels={},nodeColors={}):
-        file=open(filename,'w')
+    def writeVertexFile(self, net, fileName, coloredNodes=True, equalsize=True,
+                        singlecolor="999999", vcolors=0, singlesize="0.3",
+                        coordinates=None, labels={}, nodeColors={}):
+        with open(fileName, 'w') as f:
 
-        if len(nodeColors)>0:
-            coloredNodes=True
+            if len(nodeColors) > 0:
+                coloredNodes = True
 
-        file.write("VNAME")
-        file.write("\tVLABEL")
-        if coloredNodes:
-            file.write("\tVCOLOR")
-        if equalsize:
-            file.write("\tVSIZE")
-        if coordinates!=None:
-            file.write("\tVX")
-            file.write("\tVY")
-        file.write("\n")
-        for i in net:
-            file.write(str(i))
-            try:
-                file.write("\t"+str(labels[i]))
-            except KeyError:
-                file.write("\t"+str(i))
+            headers = ["VNAME", "VLABEL"]
             if coloredNodes:
-                if len(nodeColors)>0:
-                    file.write("\t"+str(nodeColors[i]))
-                else:
-                    file.write("\t"+singlecolor)
+                headers.append("VCOLOR")
             if equalsize:
-                file.write("\t"+singlesize)
-            if coordinates!=None:
-                file.write("\t"+str(coordinates[i][0]))
-                file.write("\t"+str(coordinates[i][1]))
-            file.write("\n")
+                headers.append("VSIZE")
+            if coordinates is not None:
+                headers.append("VX")
+                headers.append("VY")
+            f.write("\t".join(headers) + "\n")
+
+            for i in net:
+                f.write(str(i))
+                try:
+                    f.write("\t"+str(labels[i]))
+                except KeyError:
+                    f.write("\t"+str(i))
+                if coloredNodes:
+                    if len(nodeColors)>0:
+                        f.write("\t"+str(nodeColors[i]))
+                    else:
+                        f.write("\t"+singlecolor)
+                if equalsize:
+                    f.write("\t"+singlesize)
+                if coordinates!=None:
+                    f.write("\t"+str(coordinates[i][0]))
+                    f.write("\t"+str(coordinates[i][1]))
+                f.write("\n")
 
             
 # ---------------------------------------
@@ -1151,43 +1142,45 @@ class Himmeli:
 def drawNet(net,labels={},coordinates=None,showAllNodes=False):
     """Display a picture of the network using Himmeli
     """
-    h=Himmeli(net,labels=labels,coordinates=coordinates,showAllNodes=showAllNodes)
+    h=Himmeli(net, labels=labels, coordinates=coordinates,
+              showAllNodes=showAllNodes)
     h.draw()
 
 
 # ---------------------------------------        
 
-# def shiftCoordinates(xy,nodelist,shift):
-def shiftCoordinates(xy,nodelist,xshift=0,yshift=0,zshift=0):
-    """ Translates coordinates of given nodes. 
+# def shiftCoordinates(coords,nodelist,shift):
+def shiftCoordinates(coords,nodelist, xshift=0, yshift=0, zshift=0):
+    """Translate coordinates of given nodes. 
     
-        Takes in:
-        
-               xy, a dictionary in which item 'node' is a tuple
-               containing the coordinates of 'node'. They must contain
-               either two or three elements, as in (xcoord,ycoord) or
-               (xcoord,ycoord,zcoord).
+    Parameters
+    ----------
+    xy : dict
+        A dictionary in which item 'node' is a tuple containing the
+        coordinates of 'node'. They must contain either two or three
+        elements, as in (x, y) or (x, y, z).
+    nodelist : sequence
+        Listing the subset of keys in xy that need to be translated
+    xshift, yshift, zshift : float
+        These values indicate how much to shift the coordinates. Each
+        defaults to zero. If the coordinate list contains tuples of
+        length two, zshift will be ignored.
 
-               nodelist, listing the subset of keys in xy that need to be translated
-
-               xshift, yshift, zshift, whose values indicate how much
-               to shift the coordinates. Each defaults to zero. If the
-               coordinate list contains tuples of length two, zshift
-               will be ignored.
-
-        Works for tuples containing two or three coordinates.
-        Returns the modified coordinates. """
+    Return
+    ------
+    xy : dict
+        The shifted coordinates.
+    """
     
     for node in nodelist:
-        coords=xy[node]
-        if len(coords)==2:
-            xy[node]=(coords[0]+xshift,coords[1]+yshift)
-        elif len(coords)==3:
-            xy[node]=(coords[0]+xshift,coords[1]+yshift,coords[2]+zshift)
+        coords = xy[node]
+        if len(coords) == 2:
+            xy[node] = (coords[0]+xshift, coords[1]+yshift)
+        elif len(coords) == 3:
+            xy[node]=(coords[0]+xshift, coords[1]+yshift, coords[2]+zshift)
         else:
-            raise ValueError('\nThe coordinate tuples should contain two or three elements.\n') 
-        
-
+            raise ValueError("The coordinate tuples must contain two or "
+                             "three elements.") 
     return xy
 
 # ---------------------------------------  
