@@ -139,27 +139,9 @@ def copyNodeProperties(fromNet,toNet):
 
 
 def getSubnet(net,nodes):
-    if net.isSymmetric():        
-        newNet=pynet.SymmNet()
-    else:
-        newNet=pynet.Net()
-    degsum=0
-    for node in nodes:
-        degsum+=net[node].deg()
-    if degsum>=len(nodes)*(len(nodes)-1)/2:
-        othernodes=set(nodes)
-        for node in nodes:
-            if net.isSymmetric():
-                othernodes.remove(node)
-            for othernode in othernodes:
-                if net[node,othernode]!=0:
-                    newNet[node,othernode]=net[node,othernode]
-    else:
-        for node in nodes:
-            for neigh in net[node]:
-                if neigh in nodes:
-                    newNet[node,neigh]=net[node,neigh]
-    return newNet
+    """ See transforms.getSubnet
+    """
+    return transforms.getSubnet(net,nodes)
 
 
 class Enumerator:
