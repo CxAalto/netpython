@@ -166,21 +166,32 @@ def dist_to_weights(net,epsilon=0.001):
     return newmat
  
 def filterNet(net,keep_these_nodes):
-    '''Takes a network net, and returns a network newnet with only
-       those nodes listed in keep_these_nodes.  Node properties etc
-       are left untouched.
-    '''
+    """Get induced subgraph.
+
+    Parameters
+    ----------
+    net: pynet.Net, pynet.SymmNet or pynet.SymmFullNet
+        The original network.
+    keep_these_nodes : sequence
+        The nodes that span the induces subgraph.
+
+    Return
+    ------
+    subnet : type(net)
+        The induced subgraph that contains only nodes given in
+        `keep_these_nodes` and the edges between those nodes that are
+        present in `net`. Node properties etc are left untouched.
+    """
     
-    # Different schemes are required for FullNets and Nets
-    # for Nets, vertex names are kept
-    # for FullNets, rows are removed from the matrix so vertex
+    # Different schemes are required for FullNets and Nets.
+    # For Nets, vertex names are kept.
+    # For FullNets, rows are removed from the matrix so vertex
     # labels change. This has to be taken into account when
     # copying node properties from the original to the filtered matrix.
 
     if (isinstance(net,pynet.SymmFullNet)):
-        # -------- begin handling SymmFullNets ----------
 
-        newnet=pynet.SymmFullNet(len(keep_these_nodes))
+        newnet = pynet.SymmFullNet(len(keep_these_nodes))
 
         # First make a dict such keys=keep_these_nodes,
         # values=0...keep_these_nodes this dict maps the original row
@@ -191,33 +202,21 @@ def filterNet(net,keep_these_nodes):
 
         # Then go through the list of edges and build new matrix by
         # looping through edges and add each
-
-        edges=list(net.edges)
-
-        for edge in edges:
-            if (edge[0] in keep_these_nodes) and (edge[1] in keep_these_nodes):
-                newnet[nodedict[edge[0]]][nodedict[edge[1]]]=edge[2]
+        for n_i, n_j, w_ij in net.edges:
+            if (n_i in keep_these_nodes) and (n_j in keep_these_nodes):
+                newnet[nodedict[n_i]][nodedict[n_j]] = w_ij
 
         #  ----- handling node properties --------------
 
-        copyproperties=hasattr(net,'nodeProperty')      
-        # first copy the list of properties, if any
-    
-        if copyproperties:
+        if hasattr(net,'nodeProperty'):
+            # First copy the list of properties, if any.
             for node_property in net.nodeProperty:
+                netext.addNodeProperty(newnet, node_property)
 
-                netext.addNodeProperty(newnet,node_property)
-
-        # then copy properties of all nodes in keep_these_nodes
-
+            # Then copy properties of all nodes in `keep_these_nodes`.
             for node in keep_these_nodes:
-    
-                for node_property in newnet.nodeProperty:
-
-                    newnet.nodeProperty[node_property][nodedict[node]]=net.nodeProperty[node_property][node]
-
-        # --- done ---------
-                    
+                for np in newnet.nodeProperty:
+                    newnet.nodeProperty[np][nodedict[node]] = net.nodeProperty[np][node]
 
     elif isinstance(net, (pynet.Net, pynet.SymmNet)):
         # Handle both directed and undirected networks.
