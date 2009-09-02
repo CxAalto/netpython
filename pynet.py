@@ -1,5 +1,4 @@
 import numpy
-#added len(Net)
 
 class Net(object):
 	"""A sparse matrix"""

@@ -20,25 +20,6 @@
   *make gml-io stable
 """
 
-#
-# THIS WAS DONE IN ttt!
-#
-#   LIST OF CHANGES 
-# 15.7. RT fixed a bug in loadNodeProperties (the first line of the file was lost if the file did not contain headers)
-# 1.7. RT
-#   - fixed loadNodeProperties such that decimal numbers are
-#     interpreted as floats, not strings (it's still a hack
-#     though... and it cannot handle exponential notation, for example)
-#   - modified function isanum and added function isint that can
-#     handle negative numbers too
-#   - earlier, if the node property file contained nodes that are not
-#     present in the network, the function was aborted; now only a
-#     warning is issued.
-# 30.06.RT - modified loadNodeProperties such that the property file does not need
-#            to have headers. Now, each property name can be given as an argument.
-# 24.06.JS fixed loadNodeProperties (nodelabels to int if numbers)
-# 24.06.JS fixed & documented loadNodeProperties (checks if input file node exists in the network)
-
 
 import pynet,netext,warnings
 import sys

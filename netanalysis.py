@@ -15,10 +15,6 @@ from PIL import Image
 from math import ceil
 from Tkinter import *
 
-# Changes:
-# 24.06.[JS] added weightStats(net), which just yields [min_weight,max_weight,avg_weight] for a network
-# 26.05 [JS] fixed logbin hang-up bug in knn_spectrum,clustering_spectrum,X_distribution
-
 def generateLogbins(minvalue,maxvalue,factor,uselinear=True):
     '''Generates a binning vector containing bin limits
        for log-binning. Inputs: min and max values to be binned,

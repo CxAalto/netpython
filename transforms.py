@@ -1,12 +1,6 @@
 import pynet,netext,percolator
 import random
 
-# Changes
-#
-# 24.06.09 JS : Fixed filterNet so that it works properly for full networks too
-# 01.06.09 JS : Added copyNodeProperties to every function - node properties are inherited to transformed nets!
-# 01.06.09 JS : Added filterNet - input: network + list of nodes to keep, output: network with these nodes
-# 01.06.09 LK : Modified the documentation of threshold_by_value to match the implementation.
 
 def mst(net,maximum=False):
     """Find a minimum/maximum spanning tree
