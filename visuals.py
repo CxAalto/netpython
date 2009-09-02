@@ -262,128 +262,138 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
                  baseFig=None): 
     """Visualizes a network.
 
-    net = network to be visualized (of type SymmNet() ).
+    The coloring of the nodes is decided as follows:
+      a) If dictionary `nodeColors` is given, it is used.  If it does
+         not contain a color for every node, the rest are colored 
+           1) according to property `setNodeColorsByProperty`, if it is
+              given, or else
+           2) by `nodeColor` if it is given, or
+           3) white if neither of the above is given.
+      b) If dictionary `nodeColors` is not given, but `nodeColor`
+         is given, all nodes are colored with `nodeColor`.
+      c) If none of `setNodeColorsByProperty`,`nodeColors` and
+         `nodeColor` is given, nodes are colored by strength using the
+         colormap `nodeColorMap` (by default 'winter').
 
-    xy = coordinates (usually originating from visuals.Himmeli,
-    e.g. h=visuals.Himmeli(net,...,...) followed by
-    xy=h.getCoordinates()
+    Parameters
+    ----------
+    net : pynet.SymmNet
+        The network to visualize
+    xy : list of tuples
+        Coordinates of all nodes. These usually originate from
+        visuals.Himmeli, e.g. 
+          h = visuals.Himmeli(net, ...)
+          xy = h.getCoordinates()
+    figsize : (x,y)
+        Size of the output figure in inches. dpi is set to 100.
+    coloredNodes : bool
+        If True, nodes are colored. Otherwise all nodes are white.
+    nodeColors : dict
+        Dictionary of node colors by node index.
+    nodeColor : RGB color tuple
+        Default color of a node. Three values between 0 and 1, for
+        example (1.0, 0, 0) is red and (0.5, 0.5, 0.5) is middle gray.
+    setNodeColorByProperty : sequence of node indices
+        If `setNodeColorsByProperty` is specified, any node not
+        appearing in the dictionary `nodeColors` will be colored
+        according to the given property (using `nodeColorMap` and
+        `nodePropertyLimits`). Option `nodeColors` overrides the
+        'setNodeColorsByProperty' option.
+    nodeColorMap : str
+        A colormap used to color the nodes listed in
+        `setNodeColorsByProperty`.
+    nodePropertyLimits : (???)
+        (What is this?)
+    equalsize : bool
+        If True, all nodes are of size `nodeSize`. If False, node size
+        is based on node strength.
+    showAllNodes : bool
+        If True, displays disconnected components and nodes which have
+        no edges left after e.g. thresholding. (quick hack?)
+    bgcolor : sequence (r, g, b)
+        Background color as RGB tuple. Default is black.
+    minwidth : float
+        Minimum width of plotted edges.
+    maxwidth : float
+        Maximum width of plotted edges.
+    labels : dict {nodename:labelstring}
+        Dictionary of node labels.
+    uselabels : str, either 'none' or 'all'
+        Determines if node labels are shown. 'none' shows none, 'all'
+        shows all. Note that any labels input in `labels`
+        ({nodename:labelstring}) are always shown; use this dict to
+        show labels next to your chosen nodes of interest.
+    fontsize : int
+        Sets font size for labels.
+    edgeColorMap : str
+        Allows the user to set color scheme for edges. Edges are
+        always colored according to edge weights, which are first
+        normalized to the range (0,1) and then transformed to colors
+        using edgeColorMap. There are 150 colormaps available in
+        pylab; for a full listing, please see help(pylab.cm) (and look
+        for DATA). Or try, for example, edgeColorMap='orange' or
+        edgeColorMap='primary', two colormaps of our own that are not
+        available in pylab.
+    weightLimits : tuple (minWeight, maxWeight)
+        Provides the minimum and maximum value for weights. If not are
+        given, (nearly) the true min and max weights in the network
+        will be used. The weightLimits are used for setting edge
+        colors and width. They enable the user to plot several
+        networks (which may have different min and max weights) so
+        that a certain color and width always correspond to a certain
+        edge weight. Thus, the color and width in the visualization
+        can be used to infer edge weight. If the network turns out to
+        contain weights above the given maxWeight (below minWeight)
+        these will be rounded downwards (upwards) to the given
+        limit.
+    nodeLabel_xOffset : float (default nodeSize/40)
+        Amount for moving node labels the right so that the text does
+        not fall on the nodes.
+    frame : bool
+        If True, draws a box around the figure.
+    showTicks : bool
+        If True, adds ticks in the frame. Setting `showTicks` to True
+        will always set `frame` to True also.
+    axisLimits : tuple ((minX, maxX),(minY, maxY))
+        Sets tick limits if `showTicks` is True.
+    baseFig : FigureCanvasBase
+        If None, the network is drawn on an empty figure, otherwise
+        baseFig is used as a starting point.
 
-    figsize=(x,y) (default (6,6)) Size of the figure produced by VisualizeNet
+
+    Return
+    ------
+    fig : pylab.Figure
+        The plotted network figure.
 
 
-    coloredNodes = (True/False),
-    nodeColors = dictionary of node colors by node index, and 
-    nodeColor = an RGB color tuple with three values between 0 and 1
-    setNodeColorByProperty
-    nodeColorMap
-    nodePropertyLimits
+    Examples
+    --------
+    >>> from netpython import pynet, visuals
+    >>> m = pynet.SymmNet()
+    >>> m[0][1] = 1.0
+    >>> m[1][2] = 3.5
+    >>> m[0][2] = 5.0
 
-    If 'setNodeColorsByProperty' is specified, any node not appearing
-    in the dictionary 'nodeColors' will be colored according to the
-    given property (using'nodeColorMap' and 'nodePropertyLimits').
-    Option 'nodeColors' overrides the 'setNodeColorsByProperty' option.
+    >>> # Here are the coordinates, a dictionary that contains 2-tuples 
+    >>> xy = {0:(0,0), 1:(4,0), 2:(2,3)}
+    >>> # With larger network use Himmeli to calculate coordinates.
+    >>> h = visuals.Himmeli(net)
+    >>> xy = h.getCoordinates()
 
-     If coloredNodes='False', nodes are plotted white.
-     If coloredNodes='True' (default),
-      a) if dictionary 'nodeColors' is given, it is used.
-         If it does not contain a color for every node,
-         the rest are colored 1) according to property
-         'setNodeColorsByProperty', if it is given, or else
-         2) by 'nodeColor' if it is given, or
-         3) white if neither of the above is given. 
-      b) if dictionary 'nodeColors' is not given, but 'nodeColor'
-         is given, all nodes are colored with 'nodeColor'.
-      c) if neither 'setNodeColorsByProperty' nor dictionary 'nodeColors'
-          or 'nodeColor' is given, nodes are colored by strength
-          using the colormap 'nodeColorMap' (by default 'winter'). 
+    >>> f = FigureCanvasBase(visuals.VisualizeNet(m,xy))
+    >>> f.print_eps("myPlot_1.eps", dpi=80.0)
 
+    >>> f=FigureCanvasBase(visuals.VisualizeNet(m,xy,edgeColorMap='orange'))
+    >>> f.print_eps("myPlot_2.eps", dpi=80.0)
 
-    equalsize = (True/False) True: all nodes are of same size,
-    input as nodeSize, default 1.0. False: sizes are based on node
-    strength.
+    >>> f=FigureCanvasBase(visuals.VisualizeNet(m,xy,edgeColorMap='orange',
+                                                equalsize=True, nodeSize=16))
+    >>> f.print_eps("myPlot_3.eps", dpi=80.0)
 
-    showAllNodes = (True/False) something of a quick hack; if
-    True, displays disconnected components and nodes which have no
-    edges left after e.g. thresholding
-
-    bgcolor = [r g b], r/g/b between 0.0 and 1.0. Background
-    color, default is black.
-
-    maxwidth = max width of edges as plotted, default 2.0
-
-    minwidth = min width of edges as plotted, default 0.2
-
-    uselabels = ('none','all') Determines if node labels are shown.
-    'none' shows none, 'all' shows all. Note: any labels input in
-    dict labels ({nodename:labelstring}) are always shown; use
-    this dict to show labels next to your chosen nodes of
-    interest. 
-
-    fontsize=size  Sets font size for labels. Default is 7. 
-
-    edgeColorMap=myMap allows the user to set color scheme for
-    edges.  Edges are always colored according to edge weights,
-    which are first normalized to the range (0,1) and then
-    transformed to colors using edgeColorMap. There are 150
-    colormaps available in pylab; for a full listing, please see
-    help(pylab.cm) (and look for DATA). Or try, for example,
-    edgeColorMap='orange' or edgeColorMap='primary', two colormaps
-    of our own that are not available in pylab.
-
-    weightLimits=(0,5) The tuple (minWeight, maxWeight) provides
-    the minimum and maximum value for weights. If none are given,
-    (nearly) the true min and max weights in the network will be
-    used. The weightLimits are used for setting edge colors and
-    width. They enable the user to plot several networks (which
-    may have different min and max weights) such that a certain
-    color and width always correspond to a certain edge
-    weight. Thus, the color and width in the visualization can be
-    used to infer edge weight. If the network turns out to contain
-    weights above the given maxWeight (below minWeight) these will
-    be rounded downwards (upwards) to the given limit. It is more
-    reasonable however for the user to provide limits that can
-    accommodate all weights, this is just a necessary precaution
-    for the case where the given limits are too tight.
-
-    nodeLabel_xOffset (if none is given, nodeSize/40 will be used)
-    amount for moving node labels the right so that the text does
-    not fall on the nodes
-
-    frame=True or False (default False) adds or removes a box around the figure
-
-    showTicks=True or False (default False) adds or removes ticks in the frame
-    Setting showTicks=True will override the option frame, setting it to frame=True.
-
-    axisLimits=((minx,max),(miny,maxy)) (default None) sets tickLimits
-
-    baseFig=If None (default), the network is drawn on an empty figure, otherwise
-    basFig of type FigureCanvasBase is used as a starting point.
-
-    Usage examples:
-        m=pynet.SymmNet()
-        m[0][1]=1.0
-        m[1][2]=3.5
-        m[0][2]=5.0
-
-        Here are the coordinates, a dictionary that contains 2-tuples 
-        xy={}
-        xy[0]=(0,0)
-        xy[1]=(4,0)
-        xy[2]=(2,3) 
-
-        f=FigureCanvasBase(visuals.VisualizeNet(m,xy))
-        f.print_eps("tmp.eps",dpi=80.0)
-
-        f=FigureCanvasBase(visuals.VisualizeNet(m,xy,edgeColorMap='orange'))
-        f.print_eps("tmp2.eps",dpi=80.0)
-
-        f=FigureCanvasBase(visuals.VisualizeNet(m,xy,edgeColorMap='orange',equalsize=True,nodeSize=16))
-        f.print_eps("tmp3.eps",dpi=80.0)
-
-        (General questions: Is there a neater way to output the
-        figures than using FigureCanvasBase? How can I have a look
-        at the figures from within python, without saving them to
-        .eps files?)
+    (General questions: Is there a neater way to output the figures
+    than using FigureCanvasBase? How can I have a look at the figures
+    from within python, without saving them to .eps files?)
     """
 
     # Warn about obsolete input arguments
@@ -415,6 +425,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     else:
         thisfigure=baseFig.figure
         axes=thisfigure.gca()
+
     axes.set_axis_bgcolor(bgcolor)
     if frame == False and showTicks == False: 
         axes.set_axis_off()
