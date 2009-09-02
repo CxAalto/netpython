@@ -9,15 +9,6 @@ import shutil
 import Image
 
 
-
-class Myplot(object):
-    '''empty container'''
-    pass
-
-# ---------------------------------------
-
-
-
 # --------------------------------------        
 
 class Myplot(object):
@@ -269,7 +260,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
                  nodeLabel_xOffset=None, coloredvertices=None, vcolor=None,
                  vsize=None, frame=False, showTicks=False, axisLimits=None,
                  baseFig=None): 
-    """Visualizes a network. Inputs:
+    """Visualizes a network.
 
     net = network to be visualized (of type SymmNet() ).
 
@@ -896,10 +887,9 @@ class Himmeli:
 
         Returns augmented net with epsilon edges added.
         """
-        # If min weight not given, find it out
+        # If min weight is not given, find it out
         if wmin is None:
-            # Find out smallest weight
-            witer=net.weights.__iter__()
+            witer = net.weights.__iter__()
             wmin = witer.next()
             for wt in witer:
                 if wt < wmin:
