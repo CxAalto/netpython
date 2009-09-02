@@ -1,29 +1,4 @@
 """Extra functions and other extensions for pynet datastructures
-
-    Extensions
-    ----------
-    Net.edges        
-    Node.edges
-    Net.add(net)
-
-    Functions
-    ---------
-    Net_add(self, net)
-    addNodeProperty(net, propertyName)
-    collapseBiNet(net, nodesToRemove)
-    copyNodeProperties(fromNet, toNet)
-    deg(net)
-    fullNet(nodes, weight=1)
-    getMeanDistance(theSet, distanceFunction)
-    getPathLengths(net, startingNode)
-    getStrength(node)
-    getSubnet(net, nodes)
-    strengths(net, nodes=None)
-
-    Classes
-    -----
-    Enumerator        
-
 """
 import pynet,os,netio
 import random
