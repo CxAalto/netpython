@@ -319,10 +319,8 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     labels : dict {nodename:labelstring}
         Dictionary of node labels.
     uselabels : str, either 'none' or 'all'
-        Determines if node labels are shown. 'none' shows none, 'all'
-        shows all. Note that any labels input in `labels`
-        ({nodename:labelstring}) are always shown; use this dict to
-        show labels next to your chosen nodes of interest.
+        If 'all', the node index is shown as label for those nodes
+        that are not listed in `labels`.
     fontsize : int
         Sets font size for labels.
     edgeColorMap : str
@@ -590,10 +588,10 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
             # If coloredNodes is False, use white.
             color=(1.0,1.0,1.0)
 
-        if nodeLabel_xOffset == None:
-            # Move node labels slightly to the right so that they
-            # don't coincide on the nodes
-            nodeLabel_xOffset = float(nodesize)/40 
+        # Move node labels slightly to the right so that they
+        # don't coincide on the nodes
+        nodeLabel_xOffset = (nodeLabel_xOffset or float(nodesize)/40)
+
         plot_node(axes, x=xy[node][0], y=xy[node][1],
                   color=color, size=nodesize)
         if uselabels == 'all':
