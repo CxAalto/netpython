@@ -164,8 +164,11 @@ def dist_to_weights(net,epsilon=0.001):
 
         
     return newmat
- 
+
 def filterNet(net,keep_these_nodes):
+    return getSubnet(net,keep_these_nodes)
+
+def getSubnet(net,nodes):
     """Get induced subgraph.
 
     Parameters
@@ -190,20 +193,19 @@ def filterNet(net,keep_these_nodes):
     # copying node properties from the original to the filtered matrix.
 
     if (isinstance(net,pynet.SymmFullNet)):
-
-        newnet = pynet.SymmFullNet(len(keep_these_nodes))
+        newnet = pynet.SymmFullNet(len(nodes))
 
         # First make a dict such keys=keep_these_nodes,
         # values=0...keep_these_nodes this dict maps the original row
         # indices to a smaller number of row indices
         nodedict={}
-        for i,node in enumerate(keep_these_nodes):
+        for i,node in enumerate(nodes):
             nodedict[node]=i
 
         # Then go through the list of edges and build new matrix by
         # looping through edges and add each
         for n_i, n_j, w_ij in net.edges:
-            if (n_i in keep_these_nodes) and (n_j in keep_these_nodes):
+            if (n_i in nodes) and (n_j in nodes):
                 newnet[nodedict[n_i]][nodedict[n_j]] = w_ij
 
         #  ----- handling node properties --------------
@@ -214,17 +216,29 @@ def filterNet(net,keep_these_nodes):
                 netext.addNodeProperty(newnet, node_property)
 
             # Then copy properties of all nodes in `keep_these_nodes`.
-            for node in keep_these_nodes:
+            for node in nodes:
                 for np in newnet.nodeProperty:
                     newnet.nodeProperty[np][nodedict[node]] = net.nodeProperty[np][node]
 
     elif isinstance(net, (pynet.Net, pynet.SymmNet)):
         # Handle both directed and undirected networks.
-
         newnet = type(net)() # Initialize to same type as `net`.
-        for n_i, n_j, w_ij in net.edges:
-            if (n_i in keep_these_nodes) and (n_j in keep_these_nodes):
-                newnet[n_i][n_j] = w_ij
+        degsum=0
+        for node in nodes:
+            degsum+=net[node].deg()
+        if degsum>=len(nodes)*(len(nodes)-1)/2:
+            othernodes=set(nodes)
+            for node in nodes:
+                if net.isSymmetric():
+                    othernodes.remove(node)
+                for othernode in othernodes:
+                    if net[node,othernode]!=0:
+                        newnet[node,othernode]=net[node,othernode]
+        else:
+            for node in nodes:
+                for neigh in net[node]:
+                    if neigh in nodes:
+                        newnet[node,neigh]=net[node,neigh]
                 
         netext.copyNodeProperties(net, newnet)
 
