@@ -20,6 +20,9 @@
   *make gml-io stable
 """
 
+#
+# THIS WAS DONE IN ttt!
+#
 #   LIST OF CHANGES 
 # 15.7. RT fixed a bug in loadNodeProperties (the first line of the file was lost if the file did not contain headers)
 # 1.7. RT
