@@ -169,14 +169,14 @@ def getSubnet(net,nodes):
     ----------
     net: pynet.Net, pynet.SymmNet or pynet.SymmFullNet
         The original network.
-    keep_these_nodes : sequence
+    nodes : sequence
         The nodes that span the induces subgraph.
 
     Return
     ------
     subnet : type(net)
         The induced subgraph that contains only nodes given in
-        `keep_these_nodes` and the edges between those nodes that are
+        `nodes` and the edges between those nodes that are
         present in `net`. Node properties etc are left untouched.
     """
     
@@ -219,8 +219,8 @@ def getSubnet(net,nodes):
         newnet = type(net)() # Initialize to same type as `net`.
         degsum=0
         for node in nodes:
-            degsum+=net[node].deg()
-        if degsum>=len(nodes)*(len(nodes)-1)/2:
+            degsum += net[node].deg()
+        if degsum >= len(nodes)*(len(nodes)-1)/2:
             othernodes=set(nodes)
             for node in nodes:
                 if net.isSymmetric():
