@@ -112,7 +112,8 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
 	input.seek(0)
 	return True
 
-    numerical = (numerical or isNumerical(input))
+    if numerical is None:
+        numerical = isNumerical(input)
     
     if symmetricNet:
         newNet=pynet.SymmNet()
