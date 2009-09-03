@@ -268,7 +268,8 @@ def writeNet(net, output, headers=False, fileType=None):
 
     Exceptions
     ----------
-    ValueError : If file type is unknown.
+    ValueError : If file type is unknown or unable to write to
+                 `output`.
     """
     # If `output` is a string, we assume it is a file name and open
     # it. Otherwise if it implements 'write'-method we assume it is a
@@ -294,14 +295,14 @@ def writeNet(net, output, headers=False, fileType=None):
         elif fileType in ('gml', 'mat', 'net'):
             eval("writeNet_%s(net,outputFile)" % fileType)
         else:
-            raise ValueError("Unknown file type, use writeNet_[filetype].")
+            raise ValueError("Unknown file type, try writeNet_[filetype].")
     finally:
         if fileOpened:
             outputFile.close()
 
 def loadNet(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
             numerical=None, fileType=None):
-    """Write network to disk.
+    """Read network from disk.
 
     Parameters
     ----------
@@ -313,7 +314,8 @@ def loadNet(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
 
     Exceptions
     ----------
-    ValueError : If file type is unknown.
+    ValueError : If file type is unknown or unable to read from
+                 `input`.
     """
     # If `input` is a string, we assume it is a file name and open
     # it. Otherwise if it implements 'write'-method we assume it is a
