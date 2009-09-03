@@ -2,24 +2,25 @@
   
   Current status
   --------------
-  This module contains functions for reading and writing files containing networks.
-  loadNet and writeNet are general functions for loading and writing networks in 
-  different file types. This means that they try to recognize the filetype of the
-  network file from the filename and then use appropriate function to read/write it.
+  This module contains functions for reading and writing files
+  containing networks.  loadNet and writeNet are general functions for
+  loading and writing networks in different file types. This means
+  that they try to recognize the filetype of the network file from the
+  filename and then use appropriate function to read/write it.
 
-  The user can also use loadNet_[format] and writeNet_[format] directly to force 
-  loading or writing to be done in given format.
+  The user can also use loadNet_[format] and writeNet_[format]
+  directly to force loading or writing to be done in given format.
 
   Currently only the edg, gml and matrix format has been implemented 
 
   Future additions
   ----------------
-  *Important: make loadNet_? work as loadNet, so that no that filename is input
-  *Support for metadata in network files
-  *graphXML-format and others
-  *make gml-io stable
+  - Important: make loadNet_? work as loadNet, so that no that
+    filename is input
+  - Support for metadata in network files
+  - graphXML-format and others
+  - make gml-io stable
 """
-
 
 import pynet,netext,warnings
 import sys
@@ -111,8 +112,7 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
 	input.seek(0)
 	return True
 
-    if numerical is None:
-        numerical = isNumerical(input)
+    numerical = (numerical or isNumerical(input))
     
     if symmetricNet:
         newNet=pynet.SymmNet()
@@ -131,7 +131,8 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
             if fields[0]!=fields[1]:
                 if mutualEdges:
                     if nodeMap.has_key( (fields[1], fields[0]) ):
-                        value = 0.5*( nodeMap[(fields[1], fields[0])] + float(fields[2]) )
+                        value = 0.5*( nodeMap[(fields[1], fields[0])] 
+                                      + float(fields[2]) )
                         newNet[fields[0]][fields[1]] = value
                     else:
                         nodeMap[(fields[0], fields[1])] = float(fields[2])
@@ -141,17 +142,17 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
     return newNet
 
 
-def loadNet_mat(input, mutualEdges = False, splitterChar = None,symmetricNet=True):
-    rows=0
-    columns=0
+def loadNet_mat(input, mutualEdges=False, splitterChar=None,symmetricNet=True):
+    rows, columns = 0, 0
     for line in input:
-        rows+=1
+        rows += 1
         fields=line.split(splitterChar)
-        if rows!=1 and len(fields)!=columns:
-            raise Exception("Unconsistent number of columns at row "+str(rows))
-        columns=len(fields)
-    if columns!=rows:
-        raise Exception("Not a square matrix: "+str(columns)+" columns and "+str(rows)+" rows.")
+        if rows != 1 and len(fields) != columns:
+            raise Exception("Unconsistent number of columns at row %d." % rows)
+        columns = len(fields)
+    if columns != rows:
+        raise Exception("Not a square matrix: %d columns and %d rows."
+                        % (columns, rows))
     input.seek(0)
 
     if symmetricNet:
@@ -159,11 +160,11 @@ def loadNet_mat(input, mutualEdges = False, splitterChar = None,symmetricNet=Tru
     else:
         newNet=pynet.FullNet(columns)
 
-    row=0
+    row = 0
     for line in input:
         fields=line.split(splitterChar)
         for columnIndex in range(0,columns):
-            if columnIndex!=row:
+            if columnIndex != row:
                 newNet[row,columnIndex]=float(fields[columnIndex])
         row+=1
 
@@ -196,45 +197,46 @@ def writeNet_gml(net,filename):
 
     file.write("]\n")
 
-def writeNet_edg(net,filename,headers=False):
+def writeNet_edg(net, outputFile, headers=False):
+    if not hasattr(outputFile, 'write'):
+        raise ValueError("Parameter 'outputFile' must be a file object.")
     #edges=netext.getEdges(net)
     edges=net.edges
-    file=open(filename,'w')
     if headers==True:
-        file.write("HEAD\tTAIL\tWEIGHT\n")
+        outputFile.write("HEAD\tTAIL\tWEIGHT\n")
     for edge in edges:
-        file.write(str(edge[0])+"\t"+str(edge[1])+"\t"+str(edge[2])+"\n")
+        outputFile.write("\t".join(map(str, edge)) + "\n")
 
-def writeNet_net(net, output):
+def writeNet_net(net, outputFile):
     """
     Write network files in Pajek format.
 
     Todo: add writing metadata to the vertices rows
     """
-    if not hasattr(output, 'write'):
-        raise ValueError("Parameter 'output' must be a file object.")
+    if not hasattr(outputFile, 'write'):
+        raise ValueError("Parameter 'outputFile' must be a file object.")
         
     #Writing vertices to the disk.
     numberOfNodes = len(net)
     nodeNameToIndex = {}
-    output.write("*Vertices "+str(numberOfNodes)+"\n")
+    outputFile.write("*Vertices "+str(numberOfNodes)+"\n")
     for index,node in enumerate(net):
-        output.write(str(index+1)+' "'+str(node)+'"\n')
+        outputFile.write(str(index+1)+' "'+str(node)+'"\n')
         nodeNameToIndex[node]=index+1
 
     #Writing edges to the disk
-    #output.write("*Arcs\n")
-    if net.isSymmetric():
-        output.write("*Edges\n")
+    outputFile.write("*Edges\n")
     for edge in net.edges:
-        output.write(str(nodeNameToIndex[edge[0]])+"\t"+str(nodeNameToIndex[edge[1]])+"\t"+str(edge[2])+"\n")
-    #if not net.isSymmetric():
-    #    output.write("*Edges\n")
+        outputFile.write(str(nodeNameToIndex[edge[0]]) + "\t" 
+                         + str(nodeNameToIndex[edge[1]]) + "\t"
+                         + str(edge[2]) + "\n")
 
     del nodeNameToIndex
 
-def writeNet_mat(net,filename):
-    file=open(filename,'w')
+def writeNet_mat(net, outputFile):
+    if not hasattr(outputFile, 'write'):
+        raise ValueError("Parameter 'outputFile' must be a file object.")
+
     nodes=list(net)
     for i in nodes:
         first=True
@@ -242,21 +244,20 @@ def writeNet_mat(net,filename):
             if first:
                 first=False
             else:
-                file.write(" ")
-            file.write(str(net[i,j]))
-        file.write("\n")
-    file.close()
+                outputFile.write(" ")
+            outputFile.write(str(net[i,j]))
+        outputFile.write("\n")
     return nodes
 
 
-def writeNet(net, outputFile, headers=False, fileType=None):
+def writeNet(net, output, headers=False, fileType=None):
     """Write network to disk.
 
     Parameters
     ----------
     net : pynet network object
         The network to write.
-    outputFile : str or file
+    output : str or file
         Name of the file to be opened.
     headers : bool
         If true, print headers before the actual network data (affects
@@ -269,16 +270,18 @@ def writeNet(net, outputFile, headers=False, fileType=None):
     ----------
     ValueError : If file type is unknown.
     """
-    # If outputFile is a string, we assume it is a file name and open
+    # If `output` is a string, we assume it is a file name and open
     # it. Otherwise if it implements 'write'-method we assume it is a
     # file object.
     fileOpened = False
-    if isinstance(outputFile, str):
-        outputFile = open(outputFile, 'w')
+    if isinstance(output, str):
+        outputFile = open(output, 'w')
         fileOpened = True
-    elif not hasattr(outputFile, 'write'):
-        raise ValueError("'outputFile' must be a string or an object "
+    elif not hasattr(output, 'write'):
+        raise ValueError("'output' must be a string or an object "
                          "with a 'write'-method.")
+    else:
+        outputFile = output
 
     try:
         # Infer file type if not explicitely given.
@@ -296,13 +299,14 @@ def writeNet(net, outputFile, headers=False, fileType=None):
         if fileOpened:
             outputFile.close()
 
-def loadNet(inputFile, mutualEdges=False, splitterChar=None, symmetricNet=True, numerical=None, fileType=None):
+def loadNet(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
+            numerical=None, fileType=None):
     """Write network to disk.
 
     Parameters
     ----------
-    inputFile : str or file
-        Name of the file to be opened.
+    input : str or file
+        Name of the file to be opened or a file object.
     fileType : str
         Type of the output file. In None, the suffix of fileName will
         be used to guess the file type.
@@ -311,16 +315,18 @@ def loadNet(inputFile, mutualEdges=False, splitterChar=None, symmetricNet=True, 
     ----------
     ValueError : If file type is unknown.
     """
-    # If inputFile is a string, we assume it is a file name and open
+    # If `input` is a string, we assume it is a file name and open
     # it. Otherwise if it implements 'write'-method we assume it is a
     # file object.
     fileOpened = False
-    if isinstance(inputFile, str):
-        inputFile = open(inputFile, 'r')
+    if isinstance(input, str):
+        inputFile = open(input, 'r')
         fileOpened = True
-    elif not isinstance(inputFile, file):
-        raise ValueError("'inputFile' must be a string or a file object")
-
+    elif not isinstance(input, file):
+        raise ValueError("'input' must be a string or a file object.")
+    else:
+        inputFile = input
+    
     # Infer file type if not explicitely given.
     if fileType is None and hasattr(inputFile, 'name'):
         fileType = getFiletype(inputFile.name)
@@ -329,11 +335,13 @@ def loadNet(inputFile, mutualEdges=False, splitterChar=None, symmetricNet=True, 
     try:
         # edg-files need different behaviour.
         if fileType == 'edg':
-            newNet = loadNet_edg(inputFile, mutualEdges, splitterChar, symmetricNet, numerical)
+            newNet = loadNet_edg(inputFile, mutualEdges, splitterChar,
+                                 symmetricNet, numerical)
         elif fileType in ('gml', 'mat', 'net'):
             newNet = eval("loadNet_%s(inputFile)" % fileType)
         else:
-            raise ValueError("Unknown file type '%s', use loadNet_[filetype]." % fileType)
+            raise ValueError("Unknown file type '%s', try loadNet_[filetype]."
+                             % fileType)
     finally:
         if fileOpened:
             inputFile.close()
@@ -346,19 +354,19 @@ def loadNodeProperties(net,filename,splitterChar=None,propertyNames=None):
     Usage:
        loadNodeProperties(net,filename,splitterChar=None,propertyNames=None).
 
-    The metadata file can contain any number of columns. The first column
-    should contain names of nodes contained in 'net', and the other
-    columns contain user-defined properties.
+    The metadata file can contain any number of columns. The first
+    column should contain names of nodes contained in 'net', and the
+    other columns contain user-defined properties.
     
-    If a list 'propertyNames' is not given, the first row must
-    contain headers. The first column header should be node_label,
-    and the other column headers are names of the user-defined properties.
+    If a list 'propertyNames' is not given, the first row must contain
+    headers. The first column header should be node_label, and the
+    other column headers are names of the user-defined properties.
     They are automatically appended to the property list in 'net'.
-    Alternatively, you can provide a list 'propertyNames' containing
-    a label for each column. In this case, your file should not
-    contain a header. The function 'loadNodeProperties' checks whether
-    'propertyNames' contains 'node_label' as the first element, and adds
-    it if it doesn't, so you do not need to give it explicitly. 
+    Alternatively, you can provide a list 'propertyNames' containing a
+    label for each column. In this case, your file should not contain
+    a header. The function 'loadNodeProperties' checks whether
+    'propertyNames' contains 'node_label' as the first element, and
+    adds it if it doesn't, so you do not need to give it explicitly.
 
     Example input file format:
     node_label node_color node_class
