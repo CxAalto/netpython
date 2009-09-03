@@ -427,7 +427,7 @@ def kcliquesByEdges(edges, k):
     edges : iterable with elements (node_1, node_2, weight)
         The edges that form the network. `edges` may also contain
         EvaluationEvent objects, which are simply passed through.
-    k : int
+    k : int, >= 3
         The function returns `k`-cliques, that is, induced full subnets
         of `k` nodes.
 
@@ -440,7 +440,7 @@ def kcliquesByEdges(edges, k):
     Notes
     -----
     If an edge is included in `edges` multiple times, the all
-    k-cliques in the network constructed do far will be returned every
+    k-cliques in the network constructed so far will be returned every
     time. Most of the time this is not what is wanted, so take care
     not the supply multiple edges. (LK 31.7.2009)
     """
@@ -460,7 +460,7 @@ def kcliquesByEdges(edges, k):
             for kclique in kcliquesAtSubnet(triangleEnds,newNet,k-2):
                 yield kclique+KClique([edge[0],edge[1]])
 
-            newNet[edge[0],edge[1]]=edge[2] # Finally we add the new edge to the network
+            newNet[edge[0],edge[1]] = edge[2] # Finally we add the new edge to the network
 
 def kcliquesWeight(net,k,weightFunction):
     kcliques=list(kcliquesByEdges(net.edges,k))
