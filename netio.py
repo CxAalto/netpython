@@ -100,6 +100,9 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
     If `mutualEdges` is set to True, an edge is added between nodes i
     and j only if both edges (i,j) and (j,i) are listed. The weight of
     the edge is the average of the weights of the original edges.
+
+    If `mutualEdges` is False and the same edge is encountered
+    multiple times, the edge weight will be the sum of all weights.
     """
     def isNumerical(input):
 	try:
@@ -138,7 +141,7 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
                     else:
                         nodeMap[(fields[0], fields[1])] = float(fields[2])
                 else:
-                    newNet[fields[0]][fields[1]]=float(fields[2])
+                    newNet[fields[0]][fields[1]] += float(fields[2])
 
     return newNet
 
