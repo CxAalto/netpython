@@ -142,7 +142,53 @@ def getNumericProperties(net):
 
     return numericproperties
 
-    
+
+def getPropertyTypes(net):
+    """Returns a dictionary where keys are nodeProperties
+    and values indicate their type ('int','float','string','mixed')
+    """
+
+    propertylist=list(net.nodeProperty)
+
+    propertydict={}
+
+    for prop in propertylist:
+
+        intprop=True
+        floatprop=True
+        strprop=True
+
+        for node in net:
+
+            if not(isinstance(net.nodeProperty[prop][node],int)):
+
+                   intprop=False
+
+            if not(isinstance(net.nodeProperty[prop][node],float)):
+
+                   floatprop=False
+
+            if not(isinstance(net.nodeProperty[prop][node],str)):
+
+                   strprop=False
+
+        if intprop==True:
+
+            propertydict[prop]='int'
+
+        elif floatprop==True:
+
+            propertydict[prop]='float'
+
+        elif strprop==True:
+
+            propertydict[prop]='string'
+
+        else:
+
+            propertydict[prop]='mixed'
+
+    return propertydict
 
 
 class Enumerator:
