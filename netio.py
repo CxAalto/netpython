@@ -354,7 +354,7 @@ def loadNet(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
 
     return newNet
     
-def loadNodeProperties(net,filename,splitterChar=None,propertyNames=None):
+def loadNodeProperties(net,filename,splitterChar=None,propertyNames=None,allowMissingData=False,allowExtraData=False):
     """Read metadata (properties for nodes) from a file.
 
     Usage:
@@ -379,131 +379,186 @@ def loadNodeProperties(net,filename,splitterChar=None,propertyNames=None):
     node1      blue       class1
     """
 
-    #todo: see if the node names are strings, ints or floats [DONE/JS/2605]
-    # loadNet converts numerical node labels to ints, has been taken into account here.
-    #todo: check if node is in the network [DONE/JS/2705]
-
-    #todo: how to deal with FullNets???[DONE|JS/2705]
-    #todo: check that there are no non-existing nodes/too many input lines [DONE|JS/2705]
-
-    #todo: write a check that all nodes get properties!!!
+    #todo: default properties as argument for missing property lines
 
     #tested for i) SymmNet with string node labels, ii) -"- with integer labels,
     # iii) FullNet, iv) the above cases with too many lines / non-existing nodes
     # in input metadata file
+    # <--- you should have written a unit test for that, please do that next time
 
     def isanum(str):
-
-        # checks if a string contains only digits, decimal points "." or minus signs "-"
-        
+        """
+        Checks if a string contains only digits, decimal points "." or minus signs "-"        
+        """
         from string import digits
         for c in str:
-            if not c in digits and c!="." and c!="-": return 0
-        return 1
+            if not c in digits and c!="." and c!="-": return False
+        return True
 
 
     def isint(str):
-
-        # checks if a string contains only digits or minus signs "-"
-        
+        """
+        Checks if a string contains only digits or minus signs "-"        
+        """
         from string import digits
         for c in str:
-            if not c in digits and c!="-": return 0
-        return 1
+            if not c in digits and c!="-": return False
+        return True
 
-    
+    def getNumberOfLines(filename,nfields):
+        """
+        Returns length of the given file in lines. Throws IOError if the file does not 
+        exist.
+        """
+        theFile=open(filename,'rU')
+        i=0
+        for line in theFile:
+            fields=line.split(splitterChar)
+            if len(fields)!=nfields:
+                f.close()
+                raise Exception("Invalid number of fields on row: "+str(i+1))
+            i+=1
+        theFile.close()
+        return i
+
+    def checkNodes(filename,net,fieldNames,hasHeader,splitterChar):
+        """
+        Returns
+        -------
+        A tuple where: 
+        The first element is True if each node in a network is in the property file, and otherwise False
+        The second element is True if each node in the property file is in the network, and otherwise False
+        """
+
+        nfields=len(fieldNames)
+        nNodesFound=0
+        netHasAllNodes=True
+        nodeLabelField=fieldNames.index('node_label')
+        f=open(filename,'rU')
+        if hasHeader:
+            f.readline()
+        for i,line in enumerate(f):
+            fields=line.split(splitterChar)
+            if len(fields)!=nfields:
+                f.close()
+                raise Exception("Invalid number of fields on row: "+str(i+1))
+
+            if isint(fields[nodeLabelField]):
+                nodeLabel=int(fields[nodeLabelField]) # if node name/label is an integer, convert to int
+            else:
+                nodeLabel=fields[nodeLabelField]
+
+            if nodeLabel in net:
+                nNodesFound+=1
+            else:
+                netHasAllNodes=False
+        f.close()
+
+        fileHasAllNodes=(nNodesFound==len(net))
+
+        return fileHasAllNodes,netHasAllNodes
+
+    def addProperty(net,node,propertyName,theString):
+        if isanum(theString):  # if it is a number 
+            net.nodeProperty[propertyName][node]=float(theString)
+            if isint(theString):  # if it is integer 
+                net.nodeProperty[propertyName][node]=int(theString)
+        else: # if it is a string
+            net.nodeProperty[propertyName][node]=theString 
+
+        
+
     f=open(filename,'rU')   # NOTE: the 'U' flag means "Universal Newlines" - guarantees that
                             # newlines are recognized as newlines independent of exact EOL character
                             # and operating system. USE THIS EVERYWHERE FROM NOW ON
     
 
-    #Read in the fields
-    
+    #check if the network is full or sparse.
+    netIsSparse=type(net)!=pynet.FullNet and type(net)!=pynet.SymmFullNet
+
+    #Read in the field names
     if propertyNames==None:
         line=f.readline() 
         fieldNames=line.strip().split(splitterChar)  # field names are taken from first line (header)
-        nfields=len(fieldNames)
     else:
-        fieldNames=propertyNames    # fieldNames are given
+        fieldNames=list(propertyNames)    # fieldNames are given, copy field names to a new list
         if type(fieldNames)==str:
-            fieldNames=[fieldNames] # if only a single field name string was given, convert it into a list (this makes it easier for the user if only one property is added, as he only needs to type 'property' and not ['property'] )
-        if fieldNames[0]=="node_label":  # the first element is node_label
-            nfields=len(fieldNames)
-        else:
-            fieldNames=["node_label"]+ fieldNames[:]  # if the first element is NOT node_label, add it
-            nfields=len(fieldNames)
-            
-    #if not(net.isFull()):
-    # SymmNet has no module isFull, so I replaced the test with checking whether the net is one of the Full types.
-    if type(net)!=pynet.FullNet and type(net)!=pynet.SymmFullNet:
+            fieldNames=[fieldNames] # if only a single field name string was given, 
+                                    # convert it into a list (this makes it easier for the user 
+                                    # if only one property is added, as he only needs to type 'property' 
+                                    # and not ['property'] )
+        if "node_label" not in fieldNames and netIsSparse: # if node_label is not a field and the net is sparse 
+            fieldNames=["node_label"]+ fieldNames[:]    # add node_label as the first element  
+    nfields=len(fieldNames)
 
-        # for "ordinary" networks, node properties are "matched" based on first column of
-        # input file, containing node labels
-    
-        if fieldNames[0]!="node_label":
-            raise Exception("The properties file should define the first field as \"node_label\".")
+    #This function behaves in different way for sparse and full networks
+    if netIsSparse:
+        #check that there is a field for node labels
+        if "node_label" not in fieldNames:
+            f.close()
+            raise Exception("The properties file should define a field \"node_label\".")        
+        nodeLabelField=fieldNames.index("node_label")
+
+        #enforce the rules of having no missing or extra nodes:
+        fileHasAllNodes,netHasAllNodes=checkNodes(filename,net,fieldNames,propertyNames==None,splitterChar)
+        if fileHasAllNodes==False and not allowMissingData:
+            f.close()
+            raise Exception("The property file is missing some nodes that are in the network.")
+        if netHasAllNodes==False and not allowExtraData:
+            f.close()
+            raise Exception("The property file has some extra nodes that are not in the network.")
 
         #Add the property names to the net
         for field in range(1,nfields):
             netext.addNodeProperty(net,fieldNames[field])
 
-
         #Add the properties for each node
         someNodesNotInNetwork=False
-        for i,line in enumerate(f):
-        
-            fields=line.strip().split(splitterChar)
-        
-            if len(fields)!=nfields:
-                raise Exception("The number of fields on a row does not match"
-                                " the header line or given list of properties: "
-                                +str(i+2))
-            if isint(fields[0]):
-                nodeName=int(fields[0]) # if node name/label is an integer, convert to int
-            else:
-                nodeName=fields[0]
+        for i,line in enumerate(f):        
+            fields=line.strip().split(splitterChar)        
+            
+            assert len(fields)==nfields, "The number of fields on a row does not match"
 
+            if isint(fields[nodeLabelField]):
+                nodeName=int(fields[nodeLabelField]) # if node name/label is an integer, convert to int
+            else:
+                nodeName=fields[nodeLabelField]
 
             if nodeName in net:
-                for field in range(1,nfields):
-                    tmp=fields[field]
-                    if isanum(tmp):  # if it is a number 
-                        net.nodeProperty[fieldNames[field]][nodeName]=float(tmp)
-                        if isint(tmp):  # if it is integer 
-                            net.nodeProperty[fieldNames[field]][nodeName]=int(tmp)
-                    else: # if it is a string
-                        net.nodeProperty[fieldNames[field]][nodeName]=tmp 
-
-            else:
-                someNodesNotInNetwork=True
-                #warnings.warn("Node \'"+str(nodeName)+"\' in input file doesn't exist in the network!")
-
-
-        if someNodesNotInNetwork:
-            warnings.warn("Some of the nodes in the property file do not exist in the network!")
+                for field in range(1,nfields): #assumes that node label on the first field
+                    addProperty(net,nodeName,fieldNames[field],fields[field])
             
-    else:
-        netsize=len(net)
+    else: # The network is full
         # for FullNets and SymmFullNets, where nodes are just indexed (0..(N-1)), properties are
         # added to nodes in this order.
         #
         # if node_labels are used, these will be inserted as regular property fields   
-        #
-        # todo: check that input file has N-1 rows
 
+        #check that input file has N-1 rows
+        nPropertyLines=getNumberOfLines(filename,nfields)
+        if propertyNames==None:
+            nPropertyLines=nPropertyLines-1
+        if nPropertyLines!=len(net):
+            f.close()
+            raise Exception("Mismatch on number of property lines and number of nodes in the network. "
+                            "The network has "+str(len(net))+" nodes and the property file has "
+                            +str(nPropertyLines) +" lines of data.")
+
+        #Add the property names to the net
         for field in range(0,nfields):
             netext.addNodeProperty(net,fieldNames[field])
 
         #Add the properties for each node
         for i,line in enumerate(f):
             fields=line.strip().split(splitterChar)
-            if len(fields)!=nfields:
-                raise Exception("Invalid number of fields on row: "+str(i+2))
-            if i<netsize:
-                for field in range(0,nfields):
-                    net.nodeProperty[fieldNames[field]][(i)]=fields[field]
-            else:
-                raise Exception("Too many lines, network size is "+str(netsize))
+
+            #these should never happen
+            assert len(fields)==nfields, "Invalid number of fields in a row."
+            assert i<len(net), "The property file has too many lines."
+
+            for field in range(0,nfields):
+                addProperty(net,i,fieldNames[field],fields[field])
+    f.close()
 
         
 def saveNodeProperties(net,filename):
