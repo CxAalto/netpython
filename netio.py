@@ -579,3 +579,7 @@ def saveNodeProperties(net,filename):
         f.write("\n")
 
 
+if __name__ == '__main__':
+    """Run unit tests if called."""
+    from tests.test_netio import *
+    unittest.main()
