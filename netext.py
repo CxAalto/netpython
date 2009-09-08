@@ -118,6 +118,32 @@ def getSubnet(net,nodes):
     """
     return transforms.getSubnet(net,nodes)
 
+def getNumericProperties(net):
+    """ Returns a list of all node properties
+    whose values are numeric (int or float)"""
+
+    propertylist=list(net.nodeProperty)
+
+    numericproperties=[]
+
+    for prop in propertylist:
+
+        numericproperty=True
+
+        for node in net:
+
+            if not(isinstance(net.nodeProperty[prop][node],int) or (isinstance(net.nodeProperty[prop][node],float))):
+
+                numericproperty=False
+
+        if numericproperty==True:
+
+            numericproperties.append(prop)
+
+    return numericproperties
+
+    
+
 
 class Enumerator:
     """
