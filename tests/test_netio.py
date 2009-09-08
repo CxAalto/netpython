@@ -5,14 +5,14 @@ from netpython import netio
 from netpython import transforms
 import os
 
-class TestTransforms(unittest.TestCase):
+class TestNetio(unittest.TestCase):
     
     def setUp(self):
         self.folder=os.path.dirname(netio.__file__)+os.path.join("a","tests","")[1:]
         self.simpleWeightedNet=netio.loadNet(self.folder+"testData/simpleWeightedNet.edg")
 
-        self.sn_properties1="testData/nodeProperties/simpleWeightedNet_properties1.txt"
-        self.sn_properties1_nolabels="testData/nodeProperties/simpleWeightedNet_properties1_nolabels.txt"                
+        self.sn_properties1=self.folder+"testData/nodeProperties/simpleWeightedNet_properties1.txt"
+        self.sn_properties1_nolabels=self.folder+"testData/nodeProperties/simpleWeightedNet_properties1_nolabels.txt"                
     def test_loadingNodeProperties_workingFiles_sparse1(self):
         sn=self.simpleWeightedNet
         netio.loadNodeProperties(sn,self.sn_properties1)
@@ -53,12 +53,12 @@ if __name__ == '__main__':
         # If true, run only the tests listed below, otherwise run all tests
         # (this option is for testing the tests :-) )
         suite = unittest.TestSuite()
-        suite.addTest(TestTransforms("test_loadingNodeProperties_workingFiles_sparse1"))
-        suite.addTest(TestTransforms("test_loadingNodeProperties_workingFiles_sparse2"))
-        suite.addTest(TestTransforms("test_loadingNodeProperties_workingFiles_sparse3"))
-        suite.addTest(TestTransforms("test_loadingNodeProperties_workingFiles_full1"))
-        suite.addTest(TestTransforms("test_loadingNodeProperties_workingFiles_full2"))
-        suite.addTest(TestTransforms("test_loadingNodeProperties_brokenFiles"))
+        suite.addTest(TestNetio("test_loadingNodeProperties_workingFiles_sparse1"))
+        suite.addTest(TestNetio("test_loadingNodeProperties_workingFiles_sparse2"))
+        suite.addTest(TestNetio("test_loadingNodeProperties_workingFiles_sparse3"))
+        suite.addTest(TestNetio("test_loadingNodeProperties_workingFiles_full1"))
+        suite.addTest(TestNetio("test_loadingNodeProperties_workingFiles_full2"))
+        suite.addTest(TestNetio("test_loadingNodeProperties_brokenFiles"))
         unittest.TextTestRunner().run(suite)
     else:
         # Run all tests.
