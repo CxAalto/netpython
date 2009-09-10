@@ -1,8 +1,10 @@
 import pynet,netext
 from math import log
+import numpy as np
+import info_theory as ith
 
 #class CommStruct:
-class NodeFamily:
+class NodeFamily(object):
     """
     Defines a community structure of a network.
     WARNING: Name of this class was changed
@@ -15,18 +17,17 @@ class NodeFamily:
     #def __init__(self):
     #    self.comm=[]
 
-    def __init__(self,cmap={},inputFile=None):
+    def __init__(self, cmap={}, inputFile=None):
         self.comm=[]
         for community in cmap:
             self._addCommunity(cmap[community])
-        if inputFile!=None:
+        if inputFile is not None:
             self._parseStrings(inputFile)
         self._sortBySize()
 
     def _parseStrings(self,input):
         for line in input:
-            fields=line.split()
-            fields=map(int,fields)
+            fields = map(int, line.split())
             self._addCommunity(fields)
 
     def __str__(self):
@@ -38,7 +39,7 @@ class NodeFamily:
         return string
 
     def _sortBySize(self):
-        self.comm.sort(lambda x,y:cmp(len(x),len(y)),reverse=True)     
+        self.comm.sort(key=len, reverse=True)     
         
     def _addCommunity(self,newCommunity):
         self.comm.append(set(newCommunity))
@@ -54,21 +55,22 @@ class NodeFamily:
             yield c
 
     def getSizeDist(self):
+        """Get size distribution.
+        
+        Return
+        ------
+        sizeDist : dict {community_size: count}
+           The community size distribution where the community sizes
+           are keys and the number of communities of that size is the
+           value.
         """
-        Returns a map of size distribution. Keys are the sizes of the communities
-        and their values are the number of communities of the size.
-        """
-        dist={}
-        for set in self.comm:
-            if len(set) in dist:
-                dist[len(set)]+=1
-            else:
-                dist[len(set)]=1
+        dist = {}
+        for c in self.comm:
+            dist[len(c)] = 1 + dist.get(len(c), 0)
         return dist
 
     def getGiant(self):
-        """
-        Returns the largest component as a set of nodes
+        """Get the largest component as a set of nodes.
         """
         maxsize=0
         largest=None
@@ -80,36 +82,36 @@ class NodeFamily:
         return largest
 
     def getGiantSize(self):
+        """Get the size of the largest component.
         """
-        Returns the size of the largest component
-        """
-        giant=self.getGiant()
-        if giant!=None:
-            return len(giant)
-        else:
-            return 0
+        giant = self.getGiant()
+        return (0 if giant is None else len(giant))
 
-    def getSusceptibility(self,size=None):
-        """
-        Returns the susceptibility defined as:
-        (Sum_{s!=size(gc)} n_s * s * s) / (Sum_{s!=size(gc)} n_s * s)
-        Size is the number of nodes in the network. If it is given, it is assumed
-        that communities of size 1 are not included in this community structure.
-        If there is only 0 or 1 community, zero is returned.
-        """
-        sd=self.getSizeDist()
+    def getSusceptibility(self, size=None):
+        """Return the susceptibility.
+
+        Susceptibility is defined as: 
         
-        if len(sd)<1:
+        (Sum_{s!=size(gc)} n_s * s * s) / (Sum_{s!=size(gc)} n_s * s)
+
+        Size is the number of nodes in the network. If it is given, it
+        is assumed that communities of size 1 are not included in this
+        community structure.  If there is only 0 or 1 community, zero
+        is returned.
+        """
+        sd = self.getSizeDist()
+        
+        if len(sd) < 1:
             if size==None or size==0:
                 return 0.0
             else:
                 return 1.0
 
-        sizeSum=0
-        for key in sd.keys():
-                sizeSum+=key*sd[key]
+        sizeSum = 0
+        for key, value in sd.iteritems():
+            sizeSum += key*value
 
-        #If no size is given, assume that also communities of size 1 are included
+        # If no size is given, assume that also communities of size 1 are included
         if size==None:
             sus=0
             size=sizeSum
@@ -117,26 +119,25 @@ class NodeFamily:
             sus=size-sizeSum #s=1
             assert(sus>=0)
 
-        #Remove largest component
-        gc=max(sd.keys())
-        sd[gc]=0
+        # Remove largest component
+        gc = max(sd.keys())
+        sd[gc] = 0
 
-        #Calculate the susceptibility
-        for key in sd.keys():
-            sus+=key*key*sd[key]
-        if (size-gc)==0:
+        # Calculate the susceptibility
+        for key, value in sd.iteritems():
+            sus += value*key**2
+        if (size-gc) == 0:
             return 0.0
         else:
             return float(sus)/float(size-gc)
-
 
     def getCollapsed(self):
         """
 
         """
-        newcs=NodeFamily({})
+        newcs = NodeFamily()
         for community in self.comm:
-            newCommunity=set()
+            newCommunity = set()
             for oldnode in community:
                 for newnode in oldnode:
                     newCommunity.add(newnode)
@@ -183,16 +184,12 @@ class NodeFamily:
         return nodeCommunity
 
     def getEntropy(self):
+        """Calculate entropy.
+
+        Assumes that the sets in the family do not overlap.
         """
-        Calculates entropy. Assumes that the sets in the famile do not overlap.
-        """
-        h=0
-        n=sum(map(len,list(self)))
-        for c in self:
-            p=float(len(c))/float(n)
-            if p!=0:
-                h+=-p*log(p,2)
-        return h
+        len_c = map(len, self.comm)
+        return ith.entropy_X(np.array(len_c)/float(sum(len_c)))
 
     def getMutualInformation(self,otherFamily):
         i=0.0
@@ -210,10 +207,98 @@ class NodeFamily:
         return i
 
     def getNormalizedMutualInformation(self,otherFamily):
-        return self.getMutualInformation(otherFamily)*2/(self.getEntropy()+otherFamily.getEntropy())
-        
+        """Return normalized mutual information.
 
+        The normalized mutual information is
+             I_n(X;Y) = 2*I(X;Y)/(H(X)+H(Y))
+        I_n(X;Y) is always in [0, 1].
+        """
+        return (2*self.getMutualInformation(otherFamily)
+                /(self.getEntropy()+otherFamily.getEntropy()))
+
+    def getMImetric(self,otherFamily):
+        """Return a metric based on mutual information.
+
+        The returned value is
+             D(X,Y) = 1 - I(X;Y)/max{H(X), H(Y)}
+        D(X,Y) is a metric: it is symmetric, non-negative, satisfies
+        the triangle inequality and D(X,Y)=0 if and only if X==Y.
+        """
+        return 1.0 - (self.getMutualInformation(otherFamily)
+                      /max(self.getEntropy(),otherFamily.getEntropy()))
         
+        
+    def getMaxVariationOfInformation(self, otherFamily, N_nodes=None):
+        """Return maximum variation of information.
+
+        The maximum variation of information can be used to compare
+        two families with overlapping node set.
+
+        The definition comes from Appendix B of
+          Andrea Lancichinetti, Santo Fortunato, Janos Kertesz (2009)
+          `Detecting the overlapping and hierarchical community
+          structure of complex networks'.
+
+        Parameters
+        ----------
+        otherFamily : NodeFamily object
+           The other community sructure to compare with.
+        N_nodes : int
+           The total number of nodes in all communities. If None, the
+           size of the union of all communities in both community
+           structures is used. Note that if there are nodes that do
+           not belong in any community this will not give the correct
+           answer.
+
+        Return
+        ------
+        N : float
+           The maximum variation of information.
+
+        Notes
+        -----
+        If one community structure consists of only one community
+        covering all nodes, this measure is always 0.5 (unless of
+        course the other one is identical, in which case 1.0 is
+        returned.)
+        """
+
+        def p_log2_p(p):
+            return (0.0 if p == 0 else -p*np.log2(p))
+
+        # Find out the number of nodes if not given. `Nf` is defined
+        # just to make the code more readable.
+        if N_nodes is None:
+            N_nodes = len(set(reduce(set.union, self.comm+otherFamily.comm)))
+        Nf = float(N_nodes)
+
+        ret_val = 1.0
+        for XF, YF in [(self, otherFamily), (otherFamily, self)]:
+            H_norm = []
+            for X_k in XF:
+                # Calculate the entropies H(X_k|Y_l) for all Y_l in YF
+                # and find the minimum. H_min is initialized to H(X_k).
+                px = len(X_k)/Nf
+                H_min = H_X = ith.entropy_X([px, 1-px])
+                for Y_l in YF:
+                    py = len(Y_l)/Nf
+                    H_Y = ith.entropy_X([py, 1-py])
+                    cut_size = len(X_k.intersection(Y_l))
+                    hP_same = (p_log2_p(cut_size/Nf)
+                               + p_log2_p((Nf - len(X_k.union(Y_l)))/Nf))
+                    hP_diff = (p_log2_p((len(X_k) - cut_size)/Nf)
+                               + p_log2_p((len(Y_l) - cut_size)/Nf))
+                    if (hP_same > hP_diff):
+                        H_min = min(H_min, hP_same + hP_diff - H_Y)
+
+                    #print (X_k, Y_l, hP_same, hP_diff, hP_same > hP_diff,
+                    #       (hP_same + hP_diff - H_Y)/H_X)
+                H_norm.append((0 if H_X == 0 else H_min/H_X))
+
+            ret_val -= 0.5*sum(H_norm)/len(XF)
+            #print H_norm, sum(H_norm)/len(XF)
+
+        return ret_val
 
 class communityTree:
     """
@@ -375,3 +460,9 @@ def expandLeavesOnLeveltree(tree):
             tree[level].comm.append(leaf[0])
             tree[level]._sortBySize()
             
+
+
+if __name__ == '__main__':
+    """Run unit tests if called."""
+    from tests.test_communities import *
+    unittest.main()
