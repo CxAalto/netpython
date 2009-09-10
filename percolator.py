@@ -366,7 +366,7 @@ class KClique(object):
 	return len(self.nodes)
 
 def getIntensity(kclique,net):
-    intensity=0
+    intensity=1
     for edge in kclique.getEdges():
 	intensity*=net[edge[0],edge[1]]
     return pow(intensity,1.0/float(kclique.getK()))
