@@ -1,12 +1,16 @@
+from __future__ import with_statement
+
 # -*- coding: latin-1 -*-
 import pynet
 import netext,percolator,netio,transforms
 import os
 from pylab import *
+from numpy import outer
 import copy
 import random
 import shutil
 import Image
+
 
 
 # --------------------------------------        
@@ -14,6 +18,23 @@ import Image
 class Myplot(object):
     '''empty container'''
     pass
+
+# ---------------------------------------
+
+def ReturnColorMapPlot(colormap,figsize=(2,0.15)):
+
+    thisfigure=Figure(figsize=figsize,dpi=100)
+    axes=thisfigure.add_subplot(1,1,1)
+    #myplot.axes.append(myplot.thisFigure.add_axes([0.0,0.0,3.0,1.0]))
+    axes.set_axis_off()
+
+
+    a=outer(ones(10),arange(0,1,0.01),)
+
+    axes.imshow(a,aspect='auto',cmap=setColorMap(colormap),origin="lower")
+
+    return thisfigure
+    
 
 # ---------------------------------------
 
@@ -200,6 +221,165 @@ def setColorMap(colorMap):
 
 # ---------------------------------------
 
+def getNodeColors(net,colorwith="strength",useColorMap="orange",parentnet=[]):
+    """Returns a dictionary {node:color}. The colors are set based
+    on either node strengh (colorwith="strength", default) 
+    or any nodeProperty. For cases where e.g. nodes which have been thresholded
+    out (k=0), the input parameter parentnet can be used - parentnet should contain the original
+    network *before* thresholding, i.e. containing all original nodes and
+    their attributes. IF parentnet is given, i) if strength is used, its nodes
+    which are NOT in net colored gray, ii) if properties
+    are used, its nodes are colored similarly to those nodes in net. Also the
+    dictionary which is returned contains then all nodes in parentnet"""
+
+    myNodeColors=setColorMap(useColorMap)
+
+    nodeColors={}
+
+    if colorwith=="strength":
+
+        strengths = netext.strengths(net)
+        max_value = max(strengths.values())
+        min_value = min(strengths.values())
+
+        if len(parentnet)>0:        # if we want the dict to include nodes not in net
+
+            for node in parentnet:
+
+                if node in net:     # if the node is in net, use its strength for color
+
+                    nodeColors[node]=setColor(strengths[node],(min_value,max_value),myNodeColors)
+
+                else:               # otherwise color it gray
+
+                    nodeColors[node]=(0.5,0.5,0.5)
+
+        else:
+
+            for node in net:        # if parentnet not given, just color nodes by strength
+    
+                nodeColors[node]=setColor(strengths[node],(min_value,max_value),myNodeColors)        
+
+    else:
+
+        numeric_props=netext.getNumericProperties(net)
+
+        # first check if colorwith is a numeric property
+
+        if colorwith in numeric_props:
+
+            values=[]
+
+            if len(parentnet)>0:    # again if we want to include nodes not in net
+
+                for node in parentnet:  # first get min and max value of property
+
+
+                    values.append(parentnet.nodeProperty[colorwith][node])
+
+                min_value=min(values)
+                max_value=max(values)
+
+                for node in parentnet: # then set colors according to property
+
+                    nodeColors[node]=setColor(parentnet.nodeProperty[colorwith][node],(min_value,max_value),myNodeColors)
+
+            else:                   # otherwise do the above for nodes in net
+
+                for node in net:
+
+                    values.append(net.nodeProperty[colorwith][node])
+
+                
+                min_value=min(values)
+                max_value=max(values)
+
+                for node in net:
+
+                    nodeColors[node]=setColor(net.nodeProperty[colorwith][node],(min_value,max_value),myNodeColors)
+                
+
+    if len(nodeColors)==0:  # finally if for whatever reason no nodes were colored, just set them gray
+
+        if len(parentnet)>0:
+
+            for node in parentnet:
+
+                nodeColors[node]=(0.5,0.5,0.5)
+
+
+        else:
+            for node in net:
+
+                nodeColors[node]=(0.5, 0.5, 0.5)
+
+    return nodeColors
+
+# ------------------------------------------
+
+def getNodeSizes(net,size_by="strength",minsize=2.0,maxsize=6.0):
+    """Returns a dictionary {node:size} for visualizations. The sizes
+    are set using either node strength"""
+
+    nodeSizes={}
+
+    if size_by=="strength":
+
+        strengths = netext.strengths(net)
+        maxs = max(strengths.values())
+        mins = min(strengths.values())           
+
+        if maxs==mins:
+            A=0
+        else:
+            A=(maxsize-minsize)/(maxs-mins)
+
+        B=maxsize-A*maxs
+
+        for node in net:
+
+            nodeSizes[node]=A*strengths[node]+B
+
+    elif size_by=="fixed":
+
+        for node in net:
+
+            nodeSizes[node]=maxsize
+
+    else:
+
+        numeric_props=netext.getNumericProperties(net)
+
+        if size_by in numeric_props:
+
+            values=[]
+
+            for node in net:
+
+                values.append(net.nodeProperty[size_by][node])
+
+            minval=min(values)
+            maxval=max(values)
+
+            if maxval==minval:
+                A=0
+            else:
+                A=(maxsize-minsize)/(maxval-minval)
+
+            B=maxsize-A*maxval
+
+            for node in net:
+
+                nodeSizes[node]=A*net.nodeProperty[size_by][node]+B
+
+    return nodeSizes
+
+
+        
+          
+
+# ---------------------------------------
+
 def setColor(value,valueLimits,colorMap):
     """Converts a numerical value to a color.
 
@@ -244,16 +424,16 @@ def plot_edge(plotobject, xcoords, ycoords, width=1.0, colour='k',
         plotobject.add_patch(arr)
 
 
-def plot_node(plotobject,x,y,color='w',size=8.0):
+def plot_node(plotobject,x,y,color='w',size=8.0,edgecolor='w'):
     plotobject.plot([x], [y], 'yo', markerfacecolor=color,
-                    markeredgecolor='w',markersize=size)
+                    markeredgecolor=edgecolor,markersize=size)
 
 
 # ---------------------------------------
 
 def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
                  labels={}, fontsize=7, showAllNodes=True, nodeColor=None,
-                 nodeSize=1.0, nodeColors={}, bgcolor='white', maxwidth=2.0,
+                 nodeSize=1.0, minnode=2.0, maxnode=6.0, nodeColors={}, nodeSizes={}, bgcolor='white', maxwidth=2.0,
                  minwidth=0.2, uselabels='none', edgeColorMap='winter', 
                  weightLimits=None, setNodeColorsByProperty=None,
                  nodeColorMap='winter', nodePropertyLimits=None,
@@ -290,6 +470,10 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         If True, nodes are colored. Otherwise all nodes are white.
     nodeColors : dict
         Dictionary of node colors by node index.
+    nodeSizes : dict
+        Dictionary of node sizes by node index.
+    minnode : minimum node size, if autoscaling used
+    maxnode : maximum node size, if autoscaling used
     nodeColor : RGB color tuple
         Default color of a node. Three values between 0 and 1, for
         example (1.0, 0, 0) is red and (0.5, 0.5, 0.5) is middle gray.
@@ -302,8 +486,9 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     nodeColorMap : str
         A colormap used to color the nodes listed in
         `setNodeColorsByProperty`.
-    nodePropertyLimits : (???)
-        (What is this?)
+    nodePropertyLimits : [min_val max_val]
+        If nodes are coloured according to a nodeProperty, these
+        are the min and max values of said property.
     equalsize : bool
         If True, all nodes are of size `nodeSize`. If False, node size
         is based on node strength.
@@ -410,11 +595,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     # The following is for the EDEN software, where "nets" or nets
     # derived from matrices can have edge distances instead of weights.
     if hasattr(net,'matrixtype'):
-        if net.matrixtype==0:
-            # BUG! This will fail if tried, because the function
-            # dist_to_weights doesn't seem to exist. Luckily the rest
-            # of the code works fine if this is never used.
-            # (LK 27.8.2009)
+        if net.matrixtype==0:        
             net=transforms.dist_to_weights(net)
 
     if baseFig==None:
@@ -422,16 +603,20 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         axes=thisfigure.add_subplot(111)
     else:
         thisfigure=baseFig.figure
+        thisfigure.set_facecolor(bgcolor)
         axes=thisfigure.gca()
 
     axes.set_axis_bgcolor(bgcolor)
+    
     if frame == False and showTicks == False: 
         axes.set_axis_off()
 
     # Set the color for node labels
     fontcolor='w'
+    node_edgecolor='w'
     if bgcolor=='white':
         fontcolor='k'
+        node_edgecolor='k'
         
     # First draw all edges, if there are any
     edges=list(net.edges)
@@ -478,8 +663,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     else:
         nodelist = [node for node in net]
 
-    minnode = 2.0
-    maxnode = 6.0
+
 
     strengths = netext.strengths(net)
     maxs = max(strengths.values())
@@ -510,6 +694,14 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
             nodesize=nodeSize
             if (nodesize<1.0):          # hack: Himmeli wants size <1.0
                 nodesize=nodesize*maxnode  # if Himmeli-type size used, scale up
+
+        elif len(nodeSizes)>0:          # if nodeSizes are given, use it
+            
+            if node in nodeSizes.keys(): # if this node is in nodeSizes, use the value
+                nodesize=nodeSizes[node]
+            else:
+                nodesize=minnode        # otherwise use min value (e.g. if nodeSizes has only k>0 nodes,
+                                        # and k=0 nodes from thresholding are shown too.
         else:
             if node in net:
                 nodesize=A*strengths[node]+B
@@ -593,14 +785,15 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         nodeLabel_xOffset = (nodeLabel_xOffset or float(nodesize)/40)
 
         plot_node(axes, x=xy[node][0], y=xy[node][1],
-                  color=color, size=nodesize)
-        if uselabels == 'all':
-            axes.annotate(str(node),(xy[node][0]+nodeLabel_xOffset,xy[node][1]),
+                  color=color, size=nodesize,edgecolor=node_edgecolor)
+
+        if not (uselabels=='none'):
+
+            if uselabels == 'all':
+                axes.annotate(str(node),(xy[node][0]+nodeLabel_xOffset,xy[node][1]),
                           color=fontcolor,size=fontsize)
-        elif node in labels:
-            axes.annotate(labels[node],(xy[node][0]+nodeLabel_xOffset,
-                                        xy[node][1]),
-                          color=fontcolor,size=fontsize)
+            elif node in labels:
+                axes.annotate(labels[node],(xy[node][0]+nodeLabel_xOffset,xy[node][1]),color=fontcolor,size=fontsize)
 
     xylist = xy.values()
     xlist=[]
@@ -638,6 +831,9 @@ class Himmeli:
     """ This class uses the executable Himmeli, which produces an .eps
     file AND outputs x-y-coordinates of nodes for visualization.
     """
+
+    #---------------------------------------
+    
     # First we have to find this executable
     if sys.platform=='win32':
         # For Win use direct path (probably works better with the
@@ -665,6 +861,8 @@ class Himmeli:
                      + himmeliExecutable)
         raise Exception(complaint)
 
+    # ----------------------------------------
+
     epsilon=0.0001 #hack, find the real thing
 
     def __init__(self, inputnet, time=20, configFile=None, threshold=None,
@@ -672,6 +870,14 @@ class Himmeli:
                  equalsize=True, nodeColor="999999", nodeSize="1.0",
                  coordinates=None, labels={}, distanceUnit=1, showAllNodes=True,
                  edgeLabels=False, nodeColors={}, treeMode=False):
+
+        # inputs:
+        # time - time limit (secs) for the Himmeli optimization of layout; for large nets, use higher values
+        # configFile - Himmeli .cfg file, if you want to use a pre-existing one
+        # threshold - for weighted nets; use only edges above this
+        # useMST (true/false) : true - uses pre-calculated MST coords for the (weighted) net
+
+        
         # Checking that the given net is valid and not empty
         #if net.__class__!=pynet.Net and net.__class__!=pynet.SymmNet:
         if not isinstance(inputnet,pynet.Net):
@@ -684,7 +890,7 @@ class Himmeli:
         # weights.
         if hasattr(inputnet,'matrixtype'):
             if inputnet.matrixtype==0:
-                inputnet = dist_to_weights(inputnet)
+                inputnet = transforms.dist_to_weights(inputnet)
 
         if wmin is None:
             # Finds out smallest and largest weight
@@ -869,14 +1075,15 @@ class Himmeli:
         network with the epsilon edges directly added. No need for
         rewriting to any file; EdgeWeightFilter is always used.
         """
-        with open(fileName,'a') as f:
-            last=None
-            for node in net:
-                if last!=None:
-                   if net[last,node]==0:
-                       file.write(str(node)+"\t"+str(last)+"\t"
-                                  +str(self.epsilon)+"\n")
-                last=node
+      #  with open(fileName,'a') as f:
+      #      last=None
+      #      for node in net:
+      #          if last!=None:
+      #             if net[last,node]==0:
+      #                 file.write(str(node)+"\t"+str(last)+"\t"
+      #                            +str(self.epsilon)+"\n")
+      #          last=node
+        pass
 
     def __del__(self):
         if os.path.isfile(self.netName+"_0001.eps"):
