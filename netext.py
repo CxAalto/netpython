@@ -10,6 +10,7 @@ import shutil
 import copy
 from PIL import Image
 
+
 class Net_edges:
     def __init__(self,net):
         self.net=net
@@ -294,3 +295,48 @@ def getPathLengths(net,startingNode):
          pathlengths[neighbor]=i
      edge=newEdge
     return pathlengths
+
+def getBetweennessCentrality(net):
+    """
+    Returns a map from each node to its unweighted betweenness centrality.
+
+    Note: this function needs some more testing.
+    """
+    #Implementation of the algorithm found in this paper:
+    #www.inf.uni-konstanz.de/algo/publications/b-fabc-01.pdf
+    cb={}
+    for node in net:
+        cb[node]=0
+
+    for node in net:
+        st=[]
+        p={}
+        sigma={}
+        d={}
+        delta={}
+        for t in net:
+            p[t]=[]
+            sigma[t]=0
+            d[t]=-1
+            delta[t]=0
+        sigma[node]=1
+        d[node]=0
+        q=[node]
+        while len(q)>0:
+            v=q.pop(0)
+            st.append(v)
+            for w in net[v]:
+                if d[w]<0:
+                    q.append(w)
+                    d[w]=d[v]+1
+                if d[w]==d[v]+1:
+                    sigma[w]+=sigma[v]
+                    p[w].append(v)
+        while len(st)>0:
+            w=st.pop()
+            for v in p[w]:
+                delta[v]+=float(sigma[v])/float(sigma[w])*(1+delta[w])
+                if w!=node:
+                    cb[w]+=delta[w]
+    return cb
+
