@@ -110,6 +110,14 @@ class MicrosatelliteData:
     def getGroupwiseDistance_Goldstein(self,x,y):
         """
         Returns the goldstein distance between two populations
+
+        Parameters
+        ----------
+        x and y are lists of sample indices correspoding to samples of two populations.
+        The distance between these populations is calculated.
+
+        Example
+        -------
         >>> ms=eden.MicrosatelliteData(open("../data/microsatellites/microsatellites.txt",'r'))
         >>> ms_u = ms.getUniqueSubset()
         >>> ms_u.getGroupwiseDistance_Goldstein([1,2,3,4],[1,2,3,4]) == 1330.5
