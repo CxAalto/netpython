@@ -238,6 +238,10 @@ def getNodeColors(net,colorwith="strength",useColorMap="orange",parentnet=[]):
 
     if colorwith=="strength":
 
+        if hasattr(net,'matrixtype'):
+            if net.matrixtype==0:        
+                net=transforms.dist_to_weights(net)
+
         strengths = netext.strengths(net)
         max_value = max(strengths.values())
         min_value = min(strengths.values())
@@ -324,6 +328,10 @@ def getNodeSizes(net,size_by="strength",minsize=2.0,maxsize=6.0):
     nodeSizes={}
 
     if size_by=="strength":
+
+        if hasattr(net,'matrixtype'):
+            if net.matrixtype==0:        
+                net=transforms.dist_to_weights(net)
 
         strengths = netext.strengths(net)
         maxs = max(strengths.values())
