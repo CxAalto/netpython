@@ -262,7 +262,7 @@ def getNodeColors(net,colorwith="strength",useColorMap="orange",parentnet=[]):
 
             for node in net:        # if parentnet not given, just color nodes by strength
     
-                nodeColors[node]=setColor(strengths[node],(min_value,max_value),myNodeColors)        
+                nodeColors[node]=setColor(strengths[node],(min_value,max_value),myNodeColors)
 
     else:
 
@@ -801,7 +801,15 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
                 axes.annotate(str(node),(xy[node][0]+nodeLabel_xOffset,xy[node][1]),
                           color=fontcolor,size=fontsize)
             elif node in labels:
-                axes.annotate(labels[node],(xy[node][0]+nodeLabel_xOffset,xy[node][1]),color=fontcolor,size=fontsize)
+                if isinstance(labels[node],float):
+
+                    showthislabel="%2.2f" % labels[node]
+
+                else:
+
+                    showthislabel=labels[node]
+                    
+                axes.annotate(showthislabel,(xy[node][0]+nodeLabel_xOffset,xy[node][1]),color=fontcolor,size=fontsize)
 
     xylist = xy.values()
     xlist=[]
