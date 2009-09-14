@@ -374,11 +374,13 @@ class ProjectLaunchDialog(MySimpleDialog):
         self.bottompart=Frame(self.wholeframe)
 
         r1=Radiobutton(self.bottompart,text='Microsatellite repetitions',value='ms',variable=masterclass.datatype)
+        r15=Radiobutton(self.bottompart,text='Microsatellites, multiple populations',value='mpop',variable=masterclass.datatype)
         r2=Radiobutton(self.bottompart,text='Distance matrix',value='dmat',variable=masterclass.datatype)
         r3=Radiobutton(self.bottompart,text='Network data',value='net',variable=masterclass.datatype)
         r1.grid(row=1,column=0,sticky=W)
-        r2.grid(row=2,column=0,sticky=W)
-        r3.grid(row=3,column=0,sticky=W)
+        r15.grid(row=2,column=0,sticky=W)
+        r2.grid(row=3,column=0,sticky=W)
+        r3.grid(row=4,column=0,sticky=W)
 
         self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
 
@@ -881,4 +883,336 @@ class PercolationDialog(MySimpleDialog):
     def applyme(self):
         self.result=(self.threshold.get())
         
+
+class VisualizationOptions(MySimpleDialog):
+    """First window shown when launching a new analysis wizard.
+        Inquires if the user wants to load microsatellite data,
+        a distance matrix, or a network file."""
+    
+
+    def __init__(self,parent,network,title=None,titlemsg="Choose visualization options"):
+
+        Toplevel.__init__(self,parent)
+        #self.configure(bg='Gray80')
+      #  self.transient(parent)
+
+        self.title(title)
+
+        self.titlemsg=titlemsg
+        self.parent=parent
+        self.result=None
+
+        self.vcolor=StringVar()
+        self.vsize=StringVar()
+        self.bgcolor=IntVar()
+      
+       # self.linfirst=IntVar()
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        self.buttonbox(self.datatype)
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.wait_window(self)
+
+    def buttonbox(self,datatype='msat'):
+        """OK, Cancel and Help buttons"""
+
+        box=Frame(self)
+        w=Button(box,text="OK",width=10,command=self.ok,default=ACTIVE)
+        w.pack(side=LEFT,padx=5,pady=5)
+        w=Button(box,text="Cancel",width=10,command=self.cancel)
+        w.pack(side=LEFT,padx=5,pady=5)
+
+        self.bind("&lt;Return>",self.ok)
+        self.bind("&lt;Escape",self.cancel)
+
+        box.pack()
+
+    def body(self,masterclass,masterwindow,titlemsg="Select visualization options"):
+
+       # self.b1=Checkbutton(masterwindow,text='Use linear bins for 1..10',variable=masterclass.linfirst,state=ACTIVE,bg='Gray80')
+       # self.b1.grid(row=0,column=0,columnspan=2)
+       
+
+        self.wholeframe=Frame(masterwindow,relief='sunken',borderwidth=2)
+        
+        self.clabel=Label(self.wholeframe,text=self.titlemsg,justify=LEFT,anchor=W,bg='gray90',relief='groove',borderwidth=1)
+        self.clabel.pack(side=TOP,expand=YES,fill=X,ipadx=5,ipady=5)
+
+        self.bottompart=Frame(self.wholeframe)
+
+        scrollbar = Scrollbar(self.bottompart, orient=VERTICAL)
+        listbox = Listbox(self.bottompart, yscrollcommand=scrollbar.set)
+        scrollbar.config(command=listbox.yview)
+        scrollbar.pack(side=RIGHT, fill=Y)
+        listbox.pack(side=LEFT, fill=BOTH, expand=1)
+        
+        listbox.insert(END,'none')
+        listbox.insert(END,'by degree')
+
+        plist=netext.getNumericProperties(network)
+
+        for prop in plist:
+            listbox.insert(END,prop)
+       
+     
+        self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
+
+        self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
+       
+        return self.wholeframe
+
+    def applyme(self):
+        #self.result=(self.metatype.get())
+        pass
+
+    def displayhelp(self,datatype):
+        MetaHelpWindow(self,datatype)
+
+
+class SliderDialog(MySimpleDialog):
+    """Dialog for inputting a value using a slider (e.g. for font sizes etc)"""
+    
+
+    def __init__(self,parent,title=None,titlemsg="Select label font size",minval=0,maxval=100,currval=7):
+
+        Toplevel.__init__(self,parent)
+        #self.configure(bg='Gray80')
+      #  self.transient(parent)
+
+        self.title(title)
+
+        self.titlemsg=titlemsg
+
+        self.parent=parent
+        self.result=None
+
+        self.slidertype=IntVar()
+        self.minval=minval
+        self.maxval=maxval
+        self.currval=currval
+      
+       # self.linfirst=IntVar()
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        self.buttonbox()
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.wait_window(self)
+
+    def body(self,masterclass,masterwindow,titlemsg="Select label font size"):
+
+       # self.b1=Checkbutton(masterwindow,text='Use linear bins for 1..10',variable=masterclass.linfirst,state=ACTIVE,bg='Gray80')
+       # self.b1.grid(row=0,column=0,columnspan=2)
+
+        self.wholeframe=Frame(masterwindow,relief='sunken',borderwidth=2)
+        
+        self.clabel=Label(self.wholeframe,text=self.titlemsg,justify=LEFT,anchor=W,bg='gray90',relief='groove',borderwidth=1)
+        self.clabel.pack(side=TOP,expand=YES,fill=X,ipadx=5,ipady=5)
+
+        self.bottompart=Frame(self.wholeframe)
+
+      
+        self.scale=Scale(self.bottompart, from_=self.minval, to=self.maxval, orient=HORIZONTAL)
+        self.scale.set(self.currval)
+
+
+        self.scale.pack()
+
+        self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
+
+        self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
+       
+        return self.wholeframe
+
+    def applyme(self):
+        self.result=(self.scale.get())
+
+class DoubleSliderDialog(MySimpleDialog):
+    """Dialog for inputting a value using a slider (e.g. for font sizes etc)"""
+    
+
+    def __init__(self,parent,title=None,titlemsg="Select label font size",resolution=1,minval_1=0,maxval_1=100,currval_1=7,minval_2=0,maxval_2=0,currval_2=7,slidertext_1='min',slidertext_2='max'):
+
+        Toplevel.__init__(self,parent)
+        #self.configure(bg='Gray80')
+      #  self.transient(parent)
+
+        self.title(title)
+
+        self.titlemsg=titlemsg
+
+        self.parent=parent
+        self.result=None
+
+        self.slidertype_1=IntVar()
+        self.minval_1=minval_1
+        self.maxval_1=maxval_1
+        self.currval_1=currval_1
+        self.slidertext_1=slidertext_1
+        self.resolution=resolution
+
+        self.slidertype_2=IntVar()
+        self.minval_2=minval_2
+        self.maxval_2=maxval_2
+        self.currval_2=currval_2
+        self.slidertext_2=slidertext_2
+      
+       # self.linfirst=IntVar()
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        self.buttonbox()
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.wait_window(self)
+
+    def body(self,masterclass,masterwindow,titlemsg="Select label font size"):
+
+       # self.b1=Checkbutton(masterwindow,text='Use linear bins for 1..10',variable=masterclass.linfirst,state=ACTIVE,bg='Gray80')
+       # self.b1.grid(row=0,column=0,columnspan=2)
+
+        self.wholeframe=Frame(masterwindow,relief='sunken',borderwidth=2)
+        
+        self.clabel=Label(self.wholeframe,text=self.titlemsg,justify=LEFT,anchor=W,bg='gray90',relief='groove',borderwidth=1)
+        self.clabel.pack(side=TOP,expand=YES,fill=X,ipadx=5,ipady=5)
+
+        self.bottompart=Frame(self.wholeframe)
+
+        Label(self.bottompart,text=self.slidertext_1,justify=LEFT,anchor=W,bg='gray90',relief='groove',borderwidth=1).grid(row=0,column=0)
+          
+        self.scale_1=Scale(self.bottompart, from_=self.minval_1, to=self.maxval_1, orient=HORIZONTAL,resolution=self.resolution)
+        self.scale_1.set(self.currval_1)
+
+
+        self.scale_1.grid(row=0,column=1)
+
+        Label(self.bottompart,text=self.slidertext_2,justify=LEFT,anchor=W,bg='gray90',relief='groove',borderwidth=1).grid(row=1,column=0)
+          
+        self.scale_2=Scale(self.bottompart, from_=self.minval_2, to=self.maxval_2, orient=HORIZONTAL,resolution=self.resolution)
+        self.scale_2.set(self.currval_2)
+
+
+        self.scale_2.grid(row=1,column=1)
+
+        
+
+        self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
+
+        self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
+       
+        return self.wholeframe
+
+    def applyme(self):
+        self.result=[self.scale_1.get(),self.scale_2.get()]
+
+class ColorMapDialog(MySimpleDialog):
+    """Lists color maps and asks to choose one"""
+
+
+    def __init__(self,parent,title='Select color map:',current_map='orange'):
+
+        Toplevel.__init__(self,parent)
+       # self.configure(bg='Gray80')
+       # self.transient(parent)
+
+        
+        self.title(title)
+
+        self.parent=parent
+        self.result=None
+        self.current_map=current_map
+        self.colormap=StringVar()
+   
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        self.buttonbox()
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.wait_window(self)
+
+    def body(self,masterclass,masterwindow):
+
+        self.c1=Label(masterwindow,text='Please choose color map',anchor=W)
+        self.c1.grid(row=0,column=0)
+
+        colormaps=["orange","hsv","jet","spectral","winter","Accent","Paired"]
+
+        rowcounter=1
+        curr_frame=[]
+        curr_plot=[]
+
+        for cmap in colormaps:
+
+            Radiobutton(masterwindow,text=cmap,value=cmap,variable=masterclass.colormap).grid(row=rowcounter,column=0,sticky=W)
+            
+
+            curr_frame.append(Frame(masterwindow))
+
+            curr_plot.append(visuals.ReturnColorMapPlot(cmap))
+            curr_plot[-1].canvas=FigureCanvasTkAgg(curr_plot[-1],curr_frame[-1])
+            curr_plot[-1].canvas.show()
+            curr_plot[-1].canvas.get_tk_widget().grid(row=rowcounter,column=1)
+
+            curr_frame[-1].grid(row=rowcounter,column=1,sticky=W)
+
+            rowcounter=rowcounter+1
+            
+        if self.current_map in colormaps:
+            masterclass.colormap.set(self.current_map)
+        else:
+            masterclass.colormap.set('orange')
+       
+
+        return self.c1
+
+    def applyme(self):
+        self.result=self.colormap.get()
         
