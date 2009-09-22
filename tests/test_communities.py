@@ -1,18 +1,18 @@
 import unittest
 from netpython import communities
 
-class TestCommunities(unittest.TestCase):
+class TestNodeCover(unittest.TestCase):
     
     def setUp(self):
         self.cmaps = []
         self.cmaps.append({0: [0,1,2,3], 1: [4,5,6,7]})
-        #self.cmaps.append({0: [0,1,2,3], 1: [4,5], 2:[6,7]})
-        #self.cmaps.append({0: [0,1,2], 1: [3,4], 2:[5,6,7]})
+        self.cmaps.append({0: [0,1,2,3], 1: [4,5], 2:[6,7]})
+        self.cmaps.append({0: [0,1,2], 1: [3,4], 2:[5,6,7]})
         self.cmaps.append({0: [0,1,2], 1: [1,3,4], 2:[0,5,6,7]})
-        #self.cmaps.append(dict([(i,[i]) for i in range(8)]))
-        #self.cmaps.append({0: range(8)})
+        self.cmaps.append(dict([(i,[i]) for i in range(8)]))
+        self.cmaps.append({0: range(8)})
 
-        self.comms = [communities.NodeFamily(cmap=x) for x in self.cmaps]
+        self.comms = [communities.NodeCover(cmap=x) for x in self.cmaps]
 
     def tearDown(self):
         pass
@@ -29,6 +29,20 @@ class TestCommunities(unittest.TestCase):
                 self.assertEqual("%.10f" % ci.getMaxVariationOfInformation(cj),
                                  "%.10f" % cj.getMaxVariationOfInformation(ci))
 
+    def test_getMaxVariationOfInformation_compare(self):
+        """Both methods of calculation should give the same results."""
+        for i, ci in enumerate(self.comms):
+            j = i + 1
+            for cj in self.comms[i+1:]:
+                self.assertEqual("%.10f" % ci.getMaxVariationOfInformation(cj),
+                                 "%.10f" % ci.getMaxVariationOfInformation_slow(cj))
+                # DEBUG
+                #print i, self.cmaps[i]
+                #print j, self.cmaps[j]
+                #print ("   %.30f" % ci.getMaxVariationOfInformation(cj),
+                #       "   %.30f" % ci.getMaxVariationOfInformation_slow(cj))
+                j += 1
+
     def test_getMaxVariationOfInformation_lessThanOne(self):
         """The value must be less than 1 when communities differ."""
         for i, ci in enumerate(self.comms):
@@ -41,12 +55,56 @@ class TestCommunities(unittest.TestCase):
                 #       ci.getNormalizedMutualInformation(cj))
                 j += 1
 
+class TestNodePartition(unittest.TestCase):
+    
+    def setUp(self):
+        self.cmaps = []
+        self.cmaps.append({0: [0,1,2,3], 1: [4,5,6,7]})
+        self.cmaps.append({0: [0,1,2,3], 1: [4,5], 2:[6,7]})
+        self.cmaps.append({0: [0,1,2], 1: [3,4], 2:[5,6,7]})
+        self.cmaps.append(dict([(i,[i]) for i in range(8)]))
+        self.cmaps.append({0: range(8)})
+
+        self.comms = [communities.NodePartition(cmap=x) for x in self.cmaps]
+
+    def tearDown(self):
+        pass
+
+    def test_getMutualInformation_selfmatch(self):
+        """Mutual information with self is entropy."""
+        for c in self.comms:
+            self.assertEqual(c.getMutualInformation(c), c.entropy)
+
+    def test_getMutualInformation_symmetry(self):
+        """Mutual information must be symmetric."""
+        for i, ci in enumerate(self.comms):
+            j = i+1
+            for cj in self.comms[i+1:]:
+                self.assertEqual(ci.getMutualInformation(cj), 
+                                 cj.getMutualInformation(ci))
+                #print i, j, ci.getMutualInformation(cj) # DEBUG
+                j += 1
+
+    def test_getMutualInformation_compare(self):
+        """Two different ways of calculating mutual information must match."""
+        for i, ci in enumerate(self.comms):
+            for cj in self.comms[i+1:]:
+                self.assertEqual(ci.getMutualInformation(cj), 
+                                 ci.getMutualInformation_slow(cj))
+
+    def test_getMImetric(self):
+        """Make sure the metric is really metric."""
+        for i, ci in enumerate(self.comms):
+            for cj in self.comms[i+1:]:
+                self.assertEqual(ci.getMutualInformation(cj), 
+                                 ci.getMutualInformation_slow(cj))
+
 if __name__ == '__main__':
     if False:
         # If true, run only the tests listed below, otherwise run all
         # tests (this option is for testing the tests :-) ).
         suite = unittest.TestSuite()
-        suite.addTest(TestCommunities("test_getMaxVariationOfInformation_lessThanOne"))
+        suite.addTest(TestNodeCover("test_getMaxVariationOfInformation_compare"))
         unittest.TextTestRunner().run(suite)
     else:
         # Run all tests.
