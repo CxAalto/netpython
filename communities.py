@@ -480,10 +480,6 @@ class NodePartition(NodeCover):
         return 1.0 - (self.getMutualInformation(otherPartition)
                       /max(self.entropy, otherPartition.entropy))
         
-    def getMaxVariationOfInformation(self, otherCover, N_nodes=None):
-        return super(NodePartition, self).getMaxVariationOfInformation(
-            otherCover, len(self._commIDs))
-
 class communityTree:
     """
     >>> test=[[set([1,2,3,4,5])],[set([1,2,3]),set([4,5])],[set([1]),set([2]),set([3]),set([4]),set([5])]]
