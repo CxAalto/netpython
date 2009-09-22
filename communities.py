@@ -348,14 +348,46 @@ class NodePartition(NodeCover):
     """
 
     def __init__(self, cmap={}, inputFile=None, N_nodes=None):
-        # Create a list [(comm_size, comm_ID), ...] and sort it in
+        """Initialize a node partition.
+
+        A node partition can be made based on a dictionary or read
+        from a file, or both. Communities will be sorted according to
+        size in decreasing order, so that community ID of 0 refers to
+        the largest community.
+
+        Parameters
+        ----------
+        cmap : dict {community_ID: [node_1, node_2, ...], ...}
+            A dictionary where keys correspond to community IDs and
+            the value is a list of nodes in that community.
+        inputFile : file object
+            File to read the node partition from. Each line must have
+            one community, with the nodes separated by whitespace.
+        N_nodes : int
+            The total number of nodes in the network. If None, it will
+            be assumed to be the total number of nodes read from
+            `cmap` and `inputFile`.
+        """
+        # Read data from inputfile and add the read communities to
+        # cmap. The key in cmap does not matter, so we use integers
+        # starting from len(cmap) as long as they are not already in
+        # cmap.
+        if inputFile is not None:
+            c_index = len(cmap)
+            for line in inputFile:
+                while c_index in cmap:
+                    c_index += 1
+                cmap[c_index] = map(int, line.split())
+                c_index += 1
+
+        # Create a list [(len(comm), comm_ID), ...] and sort it in
         # decreasing order.
         comm_sizes = [(len(comms), commID) for commID, comms in cmap.iteritems()]
         comm_sizes.sort()
         comm_sizes.reverse()
 
         # Construct a dictionary {node_ID: comm_ID} so that comm_ID is
-        # order by community size.
+        # ordered by community size (largest = 0)
         self._commIDs = {} # Dictionary of community IDs of each node.
         for newCommID, (s, oldCommID) in enumerate(comm_sizes):
             for node in cmap[oldCommID]:
@@ -370,10 +402,11 @@ class NodePartition(NodeCover):
             N_nodes = len(self._commIDs)
         self.N_nodes = N_nodes
 
-        # Save calculated mutual informations with other nodeFamilies
-        # into `self.MIs`. This way mutual information is not calculated
-        # again if for example getNormalizedMutualInformation is
-        # called after calling getMutualInformation.
+        # Save calculated mutual informations with other
+        # nodePartitions into `self.MIs`. This way mutual information
+        # is not calculated again if for example
+        # getNormalizedMutualInformation is called after calling
+        # getMutualInformation.
         self.MIs = {} 
 
     @property
