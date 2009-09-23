@@ -278,9 +278,6 @@ class NodeCover(object):
         # List of community sizes.
         comm_sizes = self.getCommunitySizes() + otherCover.getCommunitySizes()
 
-        # DEBUG ::: 1697546 2532174 844023 1688153
-        print len(commNet), len(comm_sizes), len(self), len(otherCover)
-
         ret_val = 1.0
         for IX, IY in [(xrange(Nc_A), xrange(Nc_A, Nc_A+Nc_B)),
                        (xrange(Nc_A, Nc_A+Nc_B), xrange(Nc_A))]:
@@ -407,7 +404,6 @@ class NodePartition(NodeCover):
         # cmap. The key in cmap does not matter, so we use integers
         # starting from len(cmap) as long as they are not already in
         # cmap.
-        print len(cmap), inputFile.name
         if inputFile is not None:
             c_index = len(cmap)
             for line in inputFile:
@@ -428,7 +424,6 @@ class NodePartition(NodeCover):
         for newCommID, (s, oldCommID) in enumerate(comm_sizes):
             for node in cmap[oldCommID]:
                 self._commIDs[node] = newCommID
-        self.N_communities = len(cmap) + 1
 
         # List of community sizes.
         self.C_sizes = map(operator.itemgetter(0), comm_sizes)
@@ -446,7 +441,7 @@ class NodePartition(NodeCover):
         self.MIs = {}
 
     def __len__(self):
-        return self.N_communities
+        return len(self.C_sizes)
 
     @property
     def comm(self):
@@ -459,7 +454,7 @@ class NodePartition(NodeCover):
         try:
             return self._comm
         except AttributeError:
-            self._comm = [set() for i in range(self.N_communities)]
+            self._comm = [set() for i in range(len(self))]
             for node, commID in self._commIDs.iteritems():
                 self._comm[commID].add(node)
             return self._comm
@@ -476,7 +471,7 @@ class NodePartition(NodeCover):
         commNet = pynet.SymmNet()
         for node in self._commIDs:
             ci = self._commIDs[node]
-            cj = self.N_communities + other._commIDs[node]
+            cj = len(self) + other._commIDs[node]
             commNet[ci, cj] += 1
         return commNet
 
@@ -532,7 +527,7 @@ class NodePartition(NodeCover):
         mi=0.0
         n = self.N_nodes
         for ci, cj, n_ij in commNet.edges:
-            ci, cj = min(ci, cj), max(ci, cj)-self.N_communities
+            ci, cj = min(ci, cj), max(ci, cj) - len(self)
             n_i = self.C_sizes[ci]
             n_j = otherPartition.C_sizes[cj]
             mi += n_ij/n*np.log2(n_ij*n/n_i/n_j)
