@@ -4,10 +4,21 @@ import info_theory as ith
 import operator
 #from logger import log
 
+def printname(fun):
+    """Decorator for identifying the called method.
+    """
+    def new_fun(obj, *args):
+        print "<%s.%s>" % (obj.__class__.__name__, fun.__name__)
+        return fun(obj, *args)
+    return new_fun
+
 class NodeCover(object):
     """Representation of possibly overlapping node partitions."""
     
-    def __init__(self, cmap={}, inputFile=None, N_nodes=None):
+    def __init__(self, cmap=None, inputFile=None, N_nodes=None):
+        if cmap is None:
+            cmap = {}
+
         self._comm = []
         for community in cmap:
             self._addCommunity(cmap[community])
@@ -57,6 +68,20 @@ class NodeCover(object):
         for c in self.comm:
             yield c
 
+    def getCommunitySizes(self):
+        """Return list of community sizes."""
+        return map(len, self.comm)
+
+    def getGiant(self):
+        """Get the largest component as a set of nodes.
+        """
+        return self.comm[0]
+
+    def getGiantSize(self):
+        """Get the size of the largest component.
+        """
+        return self.getCommunitySizes()[0]
+
     def getSizeDist(self):
         """Get size distribution.
         
@@ -68,27 +93,9 @@ class NodeCover(object):
            value.
         """
         dist = {}
-        for c in self.comm:
-            dist[len(c)] = 1 + dist.get(len(c), 0)
+        for cs in self.getCommunitySizes():
+            dist[cs] = 1 + dist.get(cs, 0)
         return dist
-
-    def getGiant(self):
-        """Get the largest component as a set of nodes.
-        """
-        maxsize=0
-        largest=None
-        for community in self.comm:
-            if len(community)>maxsize:
-                maxsize=len(community)
-                largest=community
-
-        return largest
-
-    def getGiantSize(self):
-        """Get the size of the largest component.
-        """
-        giant = self.getGiant()
-        return (0 if giant is None else len(giant))
 
     def getSusceptibility(self, size=None):
         """Return the susceptibility.
@@ -114,7 +121,8 @@ class NodeCover(object):
         for key, value in sd.iteritems():
             sizeSum += key*value
 
-        # If no size is given, assume that also communities of size 1 are included
+        # If no size is given, assume that also communities of size 1
+        # are included.
         if size==None:
             sus=0
             size=sizeSum
@@ -173,14 +181,18 @@ class NodeCover(object):
         newcs._sortBySize()
         return newcs
 
-    def getMaxVariationOfInformation(self, otherCover):
-        """Return maximum variation of information.
+    def _getOverlapNetwork(self, other):
+        """Create a bipartite network from overlapping nodes.
+
+        Nodes correspond to communities and edge weight is the number
+        of common nodes between the two communities. Nodes [0
+        ... len(self)-1] correspond to communities in self, and nodes
+        [len(self) ... len(self)+len(other)] correspond to
+        communities in `other`.
         """
-        def p_log2_p(p):
-            return (0.0 if p == 0 else -p*np.log2(p))
-        
+
         def create_commIDs(comm):
-            """Construct commIDs from comm.
+            """Construct commIDs.
 
             The key is node ID, and the value will be a list of
             community IDs this node belongs to.
@@ -192,19 +204,16 @@ class NodeCover(object):
             return commIDs
 
         # Find out the number of nodes.
-        Nf = float(max(self.N_nodes, otherCover.N_nodes))
+        N = max(self.N_nodes, other.N_nodes)
 
         # Construct community ID dictionaries.
         cID_A = create_commIDs(self.comm)
-        cID_B = create_commIDs(otherCover.comm)
+        cID_B = create_commIDs(other.comm)
 
-        # Construct a bipartite community net where nodes correspond
-        # to communities and edge weight is the number of common nodes
-        # between the two communities.
+        # Construct the bipartite community net.
         Nc_A = len(self.comm)
-        Nc_B = len(otherCover.comm)
         commNet = pynet.SymmNet()
-        for node in xrange(int(Nf)):
+        for node in xrange(N):
             try:
                 for cj in cID_B[node]:
                     cj += Nc_A
@@ -215,8 +224,62 @@ class NodeCover(object):
                 # covers. Skip this node.
                 continue
 
+        return commNet
+
+    def getMaxVariationOfInformation(self, otherCover):
+        """Return maximum variation of information.
+
+        The maximum variation of information can be used to compare
+        two families with overlapping node set.
+
+        The definition comes from Appendix B of
+          Andrea Lancichinetti, Santo Fortunato, Janos Kertesz (2009)
+          `Detecting the overlapping and hierarchical community
+          structure of complex networks'.
+
+        Parameters
+        ----------
+        otherCover : NodeCover object
+           The other community sructure to compare with.
+        N_nodes : int
+           The total number of nodes in all communities. If None, the
+           size of the union of all communities in both community
+           structures is used. Note that if there are nodes that do
+           not belong in any community this will not give the correct
+           answer.
+
+        Return
+        ------
+        mv : float
+           The maximum variation of information.
+
+        Notes
+        -----
+        Time complexity is roughly O(N)+O(M^2), where N is the total
+        number of nodes and M is largest number of communities for one
+        node.
+
+        If one community structure consists of only one community
+        covering all nodes, this measure is always 0.5 (unless of
+        course the other one is identical, in which case 1.0 is
+        returned.)
+        """
+        def p_log2_p(p):
+            return (0.0 if p == 0 else -p*np.log2(p))
+        
+        # Find out the number of nodes.
+        Nf = float(max(self.N_nodes, otherCover.N_nodes))
+
+        # Construct bipartite community network.
+        commNet = self._getOverlapNetwork(otherCover)
+        Nc_A = len(self)
+        Nc_B = len(otherCover)
+
         # List of community sizes.
-        comm_sizes = map(len, self.comm) + map(len, otherCover.comm)
+        comm_sizes = self.getCommunitySizes() + otherCover.getCommunitySizes()
+
+        # DEBUG ::: 1697546 2532174 844023 1688153
+        print len(commNet), len(comm_sizes), len(self), len(otherCover)
 
         ret_val = 1.0
         for IX, IY in [(xrange(Nc_A), xrange(Nc_A, Nc_A+Nc_B)),
@@ -258,40 +321,9 @@ class NodeCover(object):
     def getMaxVariationOfInformation_slow(self, otherCover, N_nodes=None):
         """Return maximum variation of information.
 
-        The maximum variation of information can be used to compare
-        two families with overlapping node set.
-
-        The definition comes from Appendix B of
-          Andrea Lancichinetti, Santo Fortunato, Janos Kertesz (2009)
-          `Detecting the overlapping and hierarchical community
-          structure of complex networks'.
-
-        Parameters
-        ----------
-        otherCover : NodeCover object
-           The other community sructure to compare with.
-        N_nodes : int
-           The total number of nodes in all communities. If None, the
-           size of the union of all communities in both community
-           structures is used. Note that if there are nodes that do
-           not belong in any community this will not give the correct
-           answer.
-
-        Return
-        ------
-        mv : float
-           The maximum variation of information.
-
-        Notes
-        -----
-        Time complexity is O(N*M), where N is the number of
-        communities in `self` and M is the number of communities in
+        Note that the time complexity is O(N*M), where N is the number
+        of communities in `self` and M is the number of communities in
         `otherCover`.
-
-        If one community structure consists of only one community
-        covering all nodes, this measure is always 0.5 (unless of
-        course the other one is identical, in which case 1.0 is
-        returned.)
         """
 
         def p_log2_p(p):
@@ -347,7 +379,7 @@ class NodePartition(NodeCover):
     network.
     """
 
-    def __init__(self, cmap={}, inputFile=None, N_nodes=None):
+    def __init__(self, cmap=None, inputFile=None, N_nodes=None):
         """Initialize a node partition.
 
         A node partition can be made based on a dictionary or read
@@ -368,10 +400,14 @@ class NodePartition(NodeCover):
             be assumed to be the total number of nodes read from
             `cmap` and `inputFile`.
         """
+        if cmap is None:
+            cmap = {}
+
         # Read data from inputfile and add the read communities to
         # cmap. The key in cmap does not matter, so we use integers
         # starting from len(cmap) as long as they are not already in
         # cmap.
+        print len(cmap), inputFile.name
         if inputFile is not None:
             c_index = len(cmap)
             for line in inputFile:
@@ -407,7 +443,10 @@ class NodePartition(NodeCover):
         # is not calculated again if for example
         # getNormalizedMutualInformation is called after calling
         # getMutualInformation.
-        self.MIs = {} 
+        self.MIs = {}
+
+    def __len__(self):
+        return self.N_communities
 
     @property
     def comm(self):
@@ -425,9 +464,29 @@ class NodePartition(NodeCover):
                 self._comm[commID].add(node)
             return self._comm
 
+    def _getOverlapNetwork(self, other):
+        """Create a bipartite network from overlapping nodes.
+
+        Nodes correspond to communities and edge weight is the number
+        of common nodes between two communities. Nodes [0
+        ... len(self)-1] correspond to communities in self, and nodes
+        [len(self) ... len(self)+len(otherCover)] correspond to
+        communities in `other`.
+        """
+        commNet = pynet.SymmNet()
+        for node in self._commIDs:
+            ci = self._commIDs[node]
+            cj = self.N_communities + other._commIDs[node]
+            commNet[ci, cj] += 1
+        return commNet
+
     def getSetsForNodes(self):
         """Return a map of nodes to the set it belongs."""
         return self.commIDs
+
+    def getCommunitySizes(self):
+        """Return list of community sizes."""
+        return self.C_sizes
 
     @property
     def entropy(self):
@@ -467,14 +526,7 @@ class NodePartition(NodeCover):
         if id(otherPartition) in self.MIs:
             return self.MIs[id(otherPartition)]
         
-        # Construct a bipartite community net where nodes correspond
-        # to communities and edge weight is the number of common nodes
-        # between the two communities.
-        commNet = pynet.SymmNet()
-        for node in self._commIDs:
-            ci = self._commIDs[node]
-            cj = self.N_communities + otherPartition._commIDs[node]
-            commNet[ci, cj] += 1
+        commNet = self._getOverlapNetwork(otherPartition)
 
         # Calculate mutual information.
         mi=0.0
@@ -513,6 +565,9 @@ class NodePartition(NodeCover):
         return 1.0 - (self.getMutualInformation(otherPartition)
                       /max(self.entropy, otherPartition.entropy))
         
+
+
+
 class communityTree:
     """
     >>> test=[[set([1,2,3,4,5])],[set([1,2,3]),set([4,5])],[set([1]),set([2]),set([3]),set([4]),set([5])]]
