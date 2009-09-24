@@ -2,7 +2,6 @@ import pynet,netext
 import numpy as np
 import info_theory as ith
 import operator
-from timing import time_me
 
 def printname(fun):
     """Decorator for identifying the called method.
@@ -226,7 +225,6 @@ class NodeCover(object):
 
         return commNet
 
-    @time_me
     def getMaxVariationOfInformation(self, otherCover):
         """Return maximum variation of information.
 
@@ -460,7 +458,6 @@ class NodePartition(NodeCover):
                 self._comm[commID].add(node)
             return self._comm
 
-    @time_me
     def _getOverlapNetwork(self, other):
         """Create a bipartite network from overlapping nodes.
 
@@ -513,7 +510,6 @@ class NodePartition(NodeCover):
                     mi += n_ij/n*np.log2(n_ij*n/n_i/n_j)
         return mi
 
-    @time_me
     def getMutualInformation(self, otherPartition):
         """Calculate mutual information.
 
