@@ -180,6 +180,18 @@ class NodeCover(object):
         newcs._sortBySize()
         return newcs
 
+    def create_commIDs(self):
+        """Construct commIDs.
+
+        The key is node ID, and the value will be a list of
+        community IDs this node belongs to.
+        """
+        commIDs = {}
+        for c_num, c in enumerate(self.comm):
+            for node in c:
+                commIDs.setdefault(node, []).append(c_num)
+        return commIDs
+
     def _getOverlapNetwork(self, other):
         """Create a bipartite network from overlapping nodes.
 
@@ -190,24 +202,12 @@ class NodeCover(object):
         communities in `other`.
         """
 
-        def create_commIDs(comm):
-            """Construct commIDs.
-
-            The key is node ID, and the value will be a list of
-            community IDs this node belongs to.
-            """
-            commIDs = {}
-            for c_num, c in enumerate(comm):
-                for node in c:
-                    commIDs.setdefault(node, []).append(c_num)
-            return commIDs
-
         # Find out the number of nodes.
         N = max(self.N_nodes, other.N_nodes)
 
         # Construct community ID dictionaries.
-        cID_A = create_commIDs(self.comm)
-        cID_B = create_commIDs(other.comm)
+        cID_A = create_commIDs(self)
+        cID_B = create_commIDs(other)
 
         # Construct the bipartite community net.
         Nc_A = len(self.comm)
