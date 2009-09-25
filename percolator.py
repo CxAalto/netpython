@@ -4,7 +4,7 @@ This contains general framework for edge and node percolation studies, but
 also functions for k-clique percolation.
 """
 
-import pynet,netext,array,math,netio,communities, numpy,transforms
+import pynet,netext,array,math,netio,communities,numpy,transforms
 from operator import mul
 
 
@@ -63,11 +63,13 @@ class KtreeInteger_new:
             #we remove empty elements
             if self.sizeDistribution[small_set_size]==0:
                 self.sizeDistribution.__delitem__(small_set_size)
-            if small_set_size!=large_set_size: #if sets are equal size, "larger" set size is already removed
+            if small_set_size!=large_set_size: 
+                # If sets are equal size, "larger" set size is already
+                # removed.
                 if self.sizeDistribution[large_set_size]==0:
                     self.sizeDistribution.__delitem__(large_set_size)
             
-            self.sizeDistribution[small_set_size+large_set_size]=self.sizeDistribution.get(small_set_size+large_set_size,0)+1
+            self.sizeDistribution[small_set_size+large_set_size] = self.sizeDistribution.get(small_set_size+large_set_size,0)+1
             self.subTreeWeight[large_set]+=self.subTreeWeight[small_set]
 
             self.__setRealParent(small_set,large_set)
@@ -96,7 +98,7 @@ class KtreeInteger_new:
                 else:
                     communityMap[communityKey].append(node)
 
-        return communities.NodeFamily(communityMap)
+        return communities.NodeCover(communityMap)
 
     def __len__(self):
         return len(self.ktree)
@@ -166,7 +168,7 @@ class KtreeInteger:
                 else:
                     communityMap[communityKey].append(node)
 
-        return communities.NodeFamily(communityMap)
+        return communities.NodeCover(communityMap)
 
     def __len__(self):
         return len(self.ktree)
@@ -206,7 +208,7 @@ class Ktree(KtreeInteger):
 
     def getCommStruct(self):
         cs=self.ktree.getCommStruct()
-        newcs=communities.NodeFamily()
+        newcs=communities.NodeCover()
         for c in cs:
             newc=[]
             for node in c:
@@ -357,11 +359,12 @@ class KClique(object):
             yield KClique(self.nodes[:i]+self.nodes[(i+1):],notSorted=False)
     def __str__(self):
         return str(self.nodes)
-    def getEdges(self):
+    def iterEdges(self):
 	for node in self.nodes:
 	    for othernode in self.nodes:
 		if node!= othernode:
 		   yield (node,othernode)
+    getEdges = iterEdges
     def getK(self):
 	return len(self.nodes)
 
@@ -439,10 +442,10 @@ def kcliquesByEdges(edges, k):
 
     Notes
     -----
-    If an edge is included in `edges` multiple times, the all
-    k-cliques in the network constructed so far will be returned every
-    time. Most of the time this is not what is wanted, so take care
-    not the supply multiple edges. (LK 31.7.2009)
+    If an edge is included in `edges` multiple times, all k-cliques in
+    the network constructed so far will be returned every time. Most
+    of the time this is not what is wanted, so take care not the
+    supply multiple edges. (LK 31.7.2009)
     """
     newNet=pynet.SymmNet() # Edges are added to an empty network one by one
     for edge in edges:
@@ -460,7 +463,8 @@ def kcliquesByEdges(edges, k):
             for kclique in kcliquesAtSubnet(triangleEnds,newNet,k-2):
                 yield kclique+KClique([edge[0],edge[1]])
 
-            newNet[edge[0],edge[1]] = edge[2] # Finally we add the new edge to the network
+            # Finally we add the new edge to the network.
+            newNet[edge[0],edge[1]] = edge[2] 
 
 def kcliquesWeight(net,k,weightFunction):
     kcliques=list(kcliquesByEdges(net.edges,k))
