@@ -15,6 +15,29 @@ class NodeCover(object):
     """Representation of possibly overlapping node partitions."""
     
     def __init__(self, cmap=None, inputFile=None, N_nodes=None):
+        """Create node cover from data.
+
+        The data can be read either from a dictionary of a file, or
+        both. The communities will be ordered in decreasing order by
+        size, so that self.comm[0] is a set of nodes belonging to the
+        largest community.
+        
+        Parameters
+        ----------
+        cmap : dict {communityID: [node_1, node_2, ..., node_N]}
+           A dictionary for constructing the node cover. The keys are
+           community IDs and the values are sequences of nodes in that
+           community. Note that communityID's will not be used.
+        inputFile : file object
+           File to read the communities from. The file must have one
+           community per line, with the indices of the nodes in each
+           community separated by whitespace.
+        N_nodes : int
+           The total number of nodes in the network. If None or not
+           given, the number of nodes in all communities is used. Note
+           that if there are nodes that are not included in any
+           community this will not be what you want.
+        """
         if cmap is None:
             cmap = {}
 
@@ -31,7 +54,6 @@ class NodeCover(object):
             for c in self._comm:
                 all_nodes.update(c)
             N_nodes = len(all_nodes)
-            del all_nodes
         self.N_nodes = N_nodes
 
     def _addCommunity(self,newCommunity):
