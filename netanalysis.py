@@ -484,15 +484,9 @@ def globalClustering(net):
 
 def weightStats(net):
     """Input: network, output: [min_weight,max_weight,avg_weight]"""
-    witer=net.weights.__iter__()
-    weight_vector=[]
-    for eachitem in witer:
-        weight_vector.append(eachitem)
-
-    maxw=max(weight_vector)
-    minw=min(weight_vector)
-                 
-    avgw=sum(weight_vector)/len(weight_vector)
-
-    return [minw,maxw,avgw]
+    weight_vector = [w for w in net.weights]
+    maxw = max(weight_vector)
+    minw = min(weight_vector)
+    avgw = sum(weight_vector)/len(weight_vector)
+    return minw, maxw, avgw
     
