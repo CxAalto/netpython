@@ -247,74 +247,45 @@ def getNodeColors(net,colorwith="strength",useColorMap="orange",parentnet=[]):
         min_value = min(strengths.values())
 
         if len(parentnet)>0:        # if we want the dict to include nodes not in net
-
             for node in parentnet:
-
                 if node in net:     # if the node is in net, use its strength for color
-
                     nodeColors[node]=setColor(strengths[node],(min_value,max_value),myNodeColors)
-
                 else:               # otherwise color it gray
-
                     nodeColors[node]=(0.5,0.5,0.5)
-
         else:
-
             for node in net:        # if parentnet not given, just color nodes by strength
-    
                 nodeColors[node]=setColor(strengths[node],(min_value,max_value),myNodeColors)
-
     else:
 
         numeric_props=netext.getNumericProperties(net)
-
         # first check if colorwith is a numeric property
-
         if colorwith in numeric_props:
-
             values=[]
-
             if len(parentnet)>0:    # again if we want to include nodes not in net
-
                 for node in parentnet:  # first get min and max value of property
-
-
                     values.append(parentnet.nodeProperty[colorwith][node])
 
                 min_value=min(values)
                 max_value=max(values)
-
                 for node in parentnet: # then set colors according to property
-
                     nodeColors[node]=setColor(parentnet.nodeProperty[colorwith][node],(min_value,max_value),myNodeColors)
-
             else:                   # otherwise do the above for nodes in net
-
                 for node in net:
-
                     values.append(net.nodeProperty[colorwith][node])
-
                 
                 min_value=min(values)
                 max_value=max(values)
 
                 for node in net:
-
                     nodeColors[node]=setColor(net.nodeProperty[colorwith][node],(min_value,max_value),myNodeColors)
                 
 
     if len(nodeColors)==0:  # finally if for whatever reason no nodes were colored, just set them gray
-
         if len(parentnet)>0:
-
             for node in parentnet:
-
                 nodeColors[node]=(0.5,0.5,0.5)
-
-
         else:
             for node in net:
-
                 nodeColors[node]=(0.5, 0.5, 0.5)
 
     return nodeColors
@@ -341,29 +312,19 @@ def getNodeSizes(net,size_by="strength",minsize=2.0,maxsize=6.0):
             A=0
         else:
             A=(maxsize-minsize)/(maxs-mins)
-
         B=maxsize-A*maxs
 
         for node in net:
-
             nodeSizes[node]=A*strengths[node]+B
 
     elif size_by=="fixed":
-
         for node in net:
-
             nodeSizes[node]=maxsize
-
     else:
-
         numeric_props=netext.getNumericProperties(net)
-
         if size_by in numeric_props:
-
             values=[]
-
             for node in net:
-
                 values.append(net.nodeProperty[size_by][node])
 
             minval=min(values)
@@ -375,18 +336,11 @@ def getNodeSizes(net,size_by="strength",minsize=2.0,maxsize=6.0):
                 A=(maxsize-minsize)/(maxval-minval)
 
             B=maxsize-A*maxval
-
             for node in net:
-
                 nodeSizes[node]=A*net.nodeProperty[size_by][node]+B
 
     return nodeSizes
-
-
-        
           
-
-# ---------------------------------------
 
 def setColor(value,valueLimits,colorMap):
     """Converts a numerical value to a color.
@@ -436,8 +390,6 @@ def plot_node(plotobject,x,y,color='w',size=8.0,edgecolor='w'):
     plotobject.plot([x], [y], 'yo', markerfacecolor=color,
                     markeredgecolor=edgecolor,markersize=size)
 
-
-# ---------------------------------------
 
 def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
                  labels={}, fontsize=7, showAllNodes=True, nodeColor=None,
