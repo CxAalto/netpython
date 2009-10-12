@@ -5,7 +5,7 @@ import pynet
 import netext,percolator,netio,transforms
 import os
 from pylab import *
-from numpy import outer
+import numpy as np
 import copy
 import random
 import shutil
@@ -29,7 +29,7 @@ def ReturnColorMapPlot(colormap,figsize=(2,0.15)):
     axes.set_axis_off()
 
 
-    a=outer(ones(10),arange(0,1,0.01),)
+    a=np.outer(ones(10),arange(0,1,0.01),)
 
     axes.imshow(a,aspect='auto',cmap=setColorMap(colormap),origin="lower")
 
@@ -351,9 +351,9 @@ def setColor(value,valueLimits,colorMap):
     colormap should take in values in the range (0...1) and produce a
     three-tuple containing an RGB color, as in (r,g,b).
     """
-    if not (valueLimits[0]-valueLimits[1])==0: 
-        normalizedValue=normalizeValue(value,valueLimits) 
-        color=colorMap(normalizedValue) 
+    if valueLimits[0] != valueLimits[1]: 
+        normalizedValue = normalizeValue(value,valueLimits) 
+        color = colorMap(normalizedValue) 
     else:
         color=(0.5,0.5,0.5)  # gray if all values are equal
     return color
@@ -374,6 +374,7 @@ def setEdgeWidth(value,weightLimits,minwidth,maxwidth):
         # If given minwidth and maxwidth are the same, simply use that width.
         width=minwidth 
     return width
+
    
 def plot_edge(plotobject, xcoords, ycoords, width=1.0, colour='k',
               symmetric=True):
@@ -392,8 +393,9 @@ def plot_node(plotobject,x,y,color='w',size=8.0,edgecolor='w'):
 
 
 def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
-                 labels={}, fontsize=7, showAllNodes=True, nodeColor=None,
-                 nodeSize=1.0, minnode=2.0, maxnode=6.0, nodeColors={}, nodeSizes={}, bgcolor='white', maxwidth=2.0,
+                 labels=None, fontsize=7, showAllNodes=True, nodeColor=None,
+                 nodeSize=1.0, minnode=2.0, maxnode=6.0, nodeColors=None,
+                 nodeSizes=None, bgcolor='white', maxwidth=2.0,
                  minwidth=0.2, uselabels='none', edgeColorMap='winter', 
                  weightLimits=None, setNodeColorsByProperty=None,
                  nodeColorMap='winter', nodePropertyLimits=None,
@@ -419,7 +421,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     ----------
     net : pynet.SymmNet
         The network to visualize
-    xy : list of tuples
+    xy : dictionary of tuples {node_ID: (x,y,z)}
         Coordinates of all nodes. These usually originate from
         visuals.Himmeli, e.g. 
           h = visuals.Himmeli(net, ...)
@@ -513,10 +515,10 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     Examples
     --------
     >>> from netpython import pynet, visuals
-    >>> m = pynet.SymmNet()
-    >>> m[0][1] = 1.0
-    >>> m[1][2] = 3.5
-    >>> m[0][2] = 5.0
+    >>> net = pynet.SymmNet()
+    >>> net[0][1] = 1.0
+    >>> net[1][2] = 3.5
+    >>> net[0][2] = 5.0
 
     >>> # Here are the coordinates, a dictionary that contains 2-tuples 
     >>> xy = {0:(0,0), 1:(4,0), 2:(2,3)}
@@ -524,13 +526,15 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     >>> h = visuals.Himmeli(net)
     >>> xy = h.getCoordinates()
 
-    >>> f = FigureCanvasBase(visuals.VisualizeNet(m,xy))
+    >>> f = FigureCanvasBase(visuals.VisualizeNet(net,xy))
     >>> f.print_eps("myPlot_1.eps", dpi=80.0)
 
-    >>> f=FigureCanvasBase(visuals.VisualizeNet(m,xy,edgeColorMap='orange'))
+    >>> f2 = FigureCanvasBase(visuals.VisualizeNet(other_net,xy,baseFig=f))
+
+    >>> f=FigureCanvasBase(visuals.VisualizeNet(net,xy,edgeColorMap='orange'))
     >>> f.print_eps("myPlot_2.eps", dpi=80.0)
 
-    >>> f=FigureCanvasBase(visuals.VisualizeNet(m,xy,edgeColorMap='orange',
+    >>> f=FigureCanvasBase(visuals.VisualizeNet(net,xy,edgeColorMap='orange',
                                                 equalsize=True, nodeSize=16))
     >>> f.print_eps("myPlot_3.eps", dpi=80.0)
 
@@ -551,6 +555,13 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         nodeColor = vcolor 
     if vsize != None:
         nodeSize = vsize
+
+    if nodeColors is None:
+        nodeColors = {}
+    if nodeSizes is None:
+        nodeSizes = {}
+    if labels is None:
+        labels = {}
 
     # The following is for the EDEN software, where "nets" or nets
     # derived from matrices can have edge distances instead of weights.
@@ -630,12 +641,8 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     mins = min(strengths.values())           
 
     if not(equalsize):
-        if maxs==mins:
-            A=0
-        else:
-            A=(maxnode-minnode)/(maxs-mins)
-
-        B=maxnode-A*maxs    
+        A = (0 if maxs == mins else (maxnode-minnode)/(maxs-mins))
+        B = maxnode-A*maxs    
 
     myNodeColorMap=setColorMap(nodeColorMap)
 
@@ -1228,8 +1235,66 @@ def shiftCoordinates(xy,nodelist, xshift=0, yshift=0, zshift=0):
                              "three elements.") 
     return xy
 
-# ---------------------------------------  
 
+def getWheelCoords(net, node, N_trys=1):
+    """Return coordinates for a friend wheel."""
+    
+    def calculate_cost(loc, net):
+        cost = 0
+        for ni,nj,wij in net.edges:
+            dist = np.abs(loc[ni] - loc[nj])
+            cost += (min(dist, len(loc)-dist)-1)*wij
+        return cost
+            
+    # Get the subnetwork spanned by the neighbours of `node`.
+    neighbours = list(net[node])
+    N = len(neighbours) # Includes also non-connected nodes.
+    neighbour_net = transforms.getSubnet(net, neighbours)
+
+    # There is nothing to optimize if N <= 3. Just return the obvious
+    # answer.
+    if N_all == 0:
+        return {}
+
+    if N >= 3:
+        curr_res = (-1, {})
+        for try_count in range(N_trys):
+            # Go through all neighbouring nodes in a random order, switching
+            # each to the best location, until no more change occurs.
+            locs = dict(zip(neighbours, range(N)))
+            rand_order = neighbours[:]
+            changed = True
+            while changed:
+                changed = False
+                np.random.shuffle(rand_order)
+                current_cost = calculate_cost(locs, neighbour_net)
+                for i, n_rand in enumerate(rand_order):
+                    # Find the best location for n_rand.
+                    current_loc = locs[n_rand]
+                    best = (current_cost, n_rand)
+                    for other in rand_order[:i]+rand_order[i+1:]:
+                        new_locs = locs.copy()
+                        new_locs[n_rand], new_locs[other] = new_locs[other], new_locs[n_rand]
+                        new_cost = calculate_cost(new_locs, neighbour_net)
+                        if new_cost < best[0]:
+                            best = (new_cost, other)
+                    if best[0] < current_cost:
+                        locs[n_rand], locs[best[1]] = locs[best[1]], locs[n_rand]
+                        current_cost = best[0]
+                        changed = True
+
+            if current_cost < curr_res[0] or curr_res[0] == -1:
+                curr_res = (current_cost, locs)
+
+        locs = curr_res[1] # Use the best result.
+
+    # Optimal configuration found, calculate the coordinates on a
+    # circle.
+    coords = {}
+    for n, loc in locs.iteritems():
+        coords[n] = (np.cos(2*np.pi*loc/N_all), np.sin(2*np.pi*loc/N_all), 0.0)
+
+    return coords
 
 if __name__ == '__main__':
     """Run unit tests if called."""
