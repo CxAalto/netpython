@@ -304,7 +304,7 @@ def getComponents(net):
     edges=net.edges
     ee=EvaluationList(edges)
     ee.setLastEvaluation()
-    p=Percolator(ee)
+    p=Percolator(ee,buildNet=False)
     for cs in p:
         return cs
 
