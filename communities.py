@@ -389,6 +389,26 @@ class NodeCover(object):
         return ret_val
 
 
+    def getCommunityNetwork(self,net):
+        """
+        Builds a network where each node is a node set in this node cover, and
+        there is an edge between two nodes if there is an edge in the network
+        given as a parameter between two nodes in the two node sets. 
+        The weight of each edge is the sum of weights of such edges.
+
+        Todo: tests
+        """
+        newNet=pynet.SymmNet()
+        commID=self.create_commIDs()
+        for edge in net.edges:
+            if edge[0] in commID and edge[1] in commID: #node might not belong to a community
+                for newNode1 in commID[edge[0]]:
+                    for newNode2 in commID[edge[1]]:
+                        if newNode1!=newNode2: #no self-edges
+                            newNet[newNode1,newNode2]+=edge[2]
+        return newNet
+
+
 class NodePartition(NodeCover):
     """Representation of node partitions.
 
