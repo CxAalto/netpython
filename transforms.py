@@ -85,7 +85,7 @@ def snowball(net,startingnodeindex,depth):
     return newNet
 
 
-def collapseIndices(net):
+def collapseIndices(net,returnIndexMap=False):
     """
     Chances the indices of net to run from 0 to len(net)-1
     """
@@ -107,8 +107,10 @@ def collapseIndices(net):
 
     netext.copyNodeProperties(net,newNet)
 
-
-    return newNet
+    if returnIndexMap:
+        return newNet,indexmap
+    else:
+        return newNet
 
 
 def threshold_by_value(net,threshold,mode):
