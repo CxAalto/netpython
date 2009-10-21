@@ -234,8 +234,8 @@ def getConstantColorMap(rgb=(0,0,0)):
     cm : colorMap
         The colormap that has just one constant color.
     """
-    myMap=get_cmap()
-    myMap._segmentdata={
+    cm = get_cmap()
+    cm._segmentdata={
         'red':  ( (0,rgb[0],rgb[0]), 
                   (1,rgb[0],rgb[0]) )
         'green': ( (0,rgb[1],rgb[1]), 
@@ -243,7 +243,7 @@ def getConstantColorMap(rgb=(0,0,0)):
         'blue': ( (0,rgb[2],rgb[2]), 
                   (1,rgb[2],rgb[2]) ) }
 
-    return myMap    
+    return cm  
 
 
 # ---------------------------------------
@@ -505,7 +505,8 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         pylab; for a full listing, please see help(pylab.cm) (and look
         for DATA). Or try, for example, edgeColorMap='orange' or
         edgeColorMap='primary', two colormaps of our own that are not
-        available in pylab.
+        available in pylab. To make all edges have the same color,
+        create a constant color map with getConstantColorMap(rgb).
     weightLimits : tuple (minWeight, maxWeight)
         Provides the minimum and maximum value for weights. If not are
         given, (nearly) the true min and max weights in the network
