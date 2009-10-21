@@ -237,9 +237,9 @@ def getConstantColorMap(rgb=(0,0,0)):
     cm = get_cmap()
     cm._segmentdata={
         'red':  ( (0,rgb[0],rgb[0]), 
-                  (1,rgb[0],rgb[0]) )
+                  (1,rgb[0],rgb[0]) ),
         'green': ( (0,rgb[1],rgb[1]), 
-                   (1,rgb[1],rgb[1]) )
+                   (1,rgb[1],rgb[1]) ),
         'blue': ( (0,rgb[2],rgb[2]), 
                   (1,rgb[2],rgb[2]) ) }
 
@@ -1025,6 +1025,7 @@ class Himmeli:
         himmeli = os.popen(self.himmeliExecutable+' '+confFileName,'r')
         #print string.join(himmeli.readlines()) #for long debug
         himmeli.close()
+
         #print himmeli #for short debug
 
         # Save coordinates produced by Himmeli
