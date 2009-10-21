@@ -154,7 +154,9 @@ def setColorMap(colorMap):
     Usage:
         myMap = setColorMap('bone')
     """
-    
+    if hasattr(colorMap, '_segmentdata'):
+        return colorMap
+
     if colorMap=='primary':
         # Jari's map: yellow->blue->red 
         myMap=get_cmap()
@@ -217,6 +219,20 @@ def setColorMap(colorMap):
             comment = "Could not recognize given colorMap name '%s'" % colorMap
             raise AssertionError(comment)
     return myMap
+
+
+def getConstantColorMap(rgb=(0,0,0)):
+    """Return a colormap with constant color."""
+        myMap=get_cmap()
+        myMap._segmentdata={
+            'red':  ( (0,rgb[0],rgb[0]), 
+                      (1,rgb[0],rgb[0]) )
+            'green': ( (0,rgb[1],rgb[1]), 
+                       (1,rgb[1],rgb[1]) )
+            'blue': ( (0,rgb[2],rgb[2]), 
+                      (1,rgb[2],rgb[2]) ) }
+
+        return myMap    
 
 
 # ---------------------------------------
@@ -470,7 +486,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         that are not listed in `labels`.
     fontsize : int
         Sets font size for labels.
-    edgeColorMap : str
+    edgeColorMap : str or cmap
         Allows the user to set color scheme for edges. Edges are
         always colored according to edge weights, which are first
         normalized to the range (0,1) and then transformed to colors
