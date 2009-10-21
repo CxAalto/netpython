@@ -222,17 +222,28 @@ def setColorMap(colorMap):
 
 
 def getConstantColorMap(rgb=(0,0,0)):
-    """Return a colormap with constant color."""
-        myMap=get_cmap()
-        myMap._segmentdata={
-            'red':  ( (0,rgb[0],rgb[0]), 
-                      (1,rgb[0],rgb[0]) )
-            'green': ( (0,rgb[1],rgb[1]), 
-                       (1,rgb[1],rgb[1]) )
-            'blue': ( (0,rgb[2],rgb[2]), 
-                      (1,rgb[2],rgb[2]) ) }
+    """Return a colormap with constant color.
 
-        return myMap    
+    Parameters
+    ----------
+    rgb : tuple (r, g, b)
+        The color as RGB tuple. Each value must be between 0 and 1.
+
+    Return
+    ------
+    cm : colorMap
+        The colormap that has just one constant color.
+    """
+    myMap=get_cmap()
+    myMap._segmentdata={
+        'red':  ( (0,rgb[0],rgb[0]), 
+                  (1,rgb[0],rgb[0]) )
+        'green': ( (0,rgb[1],rgb[1]), 
+                   (1,rgb[1],rgb[1]) )
+        'blue': ( (0,rgb[2],rgb[2]), 
+                  (1,rgb[2],rgb[2]) ) }
+
+    return myMap    
 
 
 # ---------------------------------------
