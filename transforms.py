@@ -286,6 +286,73 @@ def local_threshold_by_value(net,threshold):
 
     return newnet
 
+		
+def netConfiguration(net,keepsOrigNet=False,seed=0):
+	"""
+	netConfiguration:
+		This function generates the configuration network of an incoming arbitrary net. 
+		It keeps the degree of each node but randomize the edges between them.
+		
+		Incoming parameters:
+			net
+			keepsOrigNet(=False) - optional
+			seed - optional
+		Outgoing parameters:
+			configuration_net - the shuffled network
+	"""
+	if seed!=0:
+		random.seed(int(seed))
+
+	newNet=pynet.SymmNet()
+	if keepsOrigNet:
+		testNet=pynet.SymmNet()
+		for edge in net.edges:
+			testNet[edge[0],edge[1]]=edge[2]	
+	else:
+		testNet=net
+	edgeList=[]
+		
+	for edge in net.edges:
+		edgeList.append(edge)
+		
+	firstEdgeID=0
+	while firstEdgeID !=(len(edgeList)):
+		
+		secondEdgeID=firstEdgeID
+		
+		while secondEdgeID==firstEdgeID:
+			secondEdgeID=random.randint(0,len(edgeList)-1)
+		
+		if (edgeList[firstEdgeID][1]==edgeList[secondEdgeID][0]) or (edgeList[secondEdgeID][1]==edgeList[firstEdgeID][0]):
+			continue
+		if (edgeList[firstEdgeID][1]==edgeList[secondEdgeID][0]) and (edgeList[secondEdgeID][1]==edgeList[firstEdgeID][0]):
+			continue
+		if (edgeList[firstEdgeID][0]==edgeList[secondEdgeID][0]) or (edgeList[firstEdgeID][1]==edgeList[secondEdgeID][1]):
+			continue
+		if (newNet[edgeList[firstEdgeID][0],edgeList[secondEdgeID][1]]>0.0) or (newNet[edgeList[secondEdgeID][0],edgeList[firstEdgeID][1]]>0.0):
+			continue
+		if (testNet[edgeList[firstEdgeID][0],edgeList[secondEdgeID][1]]>0.0) or (testNet[edgeList[secondEdgeID][0],edgeList[firstEdgeID][1]]>0.0):
+			continue
+		
+		edgeList[firstEdgeID][1]+=edgeList[secondEdgeID][1]
+		edgeList[secondEdgeID][1]=edgeList[firstEdgeID][1]-edgeList[secondEdgeID][1]
+		edgeList[firstEdgeID][1]=edgeList[firstEdgeID][1]-edgeList[secondEdgeID][1]
+		
+		newNet[edgeList[firstEdgeID][0],edgeList[secondEdgeID][1]]=0.0
+		newNet[edgeList[secondEdgeID][0],edgeList[firstEdgeID][1]]=0.0
+
+		testNet[edgeList[firstEdgeID][0],edgeList[secondEdgeID][1]]=0.0
+		testNet[edgeList[secondEdgeID][0],edgeList[firstEdgeID][1]]=0.0
+	
+		newNet[edgeList[firstEdgeID][0],edgeList[firstEdgeID][1]]=1.0
+		newNet[edgeList[secondEdgeID][0],edgeList[secondEdgeID][1]]=1.0
+		testNet[edgeList[firstEdgeID][0],edgeList[firstEdgeID][1]]=1.0
+		testNet[edgeList[secondEdgeID][0],edgeList[secondEdgeID][1]]=1.0
+		
+		firstEdgeID+=1
+		
+	return newNet
+
     
 if __name__ == '__main__':
     """Run unit tests if called."""
