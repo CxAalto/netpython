@@ -24,7 +24,7 @@
 
 import pynet,netext,warnings
 import sys
-knownFiletypes=["edg","gml","mat","net"]
+knownFiletypes=["edg","gml","mat","net","adj"]
 
 def getFiletype(fileName):
     """Infer the type of a file.
@@ -145,6 +145,9 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
 
     return newNet
 
+def loadNet_adj(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
+                numerical=None):
+    raise Exception("Reading adj file format is not implemented.")
 
 def loadNet_mat(input, mutualEdges=False, splitterChar=None,symmetricNet=True):
     rows, columns = 0, 0
@@ -253,6 +256,21 @@ def writeNet_mat(net, outputFile):
         outputFile.write("\n")
     return nodes
 
+def writeNet_adj(net,outputFile,splitterChar=" "):
+    """
+    Writes the network into disk as a directed adjacency list.
+    Each line in the output file corresponds to node and its neighbors. That is,
+    first node in each line is connected to the consequent nodes in the same line.
+    """
+
+    if not hasattr(outputFile, 'write'):
+        raise ValueError("Parameter 'outputFile' must be a file object.")
+    for node in net:
+        nodes=list(net[node])
+        nodes.append(node)
+        nodes.reverse()
+        outputFile.write(splitterChar.join(map(str,nodes)))
+        outputFile.write("\n")        
 
 def writeNet(net, output, headers=False, fileType=None):
     """Write network to disk.
@@ -296,7 +314,8 @@ def writeNet(net, output, headers=False, fileType=None):
         # Write out the network.
         if fileType == 'edg':
             writeNet_edg(net, outputFile, headers)
-        elif fileType in ('gml', 'mat', 'net'):
+        #elif fileType in ('gml', 'mat', 'net'):
+        elif fileType in knownFiletypes:
             eval("writeNet_%s(net,outputFile)" % fileType)
         else:
             raise ValueError("Unknown file type, try writeNet_[filetype].")
@@ -343,7 +362,8 @@ def loadNet(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
         if fileType == 'edg':
             newNet = loadNet_edg(inputFile, mutualEdges, splitterChar,
                                  symmetricNet, numerical)
-        elif fileType in ('gml', 'mat', 'net'):
+        #elif fileType in ('gml', 'mat', 'net'):
+        elif fileType in knownFiletypes:
             newNet = eval("loadNet_%s(inputFile)" % fileType)
         else:
             raise ValueError("Unknown file type '%s', try loadNet_[filetype]."
