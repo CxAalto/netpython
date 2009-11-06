@@ -3,6 +3,7 @@
  %{
  #include "sn.h"
  #include "netext.h"
+ #include "transforms.h"
  %}
  
  // Ignore the default constructor
@@ -46,3 +47,6 @@ class NeighborIterator{
 
 //%include "netext.h"
 float clusteringCoefficient(Sn*, int);
+
+//%include "transforms.h"
+void shuffleEdges(Sn*, int,int,int);
