@@ -94,7 +94,7 @@ def loadNet_gml(input):
     return net
 
 def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
-                numerical=None):
+                numerical=None,allowSelfEdges=True):
     """Read network data from input in edg format.
 
     If `mutualEdges` is set to True, an edge is added between nodes i
@@ -103,6 +103,9 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
 
     If `mutualEdges` is False and the same edge is encountered
     multiple times, the edge weight will be the sum of all weights.
+
+    If 'allowSelfEdges', the self edges are translated as nodes with no edges. Otherwise
+    those edges are just thrown out.
     """
     def isNumerical(input):
 	try:
@@ -128,20 +131,21 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
 
     for line in input:
         fields=line.split(splitterChar)
-        if len(fields)>2:            
-	    if numerical:
-		fields[0]=int(fields[0])
-		fields[1]=int(fields[1])
-            if fields[0]!=fields[1]:
-                if mutualEdges:
-                    if nodeMap.has_key( (fields[1], fields[0]) ):
-                        value = 0.5*( nodeMap[(fields[1], fields[0])] 
-                                      + float(fields[2]) )
-                        newNet[fields[0]][fields[1]] = value
+        if len(fields)>2:
+            if fields[0]!=fields[1] or allowSelfEdges:
+                if numerical:
+                    fields[0]=int(fields[0])
+                    fields[1]=int(fields[1])
+                if fields[0]!=fields[1]:
+                    if mutualEdges:
+                        if nodeMap.has_key( (fields[1], fields[0]) ):
+                            value = 0.5*( nodeMap[(fields[1], fields[0])] 
+                                          + float(fields[2]) )
+                            newNet[fields[0]][fields[1]] = value
+                        else:
+                            nodeMap[(fields[0], fields[1])] = float(fields[2])
                     else:
-                        nodeMap[(fields[0], fields[1])] = float(fields[2])
-                else:
-                    newNet[fields[0]][fields[1]] += float(fields[2])
+                        newNet[fields[0]][fields[1]] += float(fields[2])
 
     return newNet
 
