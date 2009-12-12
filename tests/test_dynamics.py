@@ -17,6 +17,20 @@ class TestDynamics(unittest.TestCase):
         for t, b in dynamics.eventBetweenness(self.events):
             self.assertEqual(b, corr_result[t])
 
+    def test_nodeBetweenness(self):
+        nb = dict()
+        nb_corr = {1:4, 2:4, 3:6, 4:12, 5:6, 6:0}
+        list(dynamics.eventBetweenness(self.events, nodeBetweenness=nb))
+        self.assertEqual(nb, nb_corr)
+
+    def test_nodeBetweenness_withPathEnds(self):
+        nb = dict()
+        nb_corr = {1:11, 2:11, 3:11, 4:16, 5:11, 6:6}
+        list(dynamics.eventBetweenness(self.events, nodeBetweenness=nb,
+                                       include_path_ends=True))
+        self.assertEqual(nb, nb_corr)
+        
+
 if __name__ == '__main__':
     if True:
         # If true, run only the tests listed below, otherwise run all tests
