@@ -2,7 +2,8 @@
 
 from collections import deque
 
-def eventBetweenness(events, events_reversed=None):
+def eventBetweenness(events, events_reversed=None, nodeBetweenness=None,
+                     include_path_ends=False):
     """Calculate the event betweenness of all events.
 
     The event betweenness is defined as the total number of
@@ -13,21 +14,29 @@ def eventBetweenness(events, events_reversed=None):
     events : sequence of tuples (int, int, int)
         A sequence of events where each event is a tuple (t, i, j),
         meaning that an event takes place at time t between nodes i
-        and j. Events are undirected. The times must be consecutive
-        and `events` must be sorted by time in increasing order.
-    events_reversed : iterable
-        Normally the algorithm iterates through `events` first in
+        and j. Events are undirected. `events` must be sorted by time
+        in increasing order.
+    events_reversed : iterable (default: None)
+        Normally it should be possible to iterate through `events` in
         reversed order. If this is difficult to arrange, you can
         supply `events_reversed` which is then used to go through the
         events in reversed order. In this case `events` can be any
         iterable object.
+    nodeBetweenness : dict (default: None)
+        If an empty dictionary is given, node event betweenness will
+        be calculated and saved in it, with a key corresponding to the
+        node id.
+    include_path_ends : bool (default: False)
+        If True, the ends of the paths are included when calculating
+        the node event betweenness. Otherwise only paths that go
+        _through_ the node are counted.
 
     Yield
     -----
     (t, event_betweenness) : (int, int)
         At each iteration an event time is returned with the
         corresponding event betweenness. The values are returned in
-        temporal order.
+        the same order as in `events`.
 
     Notes
     -----
@@ -73,8 +82,29 @@ def eventBetweenness(events, events_reversed=None):
         #print ("t = %d, Arr(%d) = %d, Lea(%d) = %d, Arr(%d) = %d, Lea(%d) = %d" 
         #       % (t, i, a_i, i, l_i, j, a_j, j, l_j))
 
+        # The number of paths relayed through the new event (i,j)
+        # (That is, the number of paths that do not start or end at i
+        # or j. Calculated just for clarity.)
+        N_relayed = a_i*l_j + a_j*l_i
+
+        # Calculate node betweenness if required. Count only paths
+        # arriving at node i via the current event; this way each
+        # path is only counted once.
+        if nodeBetweenness is not None:
+            nb_i = nodeBetweenness.setdefault(i,0) + a_j*l_i + l_i
+            nb_j = nodeBetweenness.setdefault(j,0) + a_i*l_j + l_j
+            if include_path_ends:
+                # Add the contribution of paths starting from or
+                # ending at the current event. Because no other
+                # adjacent event is involved in these paths, there is
+                # no risk of counting them twice.
+                nb_i += a_j + l_j
+                nb_j += a_i + l_i
+            nodeBetweenness[i] = nb_i
+            nodeBetweenness[j] = nb_j
+
         # Yield edge betweenness.
-        yield t, a_i*l_j + a_j*l_i + a_i + a_j + l_i + l_j
+        yield t, N_relayed + a_i + a_j + l_i + l_j
 
         # Update the number of paths arriving to nodes i and j at or
         # before the current event.
