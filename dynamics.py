@@ -82,11 +82,6 @@ def eventBetweenness(events, events_reversed=None, nodeBetweenness=None,
         #print ("t = %d, Arr(%d) = %d, Lea(%d) = %d, Arr(%d) = %d, Lea(%d) = %d" 
         #       % (t, i, a_i, i, l_i, j, a_j, j, l_j))
 
-        # The number of paths relayed through the new event (i,j)
-        # (That is, the number of paths that do not start or end at i
-        # or j. Calculated just for clarity.)
-        N_relayed = a_i*l_j + a_j*l_i
-
         # Calculate node betweenness if required. Count only paths
         # arriving at node i via the current event; this way each
         # path is only counted once.
@@ -104,7 +99,7 @@ def eventBetweenness(events, events_reversed=None, nodeBetweenness=None,
             nodeBetweenness[j] = nb_j
 
         # Yield edge betweenness.
-        yield t, N_relayed + a_i + a_j + l_i + l_j
+        yield t, a_i*l_j + a_j*l_i + a_i + a_j + l_i + l_j
 
         # Update the number of paths arriving to nodes i and j at or
         # before the current event.
