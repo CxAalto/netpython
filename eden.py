@@ -107,6 +107,34 @@ class MicrosatelliteData:
         #return float(distance)
         return float(sum(self.getMSDistance_vectorNonsharedAlleles(x,y)))/float(len(x))
 
+    def getGroupwiseDistance_DyerNason(self,x,y):
+        """
+        Returns the distance between two populations defined by Dyer and Nason in:
+        "Population graphs: The graph theoretic shape of genetic structure, Mol Ecol
+        13:1713-1727 (2004)". This implementation is coded by following: 
+        "M.A. Fortuna et al.: Networks of spatial genetic variation across species, PNAS
+        vol. 106 no. 45 pp. 19044-19049 (2009)".
+
+        Parameters
+        ----------
+        x and y are lists of sample indices correspoding to samples of two populations.
+        The distance between these populations is calculated.
+        """
+        #calculate the centroid multivariate coding vector:
+        x_cod={} # the codification vector for population x
+        for nodeIndex in x:
+            for locus in range(self.getNumberofLoci()):
+                alleles=self.getLocusforNodeIndex(locus,nodeIndex)
+                key=(locus,alleles[0])
+                x_cod[key]+=x_cod.get(key,0)+1
+                key=(locus,alleles[1])
+                x_cod[key]+=x_cod.get(key,0)+1
+        for key in x_cod.keys(): #normalize
+            x_cod[key]=x_cod[key]/float(len(x))
+
+                
+        raise NotImplementedError()
+
     def getGroupwiseDistance_Goldstein(self,x,y):
         """
         Returns the goldstein distance between two populations
