@@ -5,7 +5,7 @@ Collection of dialogue windows
 
 """
 
-import pynet,os,netio,netext,visuals
+import pynet,os,netio,netext,visuals,eden,transforms
 import random
 import heapq
 import string
@@ -19,6 +19,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,NavigationToolba
 
 
 # NEW DIALOGUE WINDOWS / JS / MAY-JUNE 09
+
 
 class MySimpleDialog(Toplevel):
     '''Master class for a dialog popup window.
@@ -92,6 +93,16 @@ class MySimpleDialog(Toplevel):
 
     def applyme(self):
         pass
+
+    def displayBusyCursor(self):
+
+        self.parent.configure(cursor='watch')
+        self.parent.update()
+        self.parent.after_idle(self.removeBusyCursor)
+
+    def removeBusyCursor(self):
+        self.parent.configure(cursor='arrow')
+        
 
 class WLogbinDialog(MySimpleDialog):
     """Asks for the number of bins for log binning
@@ -1216,3 +1227,429 @@ class ColorMapDialog(MySimpleDialog):
     def applyme(self):
         self.result=self.colormap.get()
         
+class WaitWindow(MySimpleDialog):
+    """Used when loading a matrix. Asks if the matrix contains weights or distances"""
+    
+
+    def __init__(self,parent,lambda_operation,title=None,titlemsg="Please wait"):
+
+        Toplevel.__init__(self,parent)
+        #self.configure(bg='Gray80')
+      #  self.transient(parent)
+
+        self.title(title)
+
+        self.titlemsg=titlemsg
+
+        self.parent=parent
+        self.result=None
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        self.buttonbox()
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.result=lambda_operation()
+
+        self.wait_window(self)
+
+    def body(self,masterclass,masterwindow,titlemsg="Please wait"):
+
+       # self.b1=Checkbutton(masterwindow,text='Use linear bins for 1..10',variable=masterclass.linfirst,state=ACTIVE,bg='Gray80')
+       # self.b1.grid(row=0,column=0,columnspan=2)
+
+        self.wholeframe=Frame(masterwindow,relief='sunken',borderwidth=2)
+        
+        self.clabel=Label(self.wholeframe,text=self.titlemsg,justify=LEFT,anchor=W,bg='gray90',relief='groove',borderwidth=1)
+        self.clabel.pack(side=TOP,expand=YES,fill=X,ipadx=5,ipady=5)
+
+        self.bottompart=Frame(self.wholeframe)
+
+        r1=Label(self.bottompart,text='Processing...',value=1,variable=masterclass.mattype)
+        r1.grid(row=1,column=0,sticky=W)
+
+        self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
+
+        self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
+               
+        return self.wholeframe
+
+    def applyme(self):
+
+        return self.result
+
+class MsLoadWaiter(MySimpleDialog):
+    """Used when loading a matrix. Asks if the matrix contains weights or distances"""
+    
+
+    def __init__(self,parent,filename,removeclones,measuretype,title="Processing microsatellite data",titlemsg="Please wait"):
+
+        Toplevel.__init__(self,parent)
+        #self.configure(bg='Gray80')
+      #  self.transient(parent)
+
+        
+        self.title(title)
+
+        self.titlemsg=titlemsg
+
+        self.parent=parent
+        self.result=None
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        #self.buttonbox()
+        self.grab_set()
+
+        self.points=['.','..','...']
+        self.pointcounter=0
+
+        self.displayBusyCursor()
+        
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        inputfile=open(filename,'rU')
+
+        self.l1['fg']='#b0b0b0'
+        self.l1.update()
+
+        self.l2['text']='Removing clones...'
+        self.l2['fg']='black'
+
+        self.l2.update()
+
+        msdata_initial=eden.MicrosatelliteData(inputfile)
+
+        if removeclones:
+
+            [msdata,keeptheserows]=msdata_initial.getUniqueSubset(returnOldIndices=True)
+            clones='collapsed'
+
+                # trick to accommodate for (possible) node properties - we will use only "keeptheserows" containing indices to non-clonal samples
+
+        else:
+
+            msdata=msdata_initial
+            clones='included'
+
+        self.clones=clones
+        self.keeptheserows=keeptheserows
+        
+        inputfile.close()
+
+        self.l3['text']='Calculating distance matrix...'
+        self.l3['fg']='black'
+
+        self.l3.update()
+
+        self.l2['fg']='#b0b0b0'
+        self.l2.update()
+    
+
+            # transform ORIGINAL WITH CLONES into distance matrix
+
+        m=msdata_initial.getDistanceMatrix(measuretype)
+        
+        if removeclones:
+            Nclones=len(m)-len(keeptheserows)
+        else:
+            Nclones=None
+
+        self.Nclones=Nclones
+        self.m=m
+
+        self.ok()
+
+
+    def animate(self):
+
+        self.pointcounter=self.pointcounter+1
+        if self.pointcounter==3:
+            self.pointcounter=0
+
+        self.clabel['text']=self.titlemsg+self.points[self.pointcounter]
+        self.clabel.update()
+
+        self.after(500,self.animate)
+
+    def body(self,masterclass,masterwindow,titlemsg="Please wait!"):
+
+       # self.b1=Checkbutton(masterwindow,text='Use linear bins for 1..10',variable=masterclass.linfirst,state=ACTIVE,bg='Gray80')
+       # self.b1.grid(row=0,column=0,columnspan=2)
+
+        self.wholeframe=Frame(masterwindow,relief='sunken',borderwidth=2)
+        
+        self.clabel=Label(self.wholeframe,text=self.titlemsg,justify=LEFT,anchor=W,bg='darkolivegreen2',relief='groove',borderwidth=1,padx=3,pady=3,width=40)
+        self.clabel.pack(side=TOP,expand=YES,fill=X,ipadx=5,ipady=5)
+
+        self.bottompart=Frame(self.wholeframe)
+
+        self.l1=Label(self.bottompart,text='Reading file...',justify=LEFT,anchor=W,bg='white',relief='flat',padx=3,pady=3)
+        self.l1.grid(row=1,column=0,sticky=W)
+        self.l1['fg']='black'
+
+        self.l2=Label(self.bottompart,text='-',justify=LEFT,anchor=W,bg='white',relief='flat',padx=3,pady=3)
+        self.l2.grid(row=2,column=0,sticky=W)
+
+        self.l3=Label(self.bottompart,text='-',justify=LEFT,anchor=W,bg='white',relief='flat',padx=3,pady=3)
+        self.l3.grid(row=3,column=0,sticky=W)
+
+        self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
+
+        self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
+               
+        return self.wholeframe
+
+    def applyme(self):
+
+        self.result=[self.Nclones,self.clones,self.keeptheserows,self.m]
+
+
+class GenericLoadWaiter(MySimpleDialog):
+    """Generic class for wait windows displaying one item"""
+    
+
+    def __init__(self,parent,filename,removeclones,measuretype,title=None,titlemsg="Please wait",specmsg="Processing"):
+
+        Toplevel.__init__(self,parent)
+        #self.configure(bg='Gray80')
+      #  self.transient(parent)
+
+        self.title(title)
+            
+        self.titlemsg=titlemsg
+        self.specmsg=specmsg
+
+        self.parent=parent
+        self.result=None
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+       #self.buttonbox()
+        self.grab_set()
+
+        self.points=['.','..','...']
+        self.pointcounter=0
+
+        self.displayBusyCursor()
+        
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        # INSERT YOUR FUNCTIONALITY HERE
+
+        self.ok()
+
+    def body(self,masterclass,masterwindow,titlemsg="Please wait!"):
+
+        self.wholeframe=Frame(masterwindow,relief='sunken',borderwidth=2)
+        
+        self.clabel=Label(self.wholeframe,text=self.titlemsg,justify=LEFT,anchor=W,bg='darkolivegreen2',relief='groove',borderwidth=1,padx=3,pady=3,width=40)
+        self.clabel.pack(side=TOP,expand=YES,fill=X,ipadx=5,ipady=5)
+
+        self.bottompart=Frame(self.wholeframe)
+
+        self.l1=Label(self.bottompart,text=self.specmsg,justify=LEFT,anchor=W,bg='white',relief='flat',padx=3,pady=3)
+        self.l1.grid(row=1,column=0,sticky=W)
+        self.l1['fg']='black'
+
+        self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
+
+        self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
+               
+        return self.wholeframe
+
+
+class MetaLoadWaiter(GenericLoadWaiter):
+    """Generic class for wait windows displaying one item"""
+    
+
+    def __init__(self,parent,m,keeptheserows,title=None,titlemsg="Please wait",specmsg="Processing"):
+
+        Toplevel.__init__(self,parent)
+        #self.configure(bg='Gray80')
+      #  self.transient(parent)
+
+        self.title(title)
+
+        self.titlemsg=titlemsg
+        self.specmsg=specmsg
+
+        self.parent=parent
+        self.result=None
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+       # self.buttonbox()
+        self.grab_set()
+
+        self.points=['.','..','...']
+        self.pointcounter=0
+
+        self.displayBusyCursor()
+        
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.distancematrix=transforms.filterNet(m,keeptheserows)
+
+        self.ok()
+
+    def applyme(self):
+
+        self.result=self.distancematrix
+
+class GoldsteinWaiter(GenericLoadWaiter):
+    """Generic class for wait windows displaying one item"""
+    
+
+    def __init__(self,parent,msdata,poplist,title="Calculating population distances",titlemsg="Please wait",specmsg="Processing..."):
+
+        Toplevel.__init__(self,parent)
+        #self.configure(bg='Gray80')
+      #  self.transient(parent)
+
+        self.title(title)
+
+        self.titlemsg=titlemsg
+        self.specmsg=specmsg
+
+        self.parent=parent
+        self.result=None
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+       # self.buttonbox()
+        self.grab_set()
+
+        self.points=['.','..','...']
+        self.pointcounter=0
+
+        self.displayBusyCursor()
+        
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        # first generate a list of unique population indices
+
+        glists=eden.getGoldsteinLists(poplist)
+
+        goldstein_list=glists[0]
+        unique_poplist=glists[1]
+
+        # then use msdata methods to get the Goldstein population-level distance matrix
+
+        distancematrix=msdata.getGroupwiseDistanceMatrix(goldstein_list)
+
+        netext.addNodeProperty(distancematrix,"Population")
+
+        for i,item in enumerate(unique_poplist):
+
+            distancematrix.nodeProperty['Population'][i]=item
+
+
+        self.distancematrix=distancematrix   
+
+        self.ok()
+
+    def applyme(self):
+
+        self.result=self.distancematrix
+
+class HimmeliWaiter(GenericLoadWaiter):
+    """Generic class for wait windows displaying one item"""
+    
+
+    def __init__(self,parent,net,time,usemst,coordinates=None,title=None,titlemsg="Please wait",specmsg="Processing..."):
+
+        Toplevel.__init__(self,parent)
+        #self.configure(bg='Gray80')
+        self.transient(parent)
+
+        self.title(title)
+
+        self.titlemsg=titlemsg
+        self.specmsg=specmsg
+
+        self.parent=parent
+        self.result=None
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+       # self.buttonbox()
+        self.grab_set()
+
+        self.points=['.','..','...']
+        self.pointcounter=0
+
+        self.displayBusyCursor()
+        
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        if usemst:
+            h=visuals.Himmeli(net,time=time,coordinates=coordinates,useMST=usemst)
+        else:
+            h=visuals.Himmeli(net,time=time,useMST=usemst)
+
+        
+        self.h=h
+
+        self.ok()
+
+    def applyme(self):
+
+        self.result=self.h
+
