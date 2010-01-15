@@ -502,7 +502,7 @@ def kcliquePercolator(net,k,start,stop,evaluations,reverse=False,weightFunction=
         kcliques=kcliquesByEdges(edgesAndEvaluations,k) #unweighted clique percolation
     #elif weightFunction=="intensity":
     else: #default to intensity
-        kcliqueList=kcliquesWeight(net,k,lambda x:getIntensity(x,net))
+        kcliqueList=kcliquesWeight(net,k,getIntensity)
         nCliques=len(kcliqueList) #number of cliques
         kcliques=EvaluationList(kcliqueList,weightFunction=lambda x:getIntensity(x,net))
         kcliques.setLinearEvaluations(int(start*nCliques),int(stop*nCliques),evaluations) 
