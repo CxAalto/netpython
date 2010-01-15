@@ -472,8 +472,9 @@ def kcliquesByEdges(edges, k):
 def kcliquesWeight(net,k,weightFunction):
     kcliques=list(kcliquesByEdges(net.edges,k))
     kcliques.sort(lambda x,y: cmp(weightFunction(x,net),weightFunction(y,net)))
-    for kclique in kcliques:
-        yield kclique
+    return kcliques
+    #for kclique in kcliques:
+    #    yield kclique
 
 def communitiesByKCliques(kcliques):
     # Calculate the neighboring relations
@@ -499,9 +500,12 @@ def kcliquePercolator(net,k,start,stop,evaluations,reverse=False,weightFunction=
         edgesAndEvaluations=EvaluationList(edges)
         edgesAndEvaluations.setLinearEvaluations(start,stop,evaluations)
         kcliques=kcliquesByEdges(edgesAndEvaluations,k) #unweighted clique percolation
-    else:    
-        kcliques=EvaluationList(kcliquesWeight(net,k,weightFunction),weightFunction=lambda x:getIntensity(x,net))
-        kcliques.setLinearEvaluations(start,stop,evaluations) 
+    #elif weightFunction=="intensity":
+    else: #default to intensity
+        kcliqueList=kcliquesWeight(net,k,lambda x:getIntensity(x,net))
+        nCliques=len(kcliqueList) #number of cliques
+        kcliques=EvaluationList(kcliqueList,weightFunction=lambda x:getIntensity(x,net))
+        kcliques.setLinearEvaluations(int(start*nCliques),int(stop*nCliques),evaluations) 
 
     for community in communitiesByKCliques(kcliques):
         yield community
