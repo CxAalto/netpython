@@ -256,6 +256,9 @@ class EvaluationList:
         self.strengthEvaluations=False
         self.evaluationPoints=[]
         self.lastEvaluation=False
+    def __len__(self):
+        return len(self.thelist)
+        
     def setEvaluations(self,evaluationPoints):
         self.evaluationPoints=evaluationPoints
     def setLinearEvaluations(self,first,last,numberOfEvaluationPoints):
