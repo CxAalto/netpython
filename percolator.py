@@ -248,19 +248,94 @@ class EvaluationList:
     """
     EvaluationList object is an iterable object that iterates through a list returning
     EvaluationEvent objects according to given rules.
-    Todo: better behavior when stacking evaluationlists
+    Todo: better behavior when stacking EvaluationList objects.
+
     """
-    def __init__(self,thelist,weightFunction=lambda x:x[2]):
+    def __init__(self,thelist,evaluationType="none",evaluations=None,weightFunction=lambda x:x[2],listlen=None):
+        """
+        Parameters
+        ----------
+        thelist : iterable object
+            The list which is iterated when this EvaluationList is iterated. Possible EvaluationEvents
+            are added between elements in thelist.
+        evaluationType : string
+            The method for adding evaluation events. See section 'Evaluation Types' for more information.
+        evaluation : None or list of numbers
+            The evalation point data. Meaning of this argument depends on the evaluationType parameter.
+        weightFunction : function
+            If evaluationType uses weights, this parameter defines how the weight is calculated from the 
+            elements in the list.
+        listlen : integer
+            Lenght of the list given as thelist argument. This is useful if thelist does not have __len__
+            function but the length is still known.
+
+
+        Evaluation Types
+        ----------------
+        The evaluationType parameter defines how the data given as parameter 'evaluations'
+        should be used.
+
+        'none' : No evaluations.
+
+        'fraclist' : Evaluations is a list of fractional number of elements to be added before 
+                     EvaluationEvent. The the total number of elements must be known either
+                     given in listlen parameter or by len function in thelist parameter.
+
+        'abslist' : Evaluations is a list of absolute numbers of elements.
+
+        'fraclinear' : Evaluation events are generated to be linearly. Evaluations is a triplet 
+                       (tuple or a list), where the first element is the first evaluation, the
+                       second element is the last evaluation and the third element is the total
+                       number of evaluations. The first and last element is given as fraction of
+                       elements in comparison to the total number of elements in the thelist parameter.
+                       The the total number of elements must be known either
+                       given in listlen parameter or by len function in thelist parameter.                       
+
+        'abslinear' : Evaluation events are generated to be linearly. Evaluations is a triplet 
+                      (tuple or a list), where the first element is the first evaluation, the
+                      second element is the last evaluation and the third element is the total
+                      number of evaluations. The first and last element is given as absolute number
+                      of elements.
+
+        'weights' : Evaluations parameter is not used. Instead EvaluationEvents are produced
+                    every time when weight of an next element is different than weight of the
+                    previous element.
+        """
+        
         self.thelist=thelist
         self.weightFunction=weightFunction
         self.strengthEvaluations=False
         self.evaluationPoints=[]
         self.lastEvaluation=False
+        self.listlen=listlen
+
+        if evaluationType=="fraclist":
+            nElements=len(self)
+            flist=map(lambda x:int(self.listlen*x),evaluations)
+            self.setEvaluations(flist)
+        elif evaluationType=="abslist":
+            self.setEvaluations(evaluations)
+        elif evaluationType=="weights":
+            self.setStrengthEvaluations()
+        elif evaluationType=="abslinear":
+            self.setLinearEvaluations(evaluations[0],evaluations[1],evaluations[2])
+        elif evaluationType=="fraclinear":
+            nElements=len(self)
+            self.setLinearEvaluations(int(evaluations[0]*nElements),int(evaluations[1]*nElements),evaluations[2])
+        elif evaluationType=="none":
+            pass
+        else:
+            raise Exception("Invalid evaluationType: "+str(evaluationType))
+
+
+
     def __len__(self):
-        return len(self.thelist)
+        if self.listlen==None:
+            self.listlen=len(self.thelist)
+        return self.listlen
         
     def setEvaluations(self,evaluationPoints):
-        self.evaluationPoints=evaluationPoints
+        self.evaluationPoints=sorted(evaluationPoints)
     def setLinearEvaluations(self,first,last,numberOfEvaluationPoints):
         self.strenghtEvaluations=False
         if last<=first:
@@ -279,7 +354,10 @@ class EvaluationList:
         if not self.strengthEvaluations and not self.lastEvaluation:
             index=0
             evalIter=self.evaluationPoints.__iter__()
-            nextEvaluationPoint=evalIter.next()
+            try:
+                nextEvaluationPoint=evalIter.next()
+            except StopIteration: #thelist is empty
+                nextEvaluationPoint=None
             for element in self.thelist:
                 yield element
                 if index==nextEvaluationPoint:
@@ -304,6 +382,17 @@ class EvaluationList:
             yield EvaluationEvent()
         
 def getComponents(net):
+    """
+    Finds connected components of a network.
+    
+    Parameters
+    ----------
+    net : A network object
+    
+    Returns
+    -------
+    Connected components as a NodePartition object.
+    """
     edges=net.edges
     ee=EvaluationList(edges)
     ee.setLastEvaluation()
@@ -313,7 +402,20 @@ def getComponents(net):
 
 def getKCliqueComponents(net,k):
     """
-    Returns community structure calculated with k-clique percolation.
+    Returns community structure calculated with unweighted k-clique percolation.
+
+    Parameters
+    ----------
+    net : A network object
+    k : integer (larger than 2)
+        The clique size.
+
+    Returns
+    -------
+    The community structure as a NodeCover object.
+
+    Examples
+    --------
     >>> n=netio.loadNet('nets/co-authorship_graph_cond-mat_small.edg')
     >>> getKCliqueComponents(n,5).getSizeDist()=={5: 36, 6: 9, 7: 4, 8: 2}
     True
@@ -375,7 +477,7 @@ def getIntensity(kclique,net):
     intensity=1
     for edge in kclique.getEdges():
 	intensity*=net[edge[0],edge[1]]
-    return pow(intensity,1.0/float(kclique.getK()))
+    return pow(intensity,1.0/float(kclique.getK()*((kclique.getK()-1)/2)))
 
 class EvaluationEvent:
     def __init__(self,threshold=None,addedElements=None):
@@ -493,20 +595,81 @@ def communitiesByKCliques(kcliques):
             krTree.mergeSetsWithElements(krcliques) #merge the sets of k-1 cliques at the list 
 
 
-def kcliquePercolator(net,k,start,stop,evaluations,reverse=False,weightFunction=None):    
-    if weightFunction==None:
+def cliquePercolator(net,k,evaluations,weightFunction="minweight",evaluationType="fraclist",reverse=False):    
+    """
+    Weighted and unweighted clique percolation with sequential clique percolation algorithm.    
+
+    Parameters
+    ----------
+    net : Network object
+    k : Size of the clique to be used.
+    evaluations : The evaluation data.
+    weightFunction : The weight function for the cliques.
+    evaluationType : How to use the evaluation data.
+    reverse : True if the order of the percolation process should be reversed. That is, if small weights
+              are added before large weights.
+
+    Weight Functions
+    ----------------
+    Weight function which should be used to sort the cliques.
+
+    'minweight' : Do sequential clique percolation by sorting the edges according to their weigths.
+
+    'intensity' : Sort the cliques according to their intensities.
+
+    Evaluation Types
+    ----------------
+    The evaluationType parameter defines how the data given as parameter 'evaluations'
+    should be used.
+
+    'fraclist' : Evaluations is a list of fractions of cliques (or edges for unweighted CP) 
+                 from the total number of cliques (edges).
+
+    'abslist' : Evaluations is a list of absolute numbers of cliques (or edges for unweighted CP).
+
+    'fraclinear' : Evaluation events are generated to be linearly. Evaluations is a triplet 
+                   (tuple or a list), where the first element is the first evaluation, the
+                   second element is the last evaluation and the third element is the total
+                   number of evaluations. The first and last element is given as fraction of
+                   cliques (edges) in comparison to the total number of cliques (edges) in the thelist parameter.
+
+    'abslinear' : Evaluation events are generated to be linearly. Evaluations is a triplet 
+                  (tuple or a list), where the first element is the first evaluation, the
+                  second element is the last evaluation and the third element is the total
+                  number of evaluations. The first and last element is given as absolute number
+                  of cliques (edges).
+
+    'weights' : Evaluations parameter is not used. Instead EvaluationEvents are produced
+                every time when weight of an next clique (edge) is different than weight of the
+                previous clique (edge).
+
+    Returns
+    -------
+    An iterable object generating the sequence of clique community structures.
+
+    Scaling
+    -------
+    Time : Number of k-cliques * k.
+    Memory : For unweighted case the memory consumption is dominated by the number of (k-1)-cliques
+             in the network. For weighted case also all the k-cliques of the network are needed to be 
+             kept in the memory.
+    """
+
+    #TODO: add sanity checks for the parameters.
+
+    #Phase I: find k-cliques
+    if weightFunction=="minweight":
         edges=list(net.edges)
         edges.sort(lambda x, y: cmp(x[2],y[2]),reverse=reverse)
-        edgesAndEvaluations=EvaluationList(edges)
-        edgesAndEvaluations.setLinearEvaluations(start,stop,evaluations)
-        kcliques=kcliquesByEdges(edgesAndEvaluations,k) #unweighted clique percolation
-    #elif weightFunction=="intensity":
-    else: #default to intensity
+        edgesAndEvaluations=EvaluationList(edges,evaluations,evaluationType)
+        kcliques=kcliquesByEdges(edgesAndEvaluations,k) #unweighted clique percolation        
+    elif weightFunction=="intensity":
         kcliqueList=kcliquesWeight(net,k,getIntensity)
-        nCliques=len(kcliqueList) #number of cliques
-        kcliques=EvaluationList(kcliqueList,weightFunction=lambda x:getIntensity(x,net))
-        kcliques.setLinearEvaluations(int(start*nCliques),int(stop*nCliques),evaluations) 
+        kcliques=EvaluationList(kcliqueList,evaluations,evaluationType,weightFunction=lambda x:getIntensity(x,net))
+    else:
+        raise Exception("No such weight function: "+str(weightFunction))
 
+    #Phase II: using k-cliques, find clique communities
     for community in communitiesByKCliques(kcliques):
         yield community
         
