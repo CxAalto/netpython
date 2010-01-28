@@ -157,61 +157,56 @@ def setColorMap(colorMap):
     if hasattr(colorMap, '_segmentdata'):
         return colorMap
 
-    if colorMap=='primary':
-        # Jari's map: yellow->blue->red 
-        myMap=get_cmap()
-        myMap._segmentdata={
-            'red': ( (0,1,1), (0.5,0,0), (1,1,1)  ),
-            'green': ( (0,1,1), (0.5,0.5,0.5), (1,0,0) ),
-            'blue': ( (0,0,0), (0.5,1,1), (1,0,0) ),
-            }
-
-    elif colorMap=='orange':
-        # Riitta's color map from white through yellow and orange to red 
-        myMap=get_cmap()
-        myMap._segmentdata = { 'red'  : ( (0.,.99,.99), 
-                                          (0.2,.98,.98), 
-                                          (0.4,.99,.99), 
-                                          (0.6,.99,.99), 
-                                          (0.8,.99,.99), 
-                                          (1.0,.92,.92) ),
-                               'green': ( (0,0.99,0.99), 
-                                          (0.2,.89,.89),  
-                                          (0.4,.80,.80), 
-                                          (0.6,.50,.50), 
-                                          (0.8,.33,.33), 
-                                          (1.0,.10,.10) ),
-                               'blue' : ( (0,.99,.99), 
-                                          (0.2,.59,.59), 
-                                          (0.4,.20,.20), 
-                                          (0.6,0.0,0.0), 
-                                          (0.8,0.0,0.0), 
-                                          (1.0,.03,.03) )  }
-    elif colorMap=='bluered':
-        myMap=get_cmap()
-        myMap._segmentdata={
-            'red':  ( (0,0,0), 
-                      (0.17,0.25,0.25), 
-                      (0.33,0.7,0.7), 
-                      (0.5,.87,.87), 
-                      (0.67,.97,.97),  
-                      (0.83,.93,.93), 
-                      (1,.85,.85) ),
-            'green': ( (0,0,0), 
-                       (0.1667,0.53,0.53), 
-                       (0.3333,.8,.8), 
-                       (0.5,.9,.9), 
-                       (0.6667,.7,.7),
-                       (0.8333,.32,.32), 
-                       (1,.07,.07) ),
-            'blue': ( (0,.6,.6),  
-                      (0.1667,.8,.8),    
-                      (0.3333,1,1),    
-                      (0.5,.8,.8),    
-                      (0.6667,.33,.33),    
-                      (0.8333,.12,.12),   
-                      (1,.05,.05) ) }
-
+    known_colormaps = ('primary', 'orange', 'bluered')
+    if colorMap in known_colormaps:
+        if colorMap == 'primary':
+            # Jari's map: yellow->blue->red 
+            segmentdata={'red': ( (0,1,1),(0.5,0,0), (1,1,1)  ),
+                         'green': ( (0,1,1), (0.5,0.5,0.5), (1,0,0) ),
+                         'blue': ( (0,0,0), (0.5,1,1), (1,0,0) )}
+        elif colorMap=='orange':
+            # Riitta's color map from white through yellow and orange to red 
+            segmentdata = { 'red'  : ( (0.,.99,.99), 
+                                       (0.2,.98,.98), 
+                                       (0.4,.99,.99), 
+                                       (0.6,.99,.99), 
+                                       (0.8,.99,.99), 
+                                       (1.0,.92,.92) ),
+                            'green': ( (0,0.99,0.99), 
+                                       (0.2,.89,.89),  
+                                       (0.4,.80,.80), 
+                                       (0.6,.50,.50), 
+                                       (0.8,.33,.33), 
+                                       (1.0,.10,.10) ),
+                            'blue' : ( (0,.99,.99), 
+                                       (0.2,.59,.59), 
+                                       (0.4,.20,.20), 
+                                       (0.6,0.0,0.0), 
+                                       (0.8,0.0,0.0), 
+                                       (1.0,.03,.03) )  }
+        elif colorMap=='bluered':
+            segmentdata={'red':  ( (0,0,0), 
+                                   (0.17,0.25,0.25), 
+                                   (0.33,0.7,0.7), 
+                                   (0.5,.87,.87), 
+                                   (0.67,.97,.97),  
+                                   (0.83,.93,.93), 
+                                   (1,.85,.85) ),
+                         'green': ( (0,0,0), 
+                                    (0.1667,0.53,0.53), 
+                                    (0.3333,.8,.8), 
+                                    (0.5,.9,.9), 
+                                    (0.6667,.7,.7),
+                                    (0.8333,.32,.32), 
+                                    (1,.07,.07) ),
+                         'blue': ( (0,.6,.6),  
+                                   (0.1667,.8,.8),    
+                                   (0.3333,1,1),    
+                                   (0.5,.8,.8),    
+                                   (0.6667,.33,.33),    
+                                   (0.8333,.12,.12),
+                                   (1,.05,.05) ) }
+        myMap = matplotlib.colors.LinearSegmentedColormap(colorMap, segmentdata)
     else:
         try:
             myMap=get_cmap(colorMap)
@@ -378,7 +373,7 @@ def setColor(value,valueLimits,colorMap):
     colormap should take in values in the range (0...1) and produce a
     three-tuple containing an RGB color, as in (r,g,b).
     """
-    if valueLimits[0] != valueLimits[1]: 
+    if valueLimits[0] < valueLimits[1]: 
         normalizedValue = normalizeValue(value,valueLimits) 
         color = colorMap(normalizedValue) 
     else:
@@ -421,9 +416,10 @@ def plot_node(plotobject,x,y,color='w',size=8.0,edgecolor='w'):
 
 def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
                  labels=None, fontsize=7, showAllNodes=True, nodeColor=None,
+                 nodeEdgeColor='k',
                  nodeSize=1.0, minnode=2.0, maxnode=6.0, nodeColors=None,
                  nodeSizes=None, bgcolor='white', maxwidth=2.0,
-                 minwidth=0.2, uselabels='none', edgeColorMap='winter', 
+                 minwidth=0.2, uselabels='some', edgeColorMap='winter', 
                  weightLimits=None, setNodeColorsByProperty=None,
                  nodeColorMap='winter', nodePropertyLimits=None,
                  nodeLabel_xOffset=None, coloredvertices=None, vcolor=None,
@@ -466,6 +462,8 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     nodeColor : RGB color tuple
         Default color of a node. Three values between 0 and 1, for
         example (1.0, 0, 0) is red and (0.5, 0.5, 0.5) is middle gray.
+    nodeEdgeColor : any valid matplotlib color (default 'k')
+        The color of the edges of nodes. Default is black.
     setNodeColorByProperty : sequence of node indices
         If `setNodeColorsByProperty` is specified, any node not
         appearing in the dictionary `nodeColors` will be colored
@@ -492,9 +490,11 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         Maximum width of plotted edges.
     labels : dict {nodename:labelstring}
         Dictionary of node labels.
-    uselabels : str, either 'none' or 'all'
-        If 'all', the node index is shown as label for those nodes
-        that are not listed in `labels`.
+    uselabels : either 'some' (default), 'none' or 'all'
+        If 'some', the label is shown for the nodes whose label is
+        given in `labels`. If 'all', the node index is shown also for
+        those nodes that are not listed in `labels`. If 'none', no
+        node labels are printed.
     fontsize : int
         Sets font size for labels.
     edgeColorMap : str or cmap
@@ -612,10 +612,8 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
 
     # Set the color for node labels
     fontcolor='w'
-    node_edgecolor='w'
     if bgcolor=='white':
         fontcolor='k'
-        node_edgecolor='k'
         
     # First draw all edges, if there are any
     edges=list(net.edges)
@@ -672,6 +670,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         A = (0 if maxs == mins else (maxnode-minnode)/(maxs-mins))
         B = maxnode-A*maxs    
 
+    print nodeColorMap
     myNodeColorMap=setColorMap(nodeColorMap)
 
     # If nodes will be colored by setNodeColorsByProperty but
@@ -718,7 +717,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
                 value = net.nodeProperty[setNodeColorsByProperty][node]
                 color = setColor(value,nodePropertyLimits,myNodeColorMap)
 
-            if len(nodeColors)>0: 
+            if len(nodeColors)>0:
                 # If dict nodeColors is given, it overrides
                 # setNodeColorsByProperty
                 if not nodeColors.get(node): 
@@ -780,23 +779,19 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         nodeLabel_xOffset = (nodeLabel_xOffset or float(nodesize)/40)
 
         plot_node(axes, x=xy[node][0], y=xy[node][1],
-                  color=color, size=nodesize,edgecolor=node_edgecolor)
+                  color=color, size=nodesize, edgecolor=nodeEdgeColor)
 
-        if not (uselabels=='none'):
-
-            if uselabels == 'all':
-                axes.annotate(str(node),(xy[node][0]+nodeLabel_xOffset,xy[node][1]),
-                          color=fontcolor,size=fontsize)
-            elif node in labels:
+        if node in labels or uselabels == 'all':
+            if node in labels:
                 if isinstance(labels[node],float):
-
                     showthislabel="%2.2f" % labels[node]
-
                 else:
-
                     showthislabel=labels[node]
-                    
-                axes.annotate(showthislabel,(xy[node][0]+nodeLabel_xOffset,xy[node][1]),color=fontcolor,size=fontsize)
+            else:
+                showthislabel = str(node)
+
+            axes.annotate(showthislabel,(xy[node][0]+nodeLabel_xOffset,xy[node][1]),
+                          color=fontcolor,size=fontsize)
 
     xylist = xy.values()
     xlist=[]
