@@ -113,7 +113,7 @@ def collapseIndices(net,returnIndexMap=False):
         return newNet
 
 
-def threshold_by_value(net,threshold,mode):
+def threshold_by_value(net,threshold,mode,keepIsolatedNodes=False):
     '''Generates a new network by thresholding the input network. 
        If using option keepIsolatedNodes=True, all nodes in the
        original network will be included in the thresholded network;
