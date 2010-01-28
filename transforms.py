@@ -114,7 +114,12 @@ def collapseIndices(net,returnIndexMap=False):
 
 
 def threshold_by_value(net,threshold,mode):
-    '''Generates a new network by thresholding the input network.
+    '''Generates a new network by thresholding the input network. 
+       If using option keepIsolatedNodes=True, all nodes in the
+       original network will be included in the thresholded network;
+       otherwise only those nodes which have links will remain (this
+       is the default). 
+    
        Inputs: net = network, threshold = threshold value,
        mode = 0 (accept weights < threshold), 1 (accept weights > threshold)
        Returns a network.'''
@@ -132,6 +137,13 @@ def threshold_by_value(net,threshold,mode):
     else:
         raise Exception("mode must be either 0 or 1.")
 
+    # Add isolated nodes to the network. Because there is no function
+    # for adding a node, such as SymmNet.addNode(), this must be done
+    # using a hack: trying to read a link
+    if keepIsolatedNodes==True:
+        for node in net:
+            newnet[node][node]
+            
     netext.copyNodeProperties(net,newnet)
                 
     return newnet
