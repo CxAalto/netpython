@@ -378,11 +378,8 @@ def loadNet(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
 
     return newNet
     
-def loadNodeProperties(net,filename,splitterChar=None,propertyNames=None,allowMissingData=False,allowExtraData=False):
+def loadNodeProperties(net,input,splitterChar=None,propertyNames=None,allowMissingData=False,allowExtraData=False):
     """Read metadata (properties for nodes) from a file.
-
-    Usage:
-       loadNodeProperties(net,filename,splitterChar=None,propertyNames=None).
 
     The metadata file can contain any number of columns. The first
     column should contain names of nodes contained in 'net', and the
@@ -401,6 +398,7 @@ def loadNodeProperties(net,filename,splitterChar=None,propertyNames=None,allowMi
     Example input file format:
     node_label node_color node_class
     node1      blue       class1
+
     """
 
     #todo: default properties as argument for missing property lines
@@ -491,11 +489,10 @@ def loadNodeProperties(net,filename,splitterChar=None,propertyNames=None,allowMi
             net.nodeProperty[propertyName][node]=theString 
 
         
-
-    f=open(filename,'rU')   # NOTE: the 'U' flag means "Universal Newlines" - guarantees that
-                            # newlines are recognized as newlines independent of exact EOL character
-                            # and operating system. USE THIS EVERYWHERE FROM NOW ON
-    
+    if isinstance(input, str):
+        f = open(input, 'rU')
+    else:
+        f = input
 
     #check if the network is full or sparse.
     netIsSparse=type(net)!=pynet.FullNet and type(net)!=pynet.SymmFullNet
