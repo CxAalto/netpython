@@ -284,7 +284,9 @@ def local_threshold_by_value(net,threshold):
     '''Generates a new network by thresholding the input network.
        Inputs: net = network, threshold = threshold value,
        mode = 0 (accept weights < threshold), 1 (accept weights > threshold)
-       Returns a network.'''
+       Returns a network. Note! threshold is really alpha which is defined in
+       "Extracting the multiscale backbone of complex weighted networks"
+       http://www.pnas.org/content/106/16/6483.full.pdf'''
 
     newnet=pynet.SymmNet()
     for node in net:
