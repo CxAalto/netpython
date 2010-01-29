@@ -1293,7 +1293,7 @@ class MsLoadWaiter(MySimpleDialog):
     """Used when loading a matrix. Asks if the matrix contains weights or distances"""
     
 
-    def __init__(self,parent,filename,removeclones,measuretype,title="Processing microsatellite data",titlemsg="Please wait"):
+    def __init__(self,parent,inputfile,removeclones,measuretype,title="Processing microsatellite data",titlemsg="Please wait"):
 
         Toplevel.__init__(self,parent)
         #self.configure(bg='Gray80')
@@ -1328,7 +1328,7 @@ class MsLoadWaiter(MySimpleDialog):
 
         self.initial_focus.focus_set()
 
-        inputfile=open(filename,'rU')
+        #inputfile=open(filename,'rU')
 
         self.l1['fg']='#b0b0b0'
         self.l1.update()
