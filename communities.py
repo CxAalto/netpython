@@ -36,7 +36,7 @@ class NodeCover(object):
            The total number of nodes in the network. If None or not
            given, the number of nodes in all communities is used. Note
            that if there are nodes that are not included in any
-           community this will not be what you want.
+           community the default behaviour is not what you want.
         """
         if cmap is None:
             cmap = {}
@@ -163,6 +163,47 @@ class NodeCover(object):
         else:
             return float(sus)/float(size-gc)
 
+    def getChi(self, size=None):
+        """Chi is similar to percolation susceptibility
+
+        Susceptibility is defined as: 
+        
+        (Sum_{c != lc)} |c|**2) / (Sum_{c} |c|)**2
+
+        Size is the number of nodes in the network. If it is given, it
+        is assumed that communities of size 1 are not included in this
+        community structure.  If there is only 0 or 1 community, zero
+        is returned.
+        """
+        sd = self.getSizeDist()
+        
+        if len(sd) < 1:
+            if size==None or size==0:
+                return 0.0
+            else:
+                return 1.0
+
+        sizeSum = 0
+        for key, value in sd.iteritems():
+            sizeSum += key*value
+
+        # If no size is given, assume that also communities of size 1
+        # are included.
+        if size==None:
+            sus=0
+            size=sizeSum
+        else:
+            sus=size-sizeSum #s=1
+            assert(sus>=0)
+
+        gc = self.getCommunitySizes()
+        denom = np.sum(gc)**2
+        gc[0] = 0
+        numer = np.sum([x**2 for x in gc])
+
+        return float(denom)/float(numer)
+
+
     def getCollapsed(self):
         """
 
@@ -202,7 +243,7 @@ class NodeCover(object):
         newcs._sortBySize()
         return newcs
 
-    def create_commIDs(self):
+    def getCommIDs(self):
         """Construct commIDs.
 
         The key is node ID, and the value will be a list of
@@ -228,8 +269,8 @@ class NodeCover(object):
         N = max(self.N_nodes, other.N_nodes)
 
         # Construct community ID dictionaries.
-        cID_A = create_commIDs(self)
-        cID_B = create_commIDs(other)
+        cID_A = self.getCommIDs()
+        cID_B = other.getCommIDs()
 
         # Construct the bipartite community net.
         Nc_A = len(self.comm)
@@ -387,6 +428,37 @@ class NodeCover(object):
             #print H_norm, sum(H_norm)/len(XF)
 
         return ret_val
+
+    def avgWeightBySize(net):
+	"""Calculates the distribution of average edge weight in
+	communities.
+	
+        Parameters
+        ----------
+        net : pynet.SymmNet object
+           The original network.
+
+        Return
+        ------
+        avg_weights : dict {community_size: w_avg}
+            A dictionary where keys are community sizes and values are
+            the average weights in communities of that size.
+	"""
+	w_avg_total = np.mean(list(net.weights))
+	
+        weights, counts = {}, {}
+        for c in self.comm:
+            subnet = transforms.getSubnet(net,c)
+            n = len(subnet)
+            if n:
+                w_sum = np.sum(list(subnet.weights))
+                weights[n] = weights.get(n,0) + w_sum
+                counts[n] = counts.get(n,0) + 1
+
+        for n, w in weights.iteritems():
+            weights[n] = 1.0*w/counts[n]
+
+        return weights
 
 
     def getCommunityNetwork(self,net):
