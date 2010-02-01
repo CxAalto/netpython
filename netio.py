@@ -427,12 +427,16 @@ def loadNodeProperties(net,input,splitterChar=None,propertyNames=None,allowMissi
             if not c in digits and c!="-": return False
         return True
 
-    def getNumberOfLines(filename,nfields):
+    def getNumberOfLines(input,nfields):
         """
         Returns length of the given file in lines. Throws IOError if the file does not 
         exist.
         """
-        theFile=open(filename,'rU')
+        if isinstance(input, str):
+            theFile = open(input, 'rU')
+        else:
+            theFile = input
+        
         i=0
         for line in theFile:
             fields=line.split(splitterChar)
@@ -443,7 +447,7 @@ def loadNodeProperties(net,input,splitterChar=None,propertyNames=None,allowMissi
         theFile.close()
         return i
 
-    def checkNodes(filename,net,fieldNames,hasHeader,splitterChar):
+    def checkNodes(input,net,fieldNames,hasHeader,splitterChar):
         """
         Returns
         -------
@@ -452,11 +456,16 @@ def loadNodeProperties(net,input,splitterChar=None,propertyNames=None,allowMissi
         The second element is True if each node in the property file is in the network, and otherwise False
         """
 
+        if isinstance(input, str):
+            f = open(input, 'rU')
+        else:
+            f = input
+
+
         nfields=len(fieldNames)
         nNodesFound=0
         netHasAllNodes=True
         nodeLabelField=fieldNames.index('node_label')
-        f=open(filename,'rU')
         if hasHeader:
             f.readline()
         for i,line in enumerate(f):
@@ -521,7 +530,7 @@ def loadNodeProperties(net,input,splitterChar=None,propertyNames=None,allowMissi
         nodeLabelField=fieldNames.index("node_label")
 
         #enforce the rules of having no missing or extra nodes:
-        fileHasAllNodes,netHasAllNodes=checkNodes(filename,net,fieldNames,propertyNames==None,splitterChar)
+        fileHasAllNodes,netHasAllNodes=checkNodes(input,net,fieldNames,propertyNames==None,splitterChar)
         if fileHasAllNodes==False and not allowMissingData:
             f.close()
             raise Exception("The property file is missing some nodes that are in the network.")
@@ -556,7 +565,7 @@ def loadNodeProperties(net,input,splitterChar=None,propertyNames=None,allowMissi
         # if node_labels are used, these will be inserted as regular property fields   
 
         #check that input file has N-1 rows
-        nPropertyLines=getNumberOfLines(filename,nfields)
+        nPropertyLines=getNumberOfLines(input,nfields)
         if propertyNames==None:
             nPropertyLines=nPropertyLines-1
         if nPropertyLines!=len(net):
