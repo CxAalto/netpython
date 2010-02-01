@@ -35,7 +35,7 @@ class Net_edges:
         #for edge in self:
         #    rs+=str(edge)+" "
         #return rs
-pynet.Net.edges=property(Net_edges)
+pynet.VirtualNet.edges=property(Net_edges)
 
 class Net_weights:
     def __init__(self,net):
@@ -47,7 +47,7 @@ class Net_weights:
         return len(self.net.edges)
     def __str__(self):
         return reduce(lambda x,y: str(x)+" "+str(y),self)
-pynet.Net.weights=property(Net_weights)
+pynet.VirtualNet.weights=property(Net_weights)
 
 class Node_edges:
     def __init__(self,node):
@@ -83,7 +83,7 @@ def Net_add(self,net):
     for node in net:
         for neigh in net[node]:
             self[node,neigh]=net[node,neigh]
-pynet.Net.add=Net_add
+pynet.VirtualNet.add=Net_add
 
 
 class NodeProperties(dict):
