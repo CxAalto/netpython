@@ -54,7 +54,7 @@ class Node_edges:
         self.node=node
     def __iter__(self):
         for index in self.node:
-            yield self.node.net[self.node.index,index]       
+            yield self.node.net[self.node.name,index]       
     def __len__(self):
         return self.node.deg()
         #return len(self.node.net._nodes[self.node.index])
