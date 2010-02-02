@@ -248,7 +248,7 @@ class MicrosatelliteData:
         return float(sum(self.getMSDistance_vectorAlleleParsimony(x,y)))/float(len(x))
 
     
-    def getDistanceMatrix(self,distance="lm"):
+    def getDistanceMatrix(self,distance="lm",nodeNames=None):
         """
         Computes the distance between each node and returns the corresponding
         distance matrix.
@@ -266,9 +266,11 @@ class MicrosatelliteData:
             
         numberOfSpecimens=len(self.alleles[0])
         matrix=pynet.SymmFullNet(numberOfSpecimens)
-        for i in range(0,numberOfSpecimens):
-            for j in range(i+1,numberOfSpecimens):
-                matrix[i,j]=getMSDistance(self.getNode(i),self.getNode(j))
+        if nodeNames==None:
+            nodeNames=range(0,numberOfSpecimens)
+        for i,iName in enumerate(nodeNames):
+            for j,jName in enumerate(nodeNames[i+1:]):
+                matrix[iName,jName]=getMSDistance(self.getNode(i),self.getNode(j))
         return matrix
             
     def getSubset(self,nodes):
