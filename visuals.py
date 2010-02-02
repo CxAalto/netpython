@@ -878,7 +878,7 @@ class Himmeli:
         
         # Checking that the given net is valid and not empty
         #if net.__class__!=pynet.Net and net.__class__!=pynet.SymmNet:
-        if not isinstance(inputnet,pynet.Net):
+        if not isinstance(inputnet,pynet.VirtualNet):
             raise AttributeError("Unknown net type "+str(inputnet.__class__))
         if len(inputnet._nodes) == 0:
             raise AttributeError("The net cannot be empty.")
