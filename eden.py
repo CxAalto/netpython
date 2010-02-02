@@ -11,6 +11,22 @@ import math
 import numpy
 
 
+def getGoldsteinLists(poplist):
+    """Transforms the list of population indices (poplist) into
+    a list of lists, where each internal list contains all indices of
+    a population. Useful for getting the Goldstein population-level
+    distances for microsatellite data. Outputs: the population
+    member list of lists (goldstein_lists), list of unique population labels (uniquepops)"""
+    uniquepops=[ uniq for uniq in poplist if uniq not in locals()['_[1]']]
+    goldstein_lists=[]
+    for population in uniquepops:
+        thislist=[]
+        for i,item in enumerate(poplist):
+            if item==population:
+                thislist.append(i)
+        goldstein_lists.append(thislist)
+    return [goldstein_lists,uniquepops]
+
 def loadNet_microsatellite(input,removeClones=True,distance="lm"):
     """
     Reads microsatellite data as full net from iterable object
