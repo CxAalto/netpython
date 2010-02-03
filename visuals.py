@@ -300,7 +300,35 @@ def getNodeColors(net,colorwith="strength",useColorMap="orange",parentnet=[]):
 
                 for node in net:
                     nodeColors[node]=setColor(net.nodeProperty[colorwith][node],(min_value,max_value),myNodeColors)
-                
+        
+        else:
+            # colorwith is not a numeric property, so look up unique values
+            # and give them integer numbers
+
+            values={} # empty dict for values
+           
+            if len(parentnet)>0:# if there are nodes not in net
+                props=list(set(parentnet.nodeProperty[colorwith].values()))
+            else:
+                props=list(set(net.nodeProperty[colorwith].values()))
+
+            for i,prop in enumerate(props):
+                values[prop]=i+1
+
+            # now all property strings have a numerical value
+
+            min_value=1
+            max_value=max(values.values())
+
+            if len(parentnet)>0:
+
+                for node in parentnet:
+                    nodeColors[node]=setColor(values[parentnet.nodeProperty[colorwith][node]],(min_value,max_value),myNodeColors)
+                else:
+                    for node in net:
+                        nodeColors[node]=setColor(values[net.nodeProperty[colorwith][node]],(min_value,max_value),myNodeColors)
+
+
 
     if len(nodeColors)==0:  # finally if for whatever reason no nodes were colored, just set them gray
         if len(parentnet)>0:
@@ -670,7 +698,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         A = (0 if maxs == mins else (maxnode-minnode)/(maxs-mins))
         B = maxnode-A*maxs    
 
-    print nodeColorMap
+
     myNodeColorMap=setColorMap(nodeColorMap)
 
     # If nodes will be colored by setNodeColorsByProperty but
