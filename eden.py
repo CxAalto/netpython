@@ -194,7 +194,7 @@ class MicrosatelliteData:
 
         return sum(distList)
 
-    def getGroupwiseDistanceMatrix(self,groups,distance='goldstein'):
+    def getGroupwiseDistanceMatrix(self,groups,distance='goldstein',groupNames=None):
         """
         Returns a distance matrix in form of a full network (pynet.SymmFullNet). The groups
         argument must be an iterable object where each element is also iterable object containing
@@ -206,9 +206,12 @@ class MicrosatelliteData:
         grouplist=list(groups)
         ngroups=len(grouplist)
         matrix=pynet.SymmFullNet(ngroups)
+        if groupNames==None:
+            groupNames=range(ngroups)
+
         for i in range(0,ngroups):
             for j in range(i+1,ngroups):
-                matrix[i,j]=getGroupwiseDistance(grouplist[i],grouplist[j])
+                matrix[groupNames[i],groupNames[j]]=getGroupwiseDistance(grouplist[i],grouplist[j])
         return matrix   
 
     def getMSDistance_linearManhattan(self,x,y):
