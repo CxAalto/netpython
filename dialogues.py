@@ -1293,7 +1293,7 @@ class MsLoadWaiter(MySimpleDialog):
     """Used when loading a matrix. Asks if the matrix contains weights or distances"""
     
 
-    def __init__(self,parent,inputfile,removeclones,measuretype,title="Processing microsatellite data",titlemsg="Please wait"):
+    def __init__(self,parent,inputfile,removeclones,measuretype,title="Processing microsatellite data",titlemsg="Please wait",nodeNames=None):
 
         Toplevel.__init__(self,parent)
         #self.configure(bg='Gray80')
@@ -1345,18 +1345,22 @@ class MsLoadWaiter(MySimpleDialog):
             [msdata,keeptheserows]=msdata_initial.getUniqueSubset(returnOldIndices=True)
             clones='collapsed'
 
+            if nodeNames!=None:
+                newNodeNames=[]
+                keeptheserows=sorted(keeptheserows)
+                for row in keeptheserows: 
+                    newNodeNames.append(nodeNames[row])
+                nodeNames=newNodeNames
+            else:
+                nodeNames=sorted(keeptheserows)
                 # trick to accommodate for (possible) node properties - we will use only "keeptheserows" containing indices to non-clonal samples
-
         else:
-
             msdata=msdata_initial
             clones='included'
 
         self.clones=clones
         self.keeptheserows=keeptheserows
         
-        inputfile.close()
-
         self.l3['text']='Calculating distance matrix...'
         self.l3['fg']='black'
 
@@ -1364,17 +1368,13 @@ class MsLoadWaiter(MySimpleDialog):
 
         self.l2['fg']='#b0b0b0'
         self.l2.update()
+
     
-
-            # transform ORIGINAL WITH CLONES into distance matrix
-
-        m=msdata_initial.getDistanceMatrix(measuretype)
-        
+        m=msdata.getDistanceMatrix(measuretype,nodeNames=nodeNames)        
         if removeclones:
-            Nclones=len(m)-len(keeptheserows)
+            Nclones=msdata_initial.getNumberOfNodes()-len(keeptheserows)
         else:
             Nclones=None
-
         self.Nclones=Nclones
         self.m=m
 
@@ -1575,29 +1575,20 @@ class GoldsteinWaiter(GenericLoadWaiter):
         self.initial_focus.focus_set()
 
         # first generate a list of unique population indices
-
         glists=eden.getGoldsteinLists(poplist)
-
         goldstein_list=glists[0]
         unique_poplist=glists[1]
 
         # then use msdata methods to get the Goldstein population-level distance matrix
-
-        distancematrix=msdata.getGroupwiseDistanceMatrix(goldstein_list)
-
-        netext.addNodeProperty(distancematrix,"Population")
-
+        distancematrix=msdata.getGroupwiseDistanceMatrix(goldstein_list,groupNames=unique_poplist)
+        netext.addNodeProperty(distancematrix,"population_size")
         for i,item in enumerate(unique_poplist):
-
-            distancematrix.nodeProperty['Population'][i]=item
-
-
+            distancematrix.nodeProperty['population_size'][item]=len(goldstein_list[i])
         self.distancematrix=distancematrix   
 
         self.ok()
 
     def applyme(self):
-
         self.result=self.distancematrix
 
 class HimmeliWaiter(GenericLoadWaiter):
