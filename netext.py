@@ -8,6 +8,7 @@ import percolator
 import transforms
 import shutil
 import copy
+import visuals
 from PIL import Image
 
 
@@ -146,7 +147,7 @@ def getNumericProperties(net):
 
 def getPropertyTypes(net):
     """Returns a dictionary where keys are nodeProperties
-    and values indicate their type ('int','float','string','mixed')
+    and values indicate their type ('int','float','string','string/color','mixed')
     """
 
     propertylist=list(net.nodeProperty)
@@ -182,8 +183,10 @@ def getPropertyTypes(net):
             propertydict[prop]='float'
 
         elif strprop==True:
-
-            propertydict[prop]='string'
+            if visuals.isListOfColors(net.nodeProperty[prop].values()):
+                propertydict[prop]='string/color'
+            else:
+                propertydict[prop]='string'
 
         else:
 
