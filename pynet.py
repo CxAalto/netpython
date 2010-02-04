@@ -162,12 +162,12 @@ class Node(object):
 		if not self.name in self.net:
 			raise KeyError, "Node not in the network."
 		#name -> index -> backend iterator -> index -> name
-		return self._indexToNameIter(self.net._iterNodeIn(self.net._nodes[name]))
+		return self._indexToNameIter(self.net._iterNodeIn(self.net._nodes[self.name]))
 	def iterOut(self):
 		if not self.name in self.net:
 			raise KeyError, "Node not in the network."
 		#name -> index -> backend iterator -> index -> name
-		return self._indexToNameIter(self.net._iterNodeOut(self.net._nodes[name]))
+		return self._indexToNameIter(self.net._iterNodeOut(self.net._nodes[self.name]))
 	
 
 class VirtualDirNet(VirtualNet):
@@ -265,12 +265,12 @@ class ScipySparseDirNet(VirtualDirNet):
 
 	def _iterNode(self,nodeIndex):
 		#First iter through all outgoing neighbors:
-		for neigh in self._nodeList[nodeIndex]:
-			yield neigh
+		for neigh in self._nodeList[nodeIndex].iterkeys():
+			yield neigh[0]
 		#Then iter through only incoming neighbors
-		for neigh in self._backNodeList[nodeIndex]:
-			if not (neigh,0) in self._nodeList[nodeIndex]:
-				yield neigh
+		for neigh in self._backNodeList[nodeIndex].iterkeys():
+			if not neigh in self._nodeList[nodeIndex]:
+				yield neigh[0]
 	def _iterNodeIn(self,nodeIndex):
 		return itertools.imap(lambda x:x[0],self._backNodeList[nodeIndex].iterkeys())
 	def _iterNodeOut(self,nodeIndex):
