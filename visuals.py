@@ -229,8 +229,7 @@ def getConstantColorMap(rgb=(0,0,0)):
     cm : colorMap
         The colormap that has just one constant color.
     """
-    cm = get_cmap()
-    cm._segmentdata={
+    cm={
         'red':  ( (0,rgb[0],rgb[0]), 
                   (1,rgb[0],rgb[0]) ),
         'green': ( (0,rgb[1],rgb[1]), 
@@ -238,7 +237,7 @@ def getConstantColorMap(rgb=(0,0,0)):
         'blue': ( (0,rgb[2],rgb[2]), 
                   (1,rgb[2],rgb[2]) ) }
 
-    return cm  
+    return matplotlib.colors.LinearSegmentedColormap("constant colormap",cm)  
 
 
 # ---------------------------------------
