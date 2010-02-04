@@ -18,16 +18,22 @@ class TestPynet(unittest.TestCase):
         self.assertEqual(myNet[2,1],0.0)
         
         self.assertEqual(sorted(list(myNet)),[1,2])
+
+        #test iterators
         self.assertEqual(list(myNet[1]),[2])
         self.assertEqual(list(myNet[2]),[1])
 
         myNet[2,1]=1.0
         self.assertEqual(list(myNet[1]),[2])
-
+        
         myNet[2,3]=5.0
         self.assertEqual(list(myNet[1].iterIn()),[2])
-        self.assertEqual(list(myNet[3].iterIn()),[2])
-        self.assertEqual(list(myNet[1].iterOut()),[2])
+
+        #test degrees
+        self.assertEqual(myNet[1].inDeg(),1)
+        self.assertEqual(myNet[3].inDeg(),1)
+        self.assertEqual(myNet[3].outDeg(),0)
+
 
     def test_basic_symm(self,netType):
         myNet=netType(sizeLimit=10)
