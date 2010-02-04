@@ -202,18 +202,12 @@ def getSubnet(net,nodes):
         `nodes` and the edges between those nodes that are
         present in `net`. Node properties etc are left untouched.
     """
-    
-    # Different schemes are required for FullNets and Nets.
-    # For Nets, vertex names are kept.
-    # For FullNets, rows are removed from the matrix so vertex
-    # labels change. This has to be taken into account when
-    # copying node properties from the original to the filtered matrix.
-
     # Handle both directed and undirected networks.
     newnet = type(net)() # Initialize to same type as `net`.
     degsum=0
-    for node in nodes:
+    for node in nodes:        
         degsum += net[node].deg()
+        newnet.addNode(node)
     if degsum >= len(nodes)*(len(nodes)-1)/2:
         othernodes=set(nodes)
         for node in nodes:
