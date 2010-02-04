@@ -242,6 +242,20 @@ def getConstantColorMap(rgb=(0,0,0)):
 
 # ---------------------------------------
 
+def isListOfColors(theList):
+    """
+    Returns True if each element in the given list can be converted to a color
+    by Matplotlib. Otherwise returns False.
+    """
+    cc=matplotlib.colors.ColorConverter()
+    for element in theList:
+        try:
+            cc.to_rgb(element)
+        except ValueError:
+            return False
+    return True
+        
+
 def getNodeColors(net,colorwith="strength",useColorMap="orange",parentnet=[]):
     """Returns a dictionary {node:color}. The colors are set based
     on either node strengh (colorwith="strength", default) 
@@ -311,18 +325,28 @@ def getNodeColors(net,colorwith="strength",useColorMap="orange",parentnet=[]):
             else:
                 props=list(set(net.nodeProperty[colorwith].values()))
 
-            for i,prop in enumerate(props):
-                values[prop]=i+1
+            #Check if properties can be converted to colors:
+            if isListOfColors(props):
+                propToColor={}
+                cc=matplotlib.colors.ColorConverter()
+                for p in props:
+                    propToColor[p]=cc.to_rgb(p)
+                if len(parentnet)>0:
+                    for node in parentnet:
+                        nodeColors[node]=propToColor[parentnet.nodeProperty[colorwith][node]]
+                else:
+                    for node in net:
+                        nodeColors[node]=propToColor[parentnet.nodeProperty[colorwith][node]]                    
+            else:
+                for i,prop in enumerate(props):
+                    values[prop]=i+1
+                # now all property strings have a numerical value
+                min_value=1
+                max_value=max(values.values())
+                if len(parentnet)>0:
 
-            # now all property strings have a numerical value
-
-            min_value=1
-            max_value=max(values.values())
-
-            if len(parentnet)>0:
-
-                for node in parentnet:
-                    nodeColors[node]=setColor(values[parentnet.nodeProperty[colorwith][node]],(min_value,max_value),myNodeColors)
+                    for node in parentnet:
+                        nodeColors[node]=setColor(values[parentnet.nodeProperty[colorwith][node]],(min_value,max_value),myNodeColors)
                 else:
                     for node in net:
                         nodeColors[node]=setColor(values[net.nodeProperty[colorwith][node]],(min_value,max_value),myNodeColors)
