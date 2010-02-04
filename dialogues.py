@@ -384,8 +384,8 @@ class ProjectLaunchDialog(MySimpleDialog):
 
         self.bottompart=Frame(self.wholeframe)
 
-        r1=Radiobutton(self.bottompart,text='Microsatellite repetitions',value='ms',variable=masterclass.datatype)
-        r15=Radiobutton(self.bottompart,text='Microsatellites, multiple populations',value='mpop',variable=masterclass.datatype)
+        r1=Radiobutton(self.bottompart,text='Genetic data, individual centred',value='ms',variable=masterclass.datatype)
+        r15=Radiobutton(self.bottompart,text='Genetic data, sampling site based',value='mpop',variable=masterclass.datatype)
         r2=Radiobutton(self.bottompart,text='Distance matrix',value='dmat',variable=masterclass.datatype)
         r3=Radiobutton(self.bottompart,text='Network data',value='net',variable=masterclass.datatype)
         r1.grid(row=1,column=0,sticky=W)
@@ -1333,10 +1333,10 @@ class MsLoadWaiter(MySimpleDialog):
         self.l1['fg']='#b0b0b0'
         self.l1.update()
 
-        self.l2['text']='Removing clones...'
-        self.l2['fg']='black'
-
-        self.l2.update()
+        if removeclones:
+            self.l2['text']='Removing clones...'
+            self.l2['fg']='black'
+            self.l2.update()
 
         msdata_initial=eden.MicrosatelliteData(inputfile)
 
@@ -1357,13 +1357,13 @@ class MsLoadWaiter(MySimpleDialog):
         else:
             msdata=msdata_initial
             clones='included'
+            keeptheserows=None
 
         self.clones=clones
         self.keeptheserows=keeptheserows
         
         self.l3['text']='Calculating distance matrix...'
         self.l3['fg']='black'
-
         self.l3.update()
 
         self.l2['fg']='#b0b0b0'
