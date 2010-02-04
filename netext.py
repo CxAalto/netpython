@@ -183,7 +183,7 @@ def getPropertyTypes(net):
             propertydict[prop]='float'
 
         elif strprop==True:
-            if visuals.isListOfColors(net.nodeProperty[prop].values()):
+            if visuals.isListOfColors(set(net.nodeProperty[prop].values())):
                 propertydict[prop]='string/color'
             else:
                 propertydict[prop]='string'
