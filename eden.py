@@ -288,7 +288,8 @@ class MicrosatelliteData:
         if nodeNames==None:
             nodeNames=range(0,numberOfSpecimens)
         for i,iName in enumerate(nodeNames):
-            for j,jName in enumerate(nodeNames[i+1:]):
+            for j in range(i+1,numberOfSpecimens):
+                jName=nodeNames[j]
                 matrix[iName,jName]=getMSDistance(self.getNode(i),self.getNode(j))
         return matrix
             
