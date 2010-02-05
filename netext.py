@@ -284,25 +284,42 @@ def getMeanDistance(theSet,distanceFunction):
 
 def getPathLengths(net,startingNode):
     if isinstance(net,pynet.SymmNet):
+        # The implementation for undirected networks.
+        # Assumes the network is unweighted 
         edge=set([startingNode])
         interior=set()
         pathlengths={}
         i=0
         while len(edge)>0:
-         i+=1
-         interior=edge.union(interior)
-         newEdge=set()
-         for node in edge:
-          for neighbor in net[node]:
-            if neighbor not in interior:
-             newEdge.add(neighbor)
-             pathlengths[neighbor]=i
-         edge=newEdge
+            i+=1
+            interior=edge.union(interior)
+            newEdge=set()
+            for node in edge:
+                for neighbor in net[node]:
+                    if neighbor not in interior:
+                        newEdge.add(neighbor)
+                        pathlengths[neighbor]=i
+            edge=newEdge
         return pathlengths
 
     elif isinstance(net,pynet.Net):
         # The implementation for directed networks.
-        pass
+        # Assumes the network in unweighted 
+        edge=set([startingNode])
+        interior=set()
+        pathlengths={}
+        i=0
+        while len(edge)>0:
+            i+=1
+            interior=edge.union(interior)
+            newEdge=set()
+            for node in edge:
+                for neighbor in net[node].iterOut():
+                    if neighbor not in interior:
+                        newEdge.add(neighbor)
+                        pathlengths[neighbor]=i
+            edge=newEdge
+        return pathlengths
 
 def getBetweennessCentrality(net):
     """
