@@ -282,8 +282,16 @@ def getMeanDistance(theSet,distanceFunction):
     return s/float(n)
 
 
-def getPathLengths(net,startingNode):
-    if isinstance(net,pynet.SymmNet):
+def getPathLengths(net,start,undirected=True):
+    '''Dijkstra's algorithm for shortest paths
+    Returns all possible path from the starting Node
+    Parameters :
+    net   : Network
+    start : Starting Node
+    undirected : bool
+    If True, network in undirected else directed
+    '''
+    if undirected:
         # The implementation for undirected networks.
         # Assumes the network is unweighted 
         edge=set([startingNode])
@@ -302,7 +310,7 @@ def getPathLengths(net,startingNode):
             edge=newEdge
         return pathlengths
 
-    elif isinstance(net,pynet.Net):
+    else :
         # The implementation for directed networks.
         # Assumes the network in unweighted 
         edge=set([startingNode])
