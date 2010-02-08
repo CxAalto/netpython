@@ -267,7 +267,7 @@ class MicrosatelliteData:
         return float(sum(self.getMSDistance_vectorAlleleParsimony(x,y)))/float(len(x))
 
     
-    def getDistanceMatrix(self,distance="lm",nodeNames=None):
+    def getDistanceMatrix(self,distance="lm",nodeNames=None,progressUpdater=None):
         """
         Computes the distance between each node and returns the corresponding
         distance matrix.
@@ -284,10 +284,21 @@ class MicrosatelliteData:
             getMSDistance=self.getMSDistance_linearManhattan
             
         numberOfSpecimens=len(self.alleles[0])
+
+        j=0
+        updateInterval=1000
+        totElems=numberOfSpecimens*(numberOfSpecimens-1)/2
+        elementsAdded=0
+        lastUpdate=0
+
         matrix=pynet.SymmFullNet(numberOfSpecimens)
         if nodeNames==None:
             nodeNames=range(0,numberOfSpecimens)
         for i,iName in enumerate(nodeNames):
+            if progressUpdater!=None:
+                if elementsAdded-lastUpdate>updateInterval:
+                    progressUpdater(float(elementsAdded)/float(totElems))
+                elementsAdded+=numberOfSpecimens-i
             for j in range(i+1,numberOfSpecimens):
                 jName=nodeNames[j]
                 matrix[iName,jName]=getMSDistance(self.getNode(i),self.getNode(j))
