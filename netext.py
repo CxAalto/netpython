@@ -294,7 +294,7 @@ def getPathLengths(net,start,undirected=True):
     if undirected:
         # The implementation for undirected networks.
         # Assumes the network is unweighted 
-        edge=set([startingNode])
+        edge=set([start])
         interior=set()
         pathlengths={}
         i=0
@@ -313,7 +313,7 @@ def getPathLengths(net,start,undirected=True):
     else :
         # The implementation for directed networks.
         # Assumes the network in unweighted 
-        edge=set([startingNode])
+        edge=set([start])
         interior=set()
         pathlengths={}
         i=0
