@@ -17,7 +17,6 @@ from Tkinter import *
 #from pylab import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,NavigationToolbar2TkAgg
 
-
 # NEW DIALOGUE WINDOWS / JS / MAY-JUNE 09
 
 
@@ -1296,15 +1295,11 @@ class MsLoadWaiter(MySimpleDialog):
     def __init__(self,parent,inputfile,removeclones,measuretype,title="Processing microsatellite data",titlemsg="Please wait",nodeNames=None):
 
         Toplevel.__init__(self,parent)
-        #self.configure(bg='Gray80')
-      #  self.transient(parent)
-
         
         self.title(title)
-
         self.titlemsg=titlemsg
-
         self.parent=parent
+
         self.result=None
 
         body=Frame(self)
@@ -1313,7 +1308,6 @@ class MsLoadWaiter(MySimpleDialog):
 
         #self.buttonbox()
         self.grab_set()
-
         self.points=['.','..','...']
         self.pointcounter=0
 
@@ -1327,8 +1321,6 @@ class MsLoadWaiter(MySimpleDialog):
         self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
 
         self.initial_focus.focus_set()
-
-        #inputfile=open(filename,'rU')
 
         self.l1['fg']='#b0b0b0'
         self.l1.update()
@@ -1361,6 +1353,8 @@ class MsLoadWaiter(MySimpleDialog):
 
         self.clones=clones
         self.keeptheserows=keeptheserows
+
+
         
         self.l3['text']='Calculating distance matrix...'
         self.l3['fg']='black'
@@ -1368,9 +1362,8 @@ class MsLoadWaiter(MySimpleDialog):
 
         self.l2['fg']='#b0b0b0'
         self.l2.update()
-
     
-        m=msdata.getDistanceMatrix(measuretype,nodeNames=nodeNames)        
+        m=msdata.getDistanceMatrix(measuretype,nodeNames=nodeNames,progressUpdater=self.progressbar.set)        
         if removeclones:
             Nclones=msdata_initial.getNumberOfNodes()-len(keeptheserows)
         else:
@@ -1398,24 +1391,28 @@ class MsLoadWaiter(MySimpleDialog):
        # self.b1.grid(row=0,column=0,columnspan=2)
 
         self.wholeframe=Frame(masterwindow,relief='sunken',borderwidth=2)
-        
-        self.clabel=Label(self.wholeframe,text=self.titlemsg,justify=LEFT,anchor=W,bg='darkolivegreen2',relief='groove',borderwidth=1,padx=3,pady=3,width=40)
+        self.clabel=Label(self.wholeframe,text=self.titlemsg,
+                          justify=LEFT,
+                          anchor=W,
+                          bg='darkolivegreen2',
+                          relief='groove',borderwidth=1,padx=3,pady=3,width=40)
         self.clabel.pack(side=TOP,expand=YES,fill=X,ipadx=5,ipady=5)
-
         self.bottompart=Frame(self.wholeframe)
-
-        self.l1=Label(self.bottompart,text='Reading file...',justify=LEFT,anchor=W,bg='white',relief='flat',padx=3,pady=3)
+        self.l1=Label(self.bottompart,text='Reading file...',justify=LEFT,
+                      anchor=W,bg='white',relief='flat',padx=3,pady=3)
         self.l1.grid(row=1,column=0,sticky=W)
         self.l1['fg']='black'
-
-        self.l2=Label(self.bottompart,text='-',justify=LEFT,anchor=W,bg='white',relief='flat',padx=3,pady=3)
+        self.l2=Label(self.bottompart,text='-',justify=LEFT,
+                      anchor=W,bg='white',relief='flat',padx=3,pady=3)
         self.l2.grid(row=2,column=0,sticky=W)
-
-        self.l3=Label(self.bottompart,text='-',justify=LEFT,anchor=W,bg='white',relief='flat',padx=3,pady=3)
+        self.l3=Label(self.bottompart,text='-',justify=LEFT,
+                      anchor=W,bg='white',relief='flat',padx=3,pady=3)
         self.l3.grid(row=3,column=0,sticky=W)
 
-        self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
+        self.progressbar=Meter(self.bottompart,value=0.0)
+        self.progressbar.grid(row=4,column=0,sticky=W)
 
+        self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
         self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
                
         return self.wholeframe
@@ -1644,3 +1641,38 @@ class HimmeliWaiter(GenericLoadWaiter):
 
         self.result=self.h
 
+
+class Meter(Frame):
+    '''A simple progress bar widget.
+    Made by Michael'''
+    def __init__(self, master, fillcolor='orchid1', text='',
+                 value=0.0, **kw):
+        Frame.__init__(self, master, bg='white', width=350,
+                               height=20)
+        self.configure(**kw)
+        
+        self._c = Canvas(self, bg=self['bg'],
+                         width=self['width'], height=self['height'],\
+                             highlightthickness=0, relief='flat',
+                         bd=0)
+        self._c.pack(fill='x', expand=1)
+        self._r = self._c.create_rectangle(0, 0, 0,
+                                           int(self['height']), fill=fillcolor, width=0)
+        self._t = self._c.create_text(int(self['width'])/2,
+                                      int(self['height'])/2, text='')
+
+        self.set(value, text)
+
+    def set(self, value=0.0, text=None):
+        #make the value failsafe:
+        if value < 0.0:
+            value = 0.0
+        elif value > 1.0:
+            value = 1.0
+        if text == None:
+            #if no text is specified get the default percentage string:
+            text = str(int(round(100 * value))) + ' %'
+        self._c.coords(self._r, 0, 0, int(self['width']) * value,
+                       int(self['height']))
+        self._c.itemconfigure(self._t, text=text)
+        self.update()
