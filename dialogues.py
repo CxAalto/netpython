@@ -1633,13 +1633,14 @@ class HimmeliWaiter(GenericLoadWaiter):
             h=visuals.Himmeli(net,time=time,useMST=usemst)
 
         
-        self.h=h
+        self.coords=h.getCoordinates()
+        del h
 
         self.ok()
 
     def applyme(self):
 
-        self.result=self.h
+        self.result=self.coords
 
 
 class Meter(Frame):
