@@ -1230,25 +1230,25 @@ class WaitWindow(MySimpleDialog):
     """Used when loading a matrix. Asks if the matrix contains weights or distances"""
     
 
-    def __init__(self,parent,lambda_operation,title=None,titlemsg="Please wait"):
+    def __init__(self,parent,title=None,titlemsg="Please wait...",hasProgressbar=False):
 
         Toplevel.__init__(self,parent)
         #self.configure(bg='Gray80')
-      #  self.transient(parent)
+        #self.transient(parent)
 
         self.title(title)
-
         self.titlemsg=titlemsg
-
         self.parent=parent
+        self.hasProgressbar=hasProgressbar
+
         self.result=None
 
         body=Frame(self)
         self.initial_focus=self.body(self,body)
         body.pack(padx=5,pady=5)
 
-        self.buttonbox()
-        self.grab_set()
+        #self.buttonbox()
+        #self.grab_set()
 
         if not self.initial_focus:
             self.initial_focus(self)
@@ -1259,30 +1259,38 @@ class WaitWindow(MySimpleDialog):
 
         self.initial_focus.focus_set()
 
+
+
+    def go(self,lambda_operation):
         self.result=lambda_operation()
+        self.ok()
+        #self.wait_window(self)
 
-        self.wait_window(self)
-
-    def body(self,masterclass,masterwindow,titlemsg="Please wait"):
-
-       # self.b1=Checkbutton(masterwindow,text='Use linear bins for 1..10',variable=masterclass.linfirst,state=ACTIVE,bg='Gray80')
-       # self.b1.grid(row=0,column=0,columnspan=2)
-
+    def body(self,masterclass,masterwindow,titlemsg="Please wait..."):
         self.wholeframe=Frame(masterwindow,relief='sunken',borderwidth=2)
-        
-        self.clabel=Label(self.wholeframe,text=self.titlemsg,justify=LEFT,anchor=W,bg='gray90',relief='groove',borderwidth=1)
+        self.clabel=Label(self.wholeframe,text=self.titlemsg,
+                          justify=LEFT,
+                          anchor=W,
+                          bg='darkolivegreen2',
+                          relief='groove',borderwidth=1,padx=3,pady=3,width=40)
         self.clabel.pack(side=TOP,expand=YES,fill=X,ipadx=5,ipady=5)
-
         self.bottompart=Frame(self.wholeframe)
+        self.l1=Label(self.bottompart,text=self.titlemsg,justify=LEFT,
+                      anchor=W,bg='white',relief='flat',padx=3,pady=3)
+        self.l1.grid(row=1,column=0,sticky=W)
+        self.l1['fg']='black'
 
-        r1=Label(self.bottompart,text='Processing...',value=1,variable=masterclass.mattype)
-        r1.grid(row=1,column=0,sticky=W)
+        if self.hasProgressbar:
+            self.progressbar=Meter(self.bottompart,value=0.0)
+            self.progressbar.grid(row=4,column=0,sticky=W)
+            self.updatePointer=self.progressbar.set
 
         self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
-
         self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
-               
+
         return self.wholeframe
+
+
 
     def applyme(self):
 
