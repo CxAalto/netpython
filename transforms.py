@@ -137,12 +137,11 @@ def threshold_by_value(net,threshold,mode,keepIsolatedNodes=False):
     else:
         raise Exception("mode must be either 0 or 1.")
 
-    # Add isolated nodes to the network. Because there is no function
-    # for adding a node, such as SymmNet.addNode(), this must be done
-    # using a hack: trying to read a link
+    # Add isolated nodes to the network.
     if keepIsolatedNodes==True:
         for node in net:
-            newnet[node][node]
+            if not newnet.__contains__(node):
+                newnet.addNode(node)
             
     netext.copyNodeProperties(net,newnet)
                 
