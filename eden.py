@@ -71,6 +71,20 @@ class MicrosatelliteData:
                         #print line
                         fields[i],fields[i+1]=fields[i+1],fields[i]
                     self.alleles[i/2].append((fields[i],fields[i+1]))
+                    
+    def shuffleNodes(self):
+        """
+        Shuffles the order of nodes
+        """
+        nNodes=len(self.alleles[0])
+        nLoci=self.getNumberofLoci()
+        for i in range(nNodes):
+            r=random.randint(i,nNodes-1)
+            for li in len(nLoci):
+                tempA=alleles[li][i]
+                alleles[li][i]=alleles[li][r]
+                alleles[li][r]=tempA
+
 
     def getNode(self,index):
         """
