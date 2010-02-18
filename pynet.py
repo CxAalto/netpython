@@ -29,7 +29,9 @@ class VirtualNet(object):
 			except KeyError:
 				return 0.0
 				#raise KeyError, "No such node: "+str(args[1])
-			assert n1!=n2, "No self-edges."
+			if n1==n2:
+				return 0
+			#assert n1!=n2, "No self-edges."
 			return self._getEdge(n1,n2)
 		else:
 			return Node(self,args)
