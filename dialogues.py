@@ -1685,3 +1685,153 @@ class Meter(Frame):
                        int(self['height']))
         self._c.itemconfigure(self._t, text=text)
         self.update()
+
+
+
+class BootstrapPopulationsDialog(MySimpleDialog):
+    """Asks for the number of bins for log binning
+       and allows linear bins for 1...10"""
+
+
+    def __init__(self,parent,title='Please provide information:'):
+
+        Toplevel.__init__(self,parent)
+        
+        self.title(title)
+
+        self.parent=parent
+        self.result=None
+        self.clones=StringVar()
+        self.measuretype=StringVar()
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        self.buttonbox()
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+        self.initial_focus.focus_set()
+        self.wait_window(self)
+
+    def body(self,masterclass,masterwindow):
+
+        self.c1=Label(masterwindow,text='Number of repeat bootstapping runs?',
+                      anchor=W)
+        self.c1.grid(row=0,column=0)
+        self.e1=Entry(masterwindow,textvariable="???",bg='Gray95')
+        self.e1.grid(row=1,column=0)
+
+        self.c2=Label(masterwindow,text='Percentage of nodes in each location?',
+                      anchor=W)
+        self.c2.grid(row=2,column=0)        
+        self.scale_1=Scale(masterwindow, from_=0.0, to=1.0, 
+                           orient=HORIZONTAL,resolution=0.01)
+        self.scale_1.set(0.5)
+        self.scale_1.grid(row=3,column=0)
+
+        return self.c1
+
+    def applyme(self):
+        self.result=[self.scale_1.get(),self.e1.get()]
+
+class SliderDialog(MySimpleDialog):
+    """Asks for the number of bins for log binning
+       and allows linear bins for 1...10"""
+
+
+    def __init__(self,parent,sMin,sMax,sRes,sStart,title='Please provide information:',bodyText="How much?"):
+
+        Toplevel.__init__(self,parent)
+        
+        self.title(title)
+
+        self.sMin=sMin
+        self.sMax=sMax
+        self.sRes=sRes
+        self.sStart=sStart
+        self.bodyText=bodyText
+        self.parent=parent
+        self.result=None
+        self.clones=StringVar()
+        self.measuretype=StringVar()
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        self.buttonbox()
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+        self.initial_focus.focus_set()
+        self.wait_window(self)
+
+    def body(self,masterclass,masterwindow):
+        self.c=Label(masterwindow,text='Percentage of nodes in each location?',
+                      anchor=W)
+        self.c.grid(row=0,column=0)        
+        self.scale=Scale(masterwindow, from_=self.sMin, to=self.sMax, 
+                           orient=HORIZONTAL,resolution=self.sRes)
+        self.scale.set(self.sStart)
+        self.scale.grid(row=1,column=0)
+
+        return self.c
+
+    def applyme(self):
+        self.result=self.scale.get()
+
+
+class AskNumberDialog(MySimpleDialog):
+    """Asks for a number 
+    """
+
+
+    def __init__(self,parent,title='Please provide information:',bodyText="Number: "):
+
+        Toplevel.__init__(self,parent)
+        
+        self.title(title)
+
+        self.bodyText=bodyText
+        self.parent=parent
+        self.result=None
+        self.clones=StringVar()
+        self.measuretype=StringVar()
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        self.buttonbox()
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+        self.initial_focus.focus_set()
+        self.wait_window(self)
+
+    def body(self,masterclass,masterwindow):
+
+        self.c1=Label(masterwindow,text=self.bodyText,
+                      anchor=W)
+        self.c1.grid(row=0,column=0)
+        self.e1=Entry(masterwindow,textvariable="???",bg='Gray95')
+        self.e1.grid(row=1,column=0)
+
+        return self.c1
+
+    def applyme(self):
+        self.result=self.e1.get()
