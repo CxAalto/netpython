@@ -146,6 +146,8 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
                             nodeMap[(fields[0], fields[1])] = float(fields[2])
                     else:
                         newNet[fields[0]][fields[1]] += float(fields[2])
+                else:
+                    newNet.addNode(fields[0])
 
     return newNet
 
@@ -444,7 +446,7 @@ def loadNodeProperties(net,input,splitterChar=None,propertyNames=None,allowMissi
                 f.close()
                 raise Exception("Invalid number of fields on row: "+str(i+1))
             i+=1
-        theFile.close()
+        #theFile.close()
         return i
 
     def checkNodes(input,net,fieldNames,hasHeader,splitterChar):
@@ -484,7 +486,7 @@ def loadNodeProperties(net,input,splitterChar=None,propertyNames=None,allowMissi
             else:
                 netHasAllNodes=False
         f.close()
-
+        
         fileHasAllNodes=(nNodesFound==len(net))
 
         return fileHasAllNodes,netHasAllNodes
