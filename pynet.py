@@ -65,16 +65,18 @@ class VirtualNet(object):
 		"""
 		Adds an empty node to the network.
 		"""
-		if len(self._removedNodes)>0:
-			newIndex=self._removedNodes.pop()
-			self._indexToName[newIndex]=nodeName
-		else:
-			newIndex=len(self._nodes)
-			#check for size limit
-			if self.sizeLimit!=0 and newIndex>self.sizeLimit:
-				raise Exception,"Size limit for the network reached." 
-			self._indexToName.append(nodeName)
-		self._nodes[nodeName]=newIndex
+		if nodeName not in self:
+			if len(self._removedNodes)>0:
+				newIndex=self._removedNodes.pop()
+				self._indexToName[newIndex]=nodeName
+			else:
+				#assert len(self._nodes)==len(self._indexToName)
+				newIndex=len(self._nodes)
+				#check for size limit
+				if self.sizeLimit!=0 and newIndex>self.sizeLimit:
+					raise Exception,"Size limit for the network reached." 
+				self._indexToName.append(nodeName)
+			self._nodes[nodeName]=newIndex
 
 	def delNode(self,nodeName): #override for directed
 		"""
