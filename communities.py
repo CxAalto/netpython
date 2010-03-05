@@ -471,7 +471,7 @@ class NodeCover(object):
         Todo: tests
         """
         newNet=pynet.SymmNet()
-        commID=self.create_commIDs()
+        commID=self.getCommIDs()
         for edge in net.edges:
             if edge[0] in commID and edge[1] in commID: #node might not belong to a community
                 for newNode1 in commID[edge[0]]:
