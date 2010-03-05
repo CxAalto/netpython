@@ -9,6 +9,7 @@ import transforms
 import shutil
 import copy
 import visuals
+import numpy
 from PIL import Image
 
 
@@ -328,6 +329,29 @@ def getPathLengths(net,start,undirected=True):
                         pathlengths[neighbor]=i
             edge=newEdge
         return pathlengths
+
+def getMeanPathLength(net,maxSamples=1000):
+    """
+    Returns the mean path length of a network. If maxSample is not negative
+    only at maxSample number of nodes is used as a starting point for finding
+    paths instead of exhaustively going through all the paths.
+    """
+    #First check if we can use the c++-implementation
+    #if net.__class__ == pynet.LCELibSparseSymmNet:
+    #    return pynet._cnet.meanPathLength(net._net,maxSamples)
+    #else:
+    #
+    ##this cannot be done as the no unweighted pathlengths implemented in c++
+
+    nodes=list(net)
+    if len(net)>maxSamples and maxSamples>0:
+        random.shuffle(nodes)
+        nodes=nodes[:maxSamples]
+    m=0
+    for node in nodes:
+        m+=numpy.mean(getPathLengths(net,node).values())
+    return float(m)/float(len(nodes))
+
 
 def getBetweennessCentrality(net):
     """
