@@ -47,6 +47,7 @@ class NeighborIterator{
 
 //%include "netext.h"
 float clusteringCoefficient(Sn*, int);
+float meanPathLength(Sn*, int);
 
 //%include "transforms.h"
 void shuffleEdges(Sn*, int,int,int);
