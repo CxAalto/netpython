@@ -47,6 +47,10 @@ float meanPathLength(Sn::Sn *netContainer, int maxSamples){
   if (maxSamples>net.size()){
     NStartNodes=net.size();
   }
+  if (maxSamples<1){
+    NStartNodes=net.size();
+  }
+
     
   /* * * * shuffle node indices from 0 to N-1, then take NStartNodes
      indices from the beginning. This way, we are able to pick
