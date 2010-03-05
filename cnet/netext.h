@@ -3,3 +3,4 @@
 #include "sn.h"
 
 float clusteringCoefficient(Sn*, int);
+float meanPathLength(Sn*, int);
