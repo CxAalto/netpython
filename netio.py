@@ -131,7 +131,9 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
 
     for line in input:
         fields=line.split(splitterChar)
-        if len(fields)>2:
+        if len(fields)>1:
+            if len(fields)==2: #if weight is missing:
+                fields.append(1) #add one as the weight
             if fields[0]!=fields[1] or allowSelfEdges:
                 if numerical:
                     fields[0]=int(fields[0])
