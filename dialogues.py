@@ -1378,6 +1378,7 @@ class MsLoadWaiter(MySimpleDialog):
             Nclones=None
         self.Nclones=Nclones
         self.m=m
+        self.msdata=msdata
 
         self.ok()
 
@@ -1427,7 +1428,7 @@ class MsLoadWaiter(MySimpleDialog):
 
     def applyme(self):
 
-        self.result=[self.Nclones,self.clones,self.keeptheserows,self.m]
+        self.result=[self.Nclones,self.clones,self.keeptheserows,self.m,self.msdata]
 
 
 class GenericLoadWaiter(MySimpleDialog):
