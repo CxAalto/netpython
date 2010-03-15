@@ -353,7 +353,7 @@ def getMeanPathLength(net,maxSamples=1000):
     return float(m)/float(len(nodes))
 
 
-def getBetweennessCentrality(net):
+def getBetweennessCentrality(net,edgeBC=False):
     """
     Returns a map from each node to its unweighted betweenness centrality.
 
@@ -364,7 +364,9 @@ def getBetweennessCentrality(net):
     cb={}
     for node in net:
         cb[node]=0
-
+    if edgeBC:
+        bcNet=pynet.SymmNet()
+        
     for node in net:
         st=[]
         p={}
@@ -392,8 +394,20 @@ def getBetweennessCentrality(net):
         while len(st)>0:
             w=st.pop()
             for v in p[w]:
-                delta[v]+=float(sigma[v])/float(sigma[w])*(1+delta[w])
-                if w!=node:
-                    cb[w]+=delta[w]
-    return cb
+                partialDelta=float(sigma[v])/float(sigma[w])*(1+delta[w])
+                delta[v]+=partialDelta
+                if edgeBC:
+                    bcNet[v,w]=bcNet[v,w]+partialDelta
+            if w!=node:
+                cb[w]+=delta[w]
+
+    for node in cb:
+        cb[node]=cb[node]/2.0
+
+    if edgeBC:
+        for e in bcNet.edges:
+            bcNet[e[0],e[1]]=e[2]/2.0
+        return cb,bcNet
+    else:
+        return cb
 
