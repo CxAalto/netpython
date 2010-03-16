@@ -1,5 +1,6 @@
 import unittest
 from netpython import dynamics
+from phone.phone import PhoneEventsContainer
 import os
 
 class TestEventBetweenness_plain(unittest.TestCase):
@@ -54,12 +55,43 @@ class TestEventBetweenness(unittest.TestCase):
         for b,t,i,j in dynamics.eventBetweenness(self.events, 1000000000, 0.0):
             self.assertEqual(int(round(b)), corr_result[t])
 
+class TestEventBetweenness_Container(unittest.TestCase):
+    
+    def setUp(self):
+        last_dir = os.getcwd().split("/")[-1]
+        path = ("tests/" if last_dir != "tests" else "")
+        eventsFileName = path + "test_dynamics.data"
+        self.events = PhoneEventsContainer(eventsFileName,
+                                           numberOfEvents=6,
+                                           numberOfUsers=6,
+                                           startTime=1010,
+                                           verbose=False,
+                                           format='sec',
+                                           sortOrder=('time',))
+        self.events.saveData("test_dynamics.data.npy")
+
+    def test_eventBetweenness_delta1(self):
+        """Test with delta = 1 (path length has no effect)"""
+        corr_result = {1:19./16, 2:37./32, 3:43./32, 4:65./32, 5:2.0, 6:1.0}
+        ebw_iter = dynamics.eventBetweenness_PhoneEvents(self.events, 1.0, 1.0)
+        for b,t,i,j in ebw_iter:
+            self.assertEqual(b, corr_result[t])
+
+    def test_eventBetweenness_delta0(self):
+        """Test with delta = 0, half_life = inf (only incident events
+        have an effect)"""
+        corr_result = {1:2, 2:3, 3:5, 4:4, 5:5, 6:1}
+        for b,t,i,j in dynamics.eventBetweenness_PhoneEvents(self.events, 
+                                                             1000000000, 0.0):
+            self.assertEqual(int(round(b)), corr_result[t])
+
+
 if __name__ == '__main__':
     if True:
         # If true, run only the tests listed below, otherwise run all tests
         # (this option is for testing the tests :-) )
         suite = unittest.TestSuite()
-        suite.addTest(TestEventBetweenness("test_eventBetweenness_delta0"))
+        suite.addTest(TestEventBetweenness_Container("test_eventBetweenness_delta1"))
         unittest.TextTestRunner().run(suite)
     else:
         # Run all tests.
