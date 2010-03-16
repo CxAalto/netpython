@@ -241,7 +241,7 @@ def eventBetweenness_dieoff(events, events_reversed=None, nodeBetweenness=None,
 
 
 
-def eventBetweenness(events, tau, delta, N_events=None, N_nodes=None,
+def eventBetweenness(events, tau, delta, N_events=None, max_node_ID=None,
                      events_reversed=None, nodeBetweenness=None,
                      include_path_ends=False):
     """Calculate the event betweenness of all events.
@@ -260,9 +260,11 @@ def eventBetweenness(events, tau, delta, N_events=None, N_nodes=None,
         and j. Events are undirected. `events` must be sorted by time
         in increasing order.
     tau : int or float
-        The effective number of paths decreases exponentially with
-        time, so that a path at current time is counted as 1 and a
-        path `tau` time steps away is counted as 0.5.
+        The half-life of paths given in the units of time in
+        `events`. The effective number of paths decreases
+        exponentially with time, so that a path at current time is
+        counted as 1 and a path `tau` time steps away is counted as
+        0.5.
     delta : float (default: 1.0, must be in [0.0, 1.0])
         Factor by which the contribution of each path is decreased for
         each new event. Value 0.0 means that only events incident to
@@ -271,7 +273,7 @@ def eventBetweenness(events, tau, delta, N_events=None, N_nodes=None,
     N_events : int (default: None)
         The number of events. If not given, len(events) will be used,
         and an error occurs if this is not possible.
-    N_nodes : int (default: None)
+    max_node_ID : int (default: None)
         The largest node index + 1. If the nodes are labeled from 0 to
         N-1, this corresponds to the number of nodes. If not given,
         the value will be found by going through `events`, which could
@@ -293,42 +295,44 @@ def eventBetweenness(events, tau, delta, N_events=None, N_nodes=None,
 
     Yield
     -----
-    (event_betweenness, t, i, j) : (int, float, int, int)
+    (event_betweenness, t, i, j) : (float, int, int, int)
         At each iteration an event betweenness is returned with the
         corresponding event time and nodes (i,j). The values are
         returned in the same order as in `events`.
 
     Notes
     -----
-    Both the time and space complexity of this algorithm are linear.
+    The time complexity is O(N_events), and space complexity
+    O(N_events + max_node_ID).
     """
     # Preprocessing:
+    tau = float(tau)
     if events_reversed is None:
         events_reversed = reversed(events)
-    tau = float(tau)
 
     # Find out the number of events and nodes if not given.
     if N_events is None:
         N_events = len(events)
-    if N_nodes is None:
-        N_nodes = 0
+    if max_node_ID is None:
+        max_node_ID = 0
         for t,i,j in events:
-            N_nodes = max([N_nodes, i, j])
-        N_nodes += 1
+            max_node_ID = max([max_node_ID, i, j])
+    max_node_ID += 1
 
     # Phase I: Build the number of leaving paths.
 
     # Note: The previous implementation used a dictionary for TL_count
     # and a collections.deque for TL_diff. While these are intuitive
     # and algorithmically good choices (constant time operations for
-    # all we do and no need to fix sizes), the Python implementation
-    # take up ridiculous amount of memory. The use on numpy arrays
-    # makes the code slightly less intuitive, but the operation is
-    # equally fast and the memory consumption significantly smaller.
+    # all we need and not necessary to fix sizes), the Python
+    # implementations take up ridiculous amount of memory. The use of
+    # numpy arrays makes the code slightly less intuitive, but the
+    # operations are equally fast and the memory consumption
+    # significantly smaller.
 
-    #sys.stderr.write("Phase I: Build the number of leaving paths.\n")
-    TL_count = np.zeros((N_nodes,2),dtype=float)
-    TL_diff = np.zeros((N_events,4),dtype=float)
+    sys.stderr.write("Phase I: Build the number of leaving paths.\n")
+    TL_count = np.zeros((max_node_ID,2),dtype=np.float64)
+    TL_diff = np.zeros((N_events,4),dtype=np.float64)
     for counter, (t, i, j) in enumerate(events_reversed):
         lt_i, l_i = ((t,0) if TL_count[i][0] == 0 else TL_count[i])
         lt_j, l_j = ((t,0) if TL_count[j][0] == 0 else TL_count[j])
@@ -338,14 +342,14 @@ def eventBetweenness(events, tau, delta, N_events=None, N_nodes=None,
         TL_diff[-counter-1] = (lt_i-t, l_i_new-l_i, lt_j-t, l_j_new-l_j)
         TL_count[i] = (t, l_i_new)
         TL_count[j] = (t, l_j_new)
-        #if (counter % 10000) == 0:
-        #    sys.stderr.write("Event %d at t = %d\n" % (counter,t))
+        if (counter % 10000) == 0:
+            sys.stderr.write("Event %d at t = %d\n" % (counter,t))
         #print t
         #print TL_count
 
     # Phase II: Calculate event betweenness.
     sys.stderr.write("Phase II: Calculate event betweenness.\n")
-    TA_count = np.zeros((N_nodes,2),dtype=float)
+    TA_count = np.zeros((max_node_ID,2),dtype=np.float64)
     for counter, (t, i, j) in enumerate(events):
         # Invariants:
         #   TA_count[i] contains the effective number of paths
@@ -414,9 +418,10 @@ def eventBetweenness(events, tau, delta, N_events=None, N_nodes=None,
         TA_count[i] = (t, a_i_new)
         TA_count[j] = (t, a_j_new)
 
-        #if (counter % 10000) == 0:
-        #    sys.stderr.write("Event %d at t = %d: %.4f\n" % 
-        #                     (counter,t,ea_i*el_j + ea_j*el_i + ea_i + ea_j + el_i + el_j))
+        if (counter % 10000) == 0:
+            sys.stderr.write("Event %d at t = %d: %.4f\n" % 
+                             (counter,t,
+                              ea_i*el_j + ea_j*el_i + ea_i + ea_j + el_i + el_j))
 
 
 def eventBetweenness_PhoneEvents(events, tau, delta, nodeBetweenness=None,
