@@ -57,40 +57,97 @@ def mst_kruskal(net,randomize=True,maximum=False):
     return mst
 
 
-def snowball(net,startingnodeindex,depth):
-    startingnode=net[startingnodeindex]
-    newNet=pynet.Net()
-    toVisit=set()
-    toVisit.add(startingnode.index)
-    newToVisit=set()
-    visited=set()
-    for d in range(1,depth+1):
-        print "Depth: ",d," visited ", len(visited)," to visit ", len(toVisit)
-        visited=visited|toVisit
-        for nodeIndex in toVisit:
-            #visited.add(nodeIndex)
-            node=net[nodeIndex]
-            for newIndex in node:
-                newNode=net[newIndex]
-                newNet[node.index][newIndex]=net[node.index][newIndex]
-                newNet[newIndex][node.index]=net[node.index][newIndex]
-                if newIndex not in visited:
-                    newToVisit.add(newIndex)
+def snowball(net, seed, depth, includeLeafNeighbors=False):
+    """Snowball sampling
 
-        toVisit=newToVisit
+    Works for both directed and undirected networks. For directed
+    networks all edges all followed during the sampling (as opposed to
+    following only outbound edges).
+
+    Parameters
+    ----------
+    net : pynet.SymmNet or pynet.Net object
+        The network to be sampled.
+    seed : int or a sequence of ints
+        The seed of the snowball, either a single node index or
+        several indices.
+    depth : int
+        The depth of the snowball. Depth 1 corresponds to first
+        neighbors of the seed only.
+    includeLeafNeighbors : bool (default: False)
+        If True, then the edges between the leaves (i.e. the nodes at
+        final depth) will also be included in the snowball network. By
+        default these edges are not included.
+
+    Return
+    ------
+    snowball : pynet.SymmNet or pynet.Net object
+        The snowball sample, will be of the same type as `net`.
+    """
+    if isinstance(seed, int):
+        seed = [seed]
+    toVisit=set(seed)
+
+    # Create a network for the sample with the same type as `net`.
+    newNet=type(net)()
+    visited=set()
+
+    for d in range(1,depth+1):
+        #print "Depth: ",d," visited ", len(visited)," to visit ", len(toVisit)
+        visited=visited|toVisit
         newToVisit=set()
+
+        if len(toVisit) == 0:
+            break
+        
+        for nodeIndex in toVisit:
+            node = net[nodeIndex]
+
+            # Go through outbound edges (this equals all neighbors in
+            # an undirected network.
+            for outIndex in node.iterOut():
+                newNet[nodeIndex][outIndex] = net[nodeIndex][outIndex]
+                if outIndex not in visited:
+                    newToVisit.add(outIndex)
+
+            # If we are dealing with a directed network, then we must
+            # also go through the inbound edges.
+            if isinstance(net, pynet.Net):
+                for inIndex in node.iterIn():
+                    newNet[inIndex][nodeIndex] = net[inIndex][nodeIndex]
+                    if inIndex not in visited:
+                        newToVisit.add(inIndex)
+
+        # If this is the last depth and `includeLeafNeighbors` is
+        # True, we add the edges between the most recently added
+        # nodes, that is, those currently in the set `newToVisit`.
+        if d == depth and includeLeafNeighbors:
+            for nodeIndex in newToVisit:
+                node = net[nodeIndex]
+
+                for outIndex in node.iterOut():
+                    if outIndex in newToVisit:
+                        newNet[nodeIndex][outIndex] = net[nodeIndex][outIndex]
+
+                if isinstance(net, pynet.Net):
+                    for inIndex in node.iterIn():
+                        if inIndex in newToVisit:
+                            newNet[inIndex][nodeIndex] = net[inIndex][nodeIndex]
+
+        # The nodes to be visited on the next round are the leaves
+        # found in the current round.
+        toVisit=newToVisit
 
     netext.copyNodeProperties(net,newNet)
 
     return newNet
 
 
-def collapseIndices(net,returnIndexMap=False):
-    """
-    Chances the indices of net to run from 0 to len(net)-1
+def collapseIndices(net, returnIndexMap=False):
+    """Changes the indices of net to run from 0 to len(net)-1.
     """
 
-    newNet = net.__class__()
+    newNet = type(net)()
     indexmap = {}
     index = 0
 
@@ -106,7 +163,7 @@ def collapseIndices(net,returnIndexMap=False):
     netext.copyNodeProperties(net,newNet)
 
     if returnIndexMap:
-        return newNet,indexmap
+        return newNet, indexmap
     else:
         return newNet
 
@@ -360,33 +417,43 @@ def getLineGraph(net, useWeights=False, output=None, format='edg'):
         return id_array
 
 
-def netConfiguration(net,keepsOrigNet=False,seed=0):
-    """
-    netConfiguration:
-    This function generates the configuration network of an incoming arbitrary net. 
-    It keeps the degree of each node but randomize the edges between them.
+def netConfiguration(net, keepsOrigNet=False, seed=None):
+    """Generate configuration network
+    
+    This function generates a configuration network from any arbitrary
+    net. It retains the degree of each node but randomize the edges
+    between them.
 		
-    Incoming parameters:
-        net
-        keepsOrigNet(=False) - optional
-        seed - optional
-    Outgoing parameters:
-        configuration_net - the shuffled network
-	"""
-    if seed!=0:
+    Parameters
+    ----------
+    net : pynet.SymmNet object
+        The network to be used as the basis for the configuration
+        model.
+    keepsOrigNet : bool (default: False)
+        If False, the input network, `net`, will be overwritten by the
+        configuration network.
+    seed : int (default: None)
+        A seed for the random number generator. If None, the RNG is
+        not be re-initialized but the current state is used.
+
+    Return
+    ------
+    configuration_net : pynet.SymmNet object
+        The shuffled network. Note that if `keepsOrigNet` is False,
+        the returned value will be identical to `net`.
+    """
+    if seed is not None:
         random.seed(int(seed))
 
-    newNet=pynet.SymmNet()
+    newNet = pynet.SymmNet()
     if keepsOrigNet:
-        testNet=pynet.SymmNet()
+        testNet = pynet.SymmNet()
         for edge in net.edges:
-            testNet[edge[0],edge[1]]=edge[2]	
+            testNet[edge[0],edge[1]] = edge[2]	
     else:
         testNet=net
-    edgeList=[]
 
-    for edge in net.edges:
-        edgeList.append(edge)
+    edgeList = list(net.edges)
 
     for i in range(len(edgeList)):
 
