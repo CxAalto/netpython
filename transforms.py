@@ -90,20 +90,18 @@ def collapseIndices(net,returnIndexMap=False):
     Chances the indices of net to run from 0 to len(net)-1
     """
 
-    newNet = pynet.Net()
+    newNet = net.__class__()
     indexmap = {}
     index = 0
 
     for i in net:
-        if net[i].deg() != 0:
-            indexmap[i] = index;
-            index += 1
-    
-    for i in net:
-        for j in net[i]:
-            if net[j][i] != 0:
-                newNet[indexmap[i]][indexmap[j]] = net[i][j]
-                newNet[indexmap[j]][indexmap[i]] = net[j][i]
+        newNet.addNode(index)
+        indexmap[i] = index;
+        index += 1
+
+    for edge in net.edges:
+        i,j,w=edge
+        newNet[indexmap[i]][indexmap[j]] = w
 
     netext.copyNodeProperties(net,newNet)
 
