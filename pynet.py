@@ -241,7 +241,7 @@ class ScipySparseDirNet(VirtualDirNet):
 
 	#--- Methods used by VirtualDirNet:
 	def _degIndex(self,nodeIndex):
-		return self.totalDeg(nodeIndex)
+		return self._totalDeg(nodeIndex)
 	def _getEdge(self,src,dest):
 		return self._nodeList[src][dest,0]
 	def _setEdge(self,src,dest,val):
