@@ -472,6 +472,12 @@ class NodeCover(object):
         """
         newNet=pynet.SymmNet()
         commID=self.getCommIDs()
+
+        #First add the nodes
+        for node in range(len(self)): #communities are named from 0 to n-1
+            newNet.addNode(node)
+
+        #Then add the edges by going through the edges in the underlying net
         for edge in net.edges:
             if edge[0] in commID and edge[1] in commID: #node might not belong to a community
                 for newNode1 in commID[edge[0]]:
