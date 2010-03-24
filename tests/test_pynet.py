@@ -54,6 +54,14 @@ class TestPynet(unittest.TestCase):
         myNet.addNode("bar")
         self.assertEqual(len(myNet),3)
         self.assertEqual(myNet["bar"].deg(),0)
+        
+        #next net
+        myNet2=netType(sizeLimit=10)
+        myNet2.addNode(1)
+        myNet2[2,3]=1
+        self.assertEqual(len(myNet2),3)
+        self.assertEqual(myNet2[1,2],0)
+        self.assertEqual(myNet2[2,3],1)
 
 
     def test_basic_dir_ScipySparseDirNet(self):
