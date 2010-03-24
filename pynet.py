@@ -206,10 +206,9 @@ class ScipySparseSymmNet(VirtualNet):
 		return self._nodeList[src][dest,0]
 	def _setEdge(self,src,dest,val):
 		nNodes=len(self._nodeList)
-		if src>=nNodes: 
+		while nNodes<=src or nNodes<=dest:
 			self._addNode()
-		if dest>=nNodes: 
-			self._addNode()
+			nNodes+=1
 		if val==0:
 			try:
 				del self._nodeList[src][dest,0]
