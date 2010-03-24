@@ -1193,7 +1193,7 @@ class ColorMapDialog(MySimpleDialog):
         self.c1=Label(masterwindow,text='Please choose color map',anchor=W)
         self.c1.grid(row=0,column=0)
 
-        colormaps=["orange","hsv","jet","spectral","winter","Accent","Paired"]
+        colormaps=["orange","hsv","jet","spectral","winter","Accent","Paired","binary","gray"]
 
         rowcounter=1
         curr_frame=[]
