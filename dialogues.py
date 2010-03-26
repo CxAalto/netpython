@@ -1588,8 +1588,20 @@ class GoldsteinWaiter(GenericLoadWaiter):
         # then use msdata methods to get the Goldstein population-level distance matrix
         distancematrix=msdata.getGroupwiseDistanceMatrix(goldstein_list,groupNames=unique_poplist)
         netext.addNodeProperty(distancematrix,"population_size")
+        netext.addNodeProperty(distancematrix,"genotypes")
+        netext.addNodeProperty(distancematrix,"clonal_diversity")
         for i,item in enumerate(unique_poplist):
-            distancematrix.nodeProperty['population_size'][item]=len(goldstein_list[i])
+            samples=goldstein_list[i]
+            nSamples=len(samples)
+            distancematrix.nodeProperty['population_size'][item]=nSamples
+            genotypes=msdata.getSubset(samples).getUniqueSubset().getNumberOfNodes()
+            distancematrix.nodeProperty['genotypes'][item]=genotypes
+            if nSamples>1:
+                R=float(genotypes-1)/float(nSamples-1)
+            else:
+                R=0
+            distancematrix.nodeProperty['clonal_diversity'][item]=R
+
         self.distancematrix=distancematrix   
 
         self.ok()
