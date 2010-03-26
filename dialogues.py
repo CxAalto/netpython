@@ -1753,7 +1753,7 @@ class BootstrapPopulationsDialog(MySimpleDialog):
     def applyme(self):
         self.result=[self.scale_1.get(),self.e1.get()]
 
-class SliderDialog(MySimpleDialog):
+class SliderDialog2(MySimpleDialog):
     """Asks for the number of bins for log binning
        and allows linear bins for 1...10"""
 
