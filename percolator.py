@@ -91,7 +91,7 @@ class KtreeInteger_new:
             nodes=range(0,len(self.ktree))
         
         for node in nodes:
-            communityKey=self.getParent(node)
+            communityKey=self.getSetIndex(node)
             if separateElements or communityKey!=node:
                 if communityKey not in communityMap:
                     communityMap[communityKey]=[node]
