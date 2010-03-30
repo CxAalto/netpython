@@ -1801,7 +1801,7 @@ class BootstrapPopulationsDialog(MySimpleDialog):
 
     def body(self,masterclass,masterwindow):
 
-        self.c1=Label(masterwindow,text='Number of repeat bootstapping runs?',
+        self.c1=Label(masterwindow,text='Number of repetitions?',
                       anchor=W)
         self.c1.grid(row=0,column=0)
         self.e1=Entry(masterwindow,textvariable=self.nRuns,bg='Gray95')
