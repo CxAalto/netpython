@@ -157,7 +157,7 @@ def loadNet_adj(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
                 numerical=None):
     raise Exception("Reading adj file format is not implemented.")
 
-def loadNet_mat(input, mutualEdges=False, splitterChar=None,symmetricNet=True):
+def loadNet_mat(input, mutualEdges=False, splitterChar=None,symmetricNet=True,nodeNames=[]):
     rows, columns = 0, 0
     for line in input:
         rows += 1
@@ -170,6 +170,13 @@ def loadNet_mat(input, mutualEdges=False, splitterChar=None,symmetricNet=True):
                         % (columns, rows))
     input.seek(0)
 
+    usenodelist=0	
+    if len(nodeNames)>0:
+	usenodelist=1
+	if len(nodeNames)!=columns:
+		raise Exception("Node label list has wrong length.")
+    		usenodelist=0
+
     if symmetricNet:
         newNet=pynet.SymmFullNet(columns)
     else:
@@ -180,7 +187,10 @@ def loadNet_mat(input, mutualEdges=False, splitterChar=None,symmetricNet=True):
         fields=line.split(splitterChar)
         for columnIndex in range(0,columns):
             if columnIndex != row:
-                newNet[row,columnIndex]=float(fields[columnIndex])
+		if usenodelist==0:
+	                newNet[row,columnIndex]=float(fields[columnIndex])
+		else:
+			newNet[nodeNames[row],nodeNames[columnIndex]]=float(fields[columnIndex])
         row+=1
 
     return newNet
