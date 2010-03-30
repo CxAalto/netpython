@@ -288,11 +288,11 @@ class NumpyFullSymmNet(VirtualNet):
 	def __init__(self,sizeLimit):
 		VirtualNet.__init__(self,sizeLimit=sizeLimit)
 		self._adjMatrix=numpy.zeros([sizeLimit,sizeLimit])
-		self._degree=numpy.zeros([self.sizeLimit,1])
+		self._degree=numpy.zeros(self.sizeLimit,dtype='uint')
 
 	#--- Methods used by VirtualNet:
 	def _degIndex(self,nodeIndex):
-		return self._degree[nodeIndex]
+		return int(self._degree[nodeIndex])
 	def _getEdge(self,src,dest):
 		return self._adjMatrix[src,dest]
 	def _setEdge(self,src,dest,val):
@@ -313,13 +313,13 @@ class NumpyFullDirNet(VirtualDirNet):
 	def __init__(self,sizeLimit):
 		VirtualNet.__init__(self,sizeLimit=sizeLimit)
 		self._adjMatrix=numpy.zeros([sizeLimit,sizeLimit])
-		self._degree=numpy.zeros([self.sizeLimit,1])
-		self._inDegree=numpy.zeros([self.sizeLimit,1])
-		self._outDegree=numpy.zeros([self.sizeLimit,1])
+		self._degree=numpy.zeros(self.sizeLimit)
+		self._inDegree=numpy.zeros(self.sizeLimit)
+		self._outDegree=numpy.zeros(self.sizeLimit)
 
 	#--- Methods used by VirtualDirNet:
 	def _degIndex(self,nodeIndex):
-		return self._degree[nodeIndex]
+		return int(self._degree[nodeIndex])
 	def _getEdge(self,src,dest):
 		return self._adjMatrix[src,dest]
 	def _setEdge(self,src,dest,val):
@@ -351,9 +351,9 @@ class NumpyFullDirNet(VirtualDirNet):
                         if self._adjMatrix[nodeIndex,i]!=0:
                                 yield i
 	def _inDegIndex(self,nodeIndex):
-		return self._inDegree[nodeIndex]
+		return int(self._inDegree[nodeIndex])
 	def _outDegIndex(self,nodeIndex):
-		return self._outDegree[nodeIndex]
+		return int(self._outDegree[nodeIndex])
 
 
 
