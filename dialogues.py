@@ -192,21 +192,21 @@ class LoadMatrixDialog(MySimpleDialog):
 
     def body(self,masterclass,masterwindow):
 
-        self.c1=Label(masterwindow,text='What distance measure has been used?',anchor=W)
+        self.c1=Label(masterwindow,text='What distance measure has been used?',bg='DarkOliveGreen2',anchor=W)
         self.c1.grid(row=0,column=0)
 
         r1=Radiobutton(masterwindow,text='Non-shared alleles',value='nsa',variable=masterclass.measuretype)
         r2=Radiobutton(masterwindow,text='Linear Manhattan',value='lm',variable=masterclass.measuretype)
         r3=Radiobutton(masterwindow,text='Allele parsimony',value='ap',variable=masterclass.measuretype)
         r4=Radiobutton(masterwindow,text='Hybrid',value="hybrid",variable=masterclass.measuretype)
-        r5=Radiobutton(masterwindow,text='Unknown',value="unknown",variable=masterclass.measuretype)
+        r5=Radiobutton(masterwindow,text='Other',value="other",variable=masterclass.measuretype)
         r1.grid(row=1,column=0,sticky=W)
         r2.grid(row=2,column=0,sticky=W)
         r3.grid(row=3,column=0,sticky=W)
         r4.grid(row=4,column=0,sticky=W)
         r5.grid(row=5,column=0,sticky=W)
 
-        self.c2=Label(masterwindow,text='How have clones been handled?',anchor=W)
+        self.c2=Label(masterwindow,text='How have clones been handled?',bg='DarkOliveGreen2',anchor=W)
         self.c2.grid(row=6,column=0)
         r6=Radiobutton(masterwindow,text='Removed',value='collapsed',variable=masterclass.clones)
         r7=Radiobutton(masterwindow,text='Kept',value='included',variable=masterclass.clones)
@@ -215,7 +215,7 @@ class LoadMatrixDialog(MySimpleDialog):
         r7.grid(row=8,column=0,sticky=W)
         r8.grid(row=9,column=0,sticky=W)
         
-        masterclass.measuretype.set('unknown')
+        masterclass.measuretype.set('other')
         masterclass.clones.set('unknown')
 
         return self.c1
@@ -402,6 +402,73 @@ class ProjectLaunchDialog(MySimpleDialog):
 
     def applyme(self):
         self.result=(self.datatype.get())
+
+class ChooseMatrixNodeNames(MySimpleDialog):
+    """First window shown when launching a new analysis wizard.
+        Inquires if the user wants to load microsatellite data,
+        a distance matrix, or a network file."""
+    
+
+    def __init__(self,parent,title=None,titlemsg="How to set node labels?"):
+
+        Toplevel.__init__(self,parent)
+        #self.configure(bg='Gray80')
+      #  self.transient(parent)
+
+        self.title(title)
+
+        self.titlemsg=titlemsg
+        self.parent=parent
+        self.result=None
+
+        self.measuretype=StringVar()
+      
+       # self.linfirst=IntVar()
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        self.buttonbox()
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.wait_window(self)
+
+    def body(self,masterclass,masterwindow,titlemsg="How to set node labels?"):
+
+
+        self.wholeframe=Frame(masterwindow,relief='sunken',borderwidth=2)
+        
+        self.clabel=Label(self.wholeframe,text=self.titlemsg,justify=LEFT,anchor=W,bg='gray90',relief='groove',borderwidth=1)
+        self.clabel.pack(side=TOP,expand=YES,fill=X,ipadx=5,ipady=5)
+
+        self.bottompart=Frame(self.wholeframe)
+
+
+        r1=Radiobutton(self.bottompart,text='From file',value='file',variable=masterclass.measuretype)
+        r2=Radiobutton(self.bottompart,text='1..N',value='numbers',variable=masterclass.measuretype)
+        r1.grid(row=1,column=0,sticky=W)
+        r2.grid(row=2,column=0,sticky=W)
+
+        self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
+        
+        masterclass.measuretype.set('nsa')
+
+        self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
+       
+        return self.wholeframe
+
+    def applyme(self):
+        self.result=(self.measuretype.get())
 
 class ChooseDistanceMeasure(MySimpleDialog):
     """First window shown when launching a new analysis wizard.
