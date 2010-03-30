@@ -1773,7 +1773,7 @@ class BootstrapPopulationsDialog(MySimpleDialog):
        and allows linear bins for 1...10"""
 
 
-    def __init__(self,parent,title='Please provide information:'):
+    def __init__(self,parent,title='Please provide information:',initRuns=100):
 
         Toplevel.__init__(self,parent)
         
@@ -1781,8 +1781,8 @@ class BootstrapPopulationsDialog(MySimpleDialog):
 
         self.parent=parent
         self.result=None
-        self.clones=StringVar()
-        self.measuretype=StringVar()
+        self.initRuns=initRuns
+        self.nRuns=StringVar()
 
         body=Frame(self)
         self.initial_focus=self.body(self,body)
@@ -1804,7 +1804,8 @@ class BootstrapPopulationsDialog(MySimpleDialog):
         self.c1=Label(masterwindow,text='Number of repeat bootstapping runs?',
                       anchor=W)
         self.c1.grid(row=0,column=0)
-        self.e1=Entry(masterwindow,textvariable="???",bg='Gray95')
+        self.e1=Entry(masterwindow,textvariable=self.nRuns,bg='Gray95')
+        self.nRuns.set(str(self.initRuns))
         self.e1.grid(row=1,column=0)
 
         self.c2=Label(masterwindow,text='Percentage of nodes in each location?',
@@ -1876,7 +1877,7 @@ class AskNumberDialog(MySimpleDialog):
     """
 
 
-    def __init__(self,parent,title='Please provide information:',bodyText="Number: "):
+    def __init__(self,parent,title='Please provide information:',bodyText="Number: ",initNumber=100):
 
         Toplevel.__init__(self,parent)
         
@@ -1885,8 +1886,9 @@ class AskNumberDialog(MySimpleDialog):
         self.bodyText=bodyText
         self.parent=parent
         self.result=None
-        self.clones=StringVar()
-        self.measuretype=StringVar()
+        self.initNumber=initNumber
+        self.theNumber=StringVar()
+        #self.measuretype=StringVar()
 
         body=Frame(self)
         self.initial_focus=self.body(self,body)
@@ -1908,10 +1910,13 @@ class AskNumberDialog(MySimpleDialog):
         self.c1=Label(masterwindow,text=self.bodyText,
                       anchor=W)
         self.c1.grid(row=0,column=0)
-        self.e1=Entry(masterwindow,textvariable="???",bg='Gray95')
+        self.e1=Entry(masterwindow,textvariable=self.theNumber,bg='Gray95')
+        self.theNumber.set(str(self.initNumber))
         self.e1.grid(row=1,column=0)
 
         return self.c1
 
     def applyme(self):
         self.result=self.e1.get()
+
+
