@@ -490,3 +490,19 @@ def weightStats(net):
     avgw = sum(weight_vector)/len(weight_vector)
     return minw, maxw, avgw
     
+def overlap(net,node1,node2):
+    nTriangles=0
+    if net[node1].deg()>net[node2].deg():
+        small,large=node2,node1
+    else:
+        small,large=node1,node2
+    for neigh in net[small]:
+        if net[neigh,large]!=0:
+            nTriangles+=1
+    d=net[node1].deg()+net[node2].deg()-2-nTriangles
+    if d>0:
+        return nTriangles/float(d)
+    else:
+        return 0.0
+
+
