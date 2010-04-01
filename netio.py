@@ -259,10 +259,19 @@ def writeNet_net(net, outputFile):
     del nodeNameToIndex
 
 def writeNet_mat(net, outputFile):
+    """
+    Writes network into file in weight matrix format. That is, the outputfile
+    is a text file where weight of an edge between node i an j is in row i and
+    column j. Nodes are ordered in ascending order by their names.
+    
+    The list of the node names in the order they are used in the weight matrix is 
+    returned.
+    """
     if not hasattr(outputFile, 'write'):
         raise ValueError("Parameter 'outputFile' must be a file object.")
 
     nodes=list(net)
+    nodes.sort()
     for i in nodes:
         first=True
         for j in nodes:
