@@ -491,13 +491,21 @@ def weightStats(net):
     return minw, maxw, avgw
     
 def overlap(net,node1,node2):
+    """
+    Returns the overlap of the edge between the two nodes 
+    given as input. Overlap is defined as:
+    n_ij/(k_i-1+k_j-1-n_ij)
+    where n_ij is the number of common neighbors of nodes i and j
+    (=number of triangles) and k_i and k_j are the degrees of nodes i
+    and j.
+    """
     nTriangles=0
     if net[node1].deg()>net[node2].deg():
         small,large=node2,node1
     else:
         small,large=node1,node2
     for neigh in net[small]:
-        if net[neigh,large]!=0:
+        if net[neigh,large]!=0: #assume no self-links.
             nTriangles+=1
     d=net[node1].deg()+net[node2].deg()-2-nTriangles
     if d>0:
