@@ -371,7 +371,7 @@ class LCELibSparseSymmNet(VirtualNet):
 	def _getEdge(self,src,dest):
 		return _cnet.Sn_getEdge(self._net,src,dest)
 	def _setEdge(self,src,dest,val):
-		_cnet.Sn_setEdge(self._net,src,dest, val)
+		_cnet.Sn_setEdge(self._net,src,dest, float(val))
 	def _iterNode(self,nodeIndex):
 		citerator=_cnet.Sn_getNeighborIterator(self._net,nodeIndex)
 		next=_cnet.NeighborIterator_getNext(citerator)
