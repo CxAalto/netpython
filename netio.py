@@ -212,29 +212,31 @@ def loadNet_mat(input, mutualEdges=False, splitterChar=None,symmetricNet=True,no
 def loadNet_net(input):
     raise Exception("Reading Pajek file format is not implemented.")
 
-def writeNet_gml(net,filename):
-    file=open(filename,'w')
-    file.write("graph [\n")
+def writeNet_gml(net,outputFile):
+    if not hasattr(outputFile, 'write'):
+        raise ValueError("Parameter 'outputFile' must be a file object.")
+    outputFile.write("graph [\n")
     if net.__class__==pynet.SymmNet:
-        file.write("directed 0\n")
+        outputFile.write("directed 0\n")
     else:
-        file.write("directed 1\n")
+        outputFile.write("directed 1\n")
 
     nodeIndex=netext.Enumerator()
     for node in net:
-        file.write("node [\n")
-        file.write("id "+str(nodeIndex[node])+"\n")
-        file.write("label "+str(node))
-        file.write("]\n")
+        outputFile.write("node [\n")
+        outputFile.write("id "+str(nodeIndex[node])+"\n")
+        outputFile.write("label "+str(node))
+        outputFile.write("]\n")
 
     for edge in net.edges:
-        file.write("edge [\n")
-        file.write("source " + str(nodeIndex[edge[0]])+"\n")
-        file.write("target " + str(nodeIndex[edge[1]])+"\n")
-        file.write("value " + str(edge[2])+"\n")
-        file.write("]\n")
+        outputFile.write("edge [\n")
+        outputFile.write("source " + str(nodeIndex[edge[0]])+"\n")
+        outputFile.write("target " + str(nodeIndex[edge[1]])+"\n")
+        outputFile.write("value " + str(edge[2])+"\n")
+        outputFile.write("]\n")
 
-    file.write("]\n")
+    outputFile.write("]\n")
+    outputFile.close()
 
 def writeNet_edg(net, outputFile, headers=False):
     if not hasattr(outputFile, 'write'):
