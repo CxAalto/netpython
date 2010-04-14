@@ -94,7 +94,7 @@ def loadNet_gml(input):
     return net
 
 def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
-                numerical=None,allowSelfEdges=True):
+                numerical=None,allowSelfEdges=True,hasHeaderLine=None):
     """Read network data from input in edg format.
 
     If `mutualEdges` is set to True, an edge is added between nodes i
@@ -106,6 +106,11 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
 
     If 'allowSelfEdges', the self edges are translated as nodes with no edges. Otherwise
     those edges are just thrown out.
+
+    If hasHeaderLine is True the first line is skipped, if it is False the first line is
+    read normally, and if it is None the first line is skanned for "from to weight" string
+    to decide if it is a header line.
+
     """
     def isNumerical(input):
 	try:
@@ -126,6 +131,15 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
     else:
         newNet=pynet.Net()
 
+    #Check for headers
+    possibleHeaders=[["from","to","weight"],["head","tail","weight"]]
+    if hasHeaderLine!=False:
+        firstLine=input.readline().strip().lower()
+        fields=firstLine.split(splitterChar)
+        if hasHeaderLine==None and fields not in possibleHeaders:
+            input.seek(0)
+        if hasHeaderLine==True:
+            input.seek(0)
 
     nodeMap = {} # Used only if mutualEdges = True.
 
