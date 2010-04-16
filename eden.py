@@ -42,7 +42,7 @@ def loadNet_microsatellite(input,removeClones=True,distance="lm"):
 class MicrosatelliteData:
     """ A class for parsing and using microsatellite data
     """
-    def __init__(self,input):
+    def __init__(self,input,missingValue="999999"):
         """
         The microsatellite data must be given as a input where each row
         has microsatellites for one node/specimen. Alleles should be given as
@@ -58,7 +58,7 @@ class MicrosatelliteData:
             if len(fields)%2!=0:
                 raise SyntaxError("Input should have even number of columns");
 	    elif lastNumberOfFields!=None and lastNumberOfFields!=len(fields):
-		raise SyntaxError("The input has unconsistent number of columns")
+		raise SyntaxError("The input has inconsistent number of columns")
             else:
                 fields=map(int,fields)
                 if len(self.alleles)==0: #first time here                    
@@ -110,12 +110,6 @@ class MicrosatelliteData:
             lm_w=self.lm_w
         if nsa_w==None:
             nsa_w=self.nsa_w
-        #distance=0
-        #for locus in range(0,len(x)):
-        #    distance+=nsa_w[locus]*(len(set([x[locus][0],x[locus][1]]).union(set([y[locus][0],y[locus][1]])))-len(set([x[locus][0],x[locus][1]]).intersection(set([y[locus][0],y[locus][1]]))))
-        #    #distance+=nsa_w[locus]*(2-len(set([x[locus][0],x[locus][1]]).intersection(set([y[locus][0],y[locus][1]]))))
-        #    distance+=lm_w[locus]*math.sqrt(abs(x[locus][0]-y[locus][0])+abs(x[locus][1]-y[locus][1]))
-        #return float(distance)
         return float(sum(self.getMSDistance_vectorHybrid(x,y,lm_w=lm_w,nsa_w=nsa_w)))
 
     def getMSDistance_vectorHybrid(self,x,y,lm_w=None,nsa_w=None):
@@ -124,20 +118,9 @@ class MicrosatelliteData:
         if nsa_w==None:
             nsa_w=self.nsa_w
             distance=numpy.zeros(len(x))
-        #for locus in range(0,len(x)):
-        #    d=0
-        #    distance[locus]+=nsa_w[locus]*(len(set([x[locus][0],x[locus][1]]).union(set([y[locus][0],y[locus][1]])))-len(set([x[locus][0],x[locus][1]]).intersection(set([y[locus][0],y[locus][1]]))))
-        #    #distance+=nsa_w[locus]*(2-len(set([x[locus][0],x[locus][1]]).intersection(set([y[locus][0],y[locus][1]]))))
-        #    distance[locus]+=lm_w[locus]*math.sqrt(abs(x[locus][0]-y[locus][0])+abs(x[locus][1]-y[locus][1]))
-        #return distance
         return nsa_w*self.getMSDistance_vectorNonsharedAlleles(x,y)+lm_w*self.getMSDistance_vectorLinearManhattan(x,y)
 
     def getMSDistance_nonsharedAlleles(self,x,y):
-        #distance=0
-        #for locus in range(0,len(x)):
-        #    distance+=(len(set([x[locus][0],x[locus][1]]).union(set([y[locus][0],y[locus][1]])))-len(set([x[locus][0],x[locus][1]]).intersection(set([y[locus][0],y[locus][1]]))))
-        #    #distance+=2-len(set([x[locus][0],x[locus][1]]).intersection(set([y[locus][0],y[locus][1]])))
-        #return float(distance)
         return float(sum(self.getMSDistance_vectorNonsharedAlleles(x,y)))/float(len(x))
 
     def getGroupwiseDistance_DyerNason(self,x,y):
@@ -235,10 +218,6 @@ class MicrosatelliteData:
         """
         Returns the distance between two nodes/specimen
         """
-        #distance=0
-        #for locus in range(0,len(x)):
-        #    distance+=math.sqrt(abs(x[locus][0]-y[locus][0])+abs(x[locus][1]-y[locus][1]))
-        #return float(distance)/float(len(x))
         return float(sum(self.getMSDistance_vectorLinearManhattan(x,y)))/float(len(x))
 
     def getMSDistance_vectorLinearManhattan(self,x,y):
@@ -246,13 +225,6 @@ class MicrosatelliteData:
         for locus in range(0,len(x)):
             distance[locus]=abs(x[locus][0]-y[locus][0])+abs(x[locus][1]-y[locus][1])
         return distance
-
-    def getMSDistance_vectorNonsharedAlleles_old(self,x,y):
-        distance=numpy.zeros(len(x))
-        for locus in range(0,len(x)):
-            distance[locus]=len(set([x[locus][0],x[locus][1]]).union(set([y[locus][0],y[locus][1]])))-len(set([x[locus][0],x[locus][1]]).intersection(set([y[locus][0],y[locus][1]])))
-        return distance
-
 
     def getMSDistance_vectorNonsharedAlleles(self,x,y):
         return self.getMSDistance_vector(x,y,self.getMSDistance_singleLocus_NonsharedAlleles)
