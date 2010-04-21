@@ -460,22 +460,20 @@ def plot_edge(plotobject, xcoords, ycoords, width=1.0, colour='k',
         plotobject.add_patch(arr)
 
 
-def plot_node(plotobject,x,y,color='w',size=8.0,edgecolor='w'):
-    plotobject.plot([x], [y], 'yo', markerfacecolor=color,
+def plot_node(plotobject,x,y,shape='o',color='w',size=8.0,edgecolor='w'):
+    plotobject.plot([x], [y], 'yo', marker=shape,markerfacecolor=color,
                     markeredgecolor=edgecolor,markersize=size)
 
 
 def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
-                 labels=None, fontsize=7, showAllNodes=True, nodeColor=None,
-                 nodeEdgeColor='k',
-                 nodeSize=1.0, minnode=2.0, maxnode=6.0, nodeColors=None,
-                 nodeSizes=None, bgcolor='white', maxwidth=2.0,
-                 minwidth=0.2, uselabels='some', edgeColorMap='winter', 
-                 weightLimits=None, setNodeColorsByProperty=None,
-                 nodeColorMap='winter', nodePropertyLimits=None,
-                 nodeLabel_xOffset=None, coloredvertices=None, vcolor=None,
-                 vsize=None, frame=False, showTicks=False, axisLimits=None,
-                 baseFig=None): 
+        equalshape=False, labels=None, fontsize=7, showAllNodes=True, 
+        nodeColor=None, nodeShape='o', nodeSize=1.0, minnode=2.0, maxnode=6.0,
+        nodeColors=None, nodeSizes=None, nodeShapes=None, bgcolor='white',
+        maxwidth=2.0, minwidth=0.2, uselabels='none', edgeColorMap='winter',
+        weightLimits=None, setNodeColorsByProperty=None, nodeColorMap='winter',
+        nodePropertyLimits=None, nodeLabel_xOffset=None, coloredvertices=None,
+        vcolor=None, vsize=None, frame=False, showTicks=False, axisLimits=None,
+        baseFig=None): 
     """Visualizes a network.
 
     The coloring of the nodes is decided as follows:
@@ -508,6 +506,8 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         Dictionary of node colors by node index.
     nodeSizes : dict
         Dictionary of node sizes by node index.
+    nodeShapes : dict
+        Dictonary of node shapes by node index.
     minnode : minimum node size, if autoscaling used
     maxnode : maximum node size, if autoscaling used
     nodeColor : RGB color tuple
@@ -530,6 +530,9 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     equalsize : bool
         If True, all nodes are of size `nodeSize`. If False, node size
         is based on node strength.
+    equalshape : bool
+        If True, all nodes are of shape 'nodeShape'. If False, node shape is
+        based on 'nodeShapes'
     showAllNodes : bool
         If True, displays disconnected components and nodes which have
         no edges left after e.g. thresholding. (quick hack?)
@@ -639,6 +642,8 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         nodeColors = {}
     if nodeSizes is None:
         nodeSizes = {}
+    if nodeShapes is None:
+        nodeShapes = {}
     if labels is None:
         labels = {}
 
@@ -733,8 +738,19 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
             nodePropertyLimits=(min(np),max(np))
 
     for node in nodelist:
-        # First define size
 
+        # Define the shape of the node
+        if equalshape:                    # If all the shapes are equal
+            nodeshape = nodeShape         # Use a default shape
+        elif len(nodeShapes) > 0:         # If nodeShapes are given
+            if node in nodeShapes.keys(): # If shape of the node is provided
+                nodeshape = nodeShapes[node]
+            else :
+                nodeshape = nodeShape
+        else :
+            nodeshape = nodeShape
+        
+        # First define size
         if equalsize:
             nodesize=nodeSize
             if (nodesize<1.0):          # hack: Himmeli wants size <1.0
@@ -829,8 +845,8 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         # don't coincide on the nodes
         nodeLabel_xOffset = (nodeLabel_xOffset or float(nodesize)/40)
 
-        plot_node(axes, x=xy[node][0], y=xy[node][1],
-                  color=color, size=nodesize, edgecolor=nodeEdgeColor)
+        plot_node(axes, x=xy[node][0], y=xy[node][1], shape=nodeshape,
+                  color=color, size=nodesize,edgecolor=node_edgecolor)
 
         if node in labels or uselabels == 'all':
             if node in labels:
