@@ -466,11 +466,12 @@ def plot_node(plotobject,x,y,shape='o',color='w',size=8.0,edgecolor='w'):
 
 
 def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
-        equalshape=False, labels=None, fontsize=7, showAllNodes=True, 
-        nodeColor=None, nodeShape='o', nodeSize=1.0, minnode=2.0, maxnode=6.0,
-        nodeColors=None, nodeSizes=None, nodeShapes=None, bgcolor='white',
-        maxwidth=2.0, minwidth=0.2, uselabels='none', edgeColorMap='winter',
-        weightLimits=None, setNodeColorsByProperty=None, nodeColorMap='winter',
+        equalshape=True, labels=None, fontsize=7, showAllNodes=True,
+        nodeColor=None, nodeShape='o', nodeEdgeColor='k', nodeSize=1.0,
+        minnode=2.0, maxnode=6.0, nodeColors=None, nodeSizes=None,
+        nodeShapes=None, bgcolor='white', maxwidth=2.0, minwidth=0.2,
+        uselabels='none', edgeColorMap='winter', weightLimits=None,
+        setNodeColorsByProperty=None, nodeColorMap='winter',
         nodePropertyLimits=None, nodeLabel_xOffset=None, coloredvertices=None,
         vcolor=None, vsize=None, frame=False, showTicks=False, axisLimits=None,
         baseFig=None): 
@@ -846,7 +847,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         nodeLabel_xOffset = (nodeLabel_xOffset or float(nodesize)/40)
 
         plot_node(axes, x=xy[node][0], y=xy[node][1], shape=nodeshape,
-                  color=color, size=nodesize,edgecolor=node_edgecolor)
+                  color=color, size=nodesize,edgecolor=nodeEdgeColor)
 
         if node in labels or uselabels == 'all':
             if node in labels:
