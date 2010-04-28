@@ -10,7 +10,7 @@ import copy
 import random
 import shutil
 import Image
-
+import operator
 
 
 # --------------------------------------        
@@ -464,17 +464,452 @@ def plot_node(plotobject,x,y,shape='o',color='w',size=8.0,edgecolor='w'):
     plotobject.plot([x], [y], 'yo', marker=shape,markerfacecolor=color,
                     markeredgecolor=edgecolor,markersize=size)
 
+def visualizeNet(net, coords=None, axes=None, frame=False,
+                 nodeColors=None, defaultNodeColor=None,
+                 nodeEdgeColors=None, defaultNodeEdgeColor='black',
+                 edgeColors=None, defaultEdgeColor=None,
+                 nodeSizes=None, defaultNodeSize=None,
+                 edgeWidths=None, defaultEdgeWidth=None,
+                 nodeEdgeWidths=None, defaultNodeEdgeWidth=0.2,
+                 nodeLabels=None, labelAllNodes=False,
+                 nodePlotOrders=None, defaultNodePlotOrder=1,
+                 edgePlotOrders=None, defaultEdgePlotOrder=0):
+    """Visualize a network.
+    
+    Basic parameters
+    ----------------
+    net : pynet.SymmNet
+        The network to visualize
+    coords : dictionary of tuples {node_ID: (x,y,z)}
+        Coordinates of all nodes. If None, the coordinates will be
+        calculated by Himmeli.
+    axes : pylab.axes object
+        If given, the network will be drawn in this axis. Otherwise a
+        new figure is created for the plot and the figure handle is
+        then returned.
+    frame : bool
+        If False, the frame and axis will be not be shown in the plot.
+
+    Defining node and edge colors
+    -----------------------------
+
+    Colors for nodes and edges are defined similarly. The following
+    explains the procedure for nodes; to control edge coloring simply
+    replace the word 'node' (or 'Node') with the word 'edge' (or
+    'Edge') in the parameter names.
+
+    The color of a node is defined with the dictionary `nodeColors`:
+    key is the node index and the value is any valid coloring scheme
+    (see below under 'Coloring schemes'). If a node index is not in
+    `nodeColors`, it is colored according to `defaultNodeColor`. This
+    variable can have the same values as the values in `nodeColors`.
+
+    Coloring schemes
+    ----------------
+
+    A constant color can be defined in any way allowed by pylab. For
+    example 'k', 'black' and (0,0,0) all result in black color.
+
+    Alternatively the color can be based on the node strength, degree
+    or any node property. In this case the coloring definition is a
+    dictionary. The following examples illustrate the idea:
+    
+    color_scheme = {'by':'weight', 'scale':'log', 'cmap':'winter'}
+    color_scheme = {'by':'degree', 'scale':'lin', 'min':1, 'max':10}
+    color_scheme = {'by':'property:myProperty', 'scale':'log'}
+
+    The possible keys and their default values are
+    
+        KEY      DEFAULT VALUE       OTHER POSSIBLE VALUES
+        'by'     'strength'/'weight' 'degree', 'property:<property_name>'
+        'scale'  'lin'               'log'
+        'cmap'   'jet'               Any colormap
+        'min'    (Min value in data) Any integer x,     1 <= x <= 'max'
+        'max'    (Max value in data) Any integer x, 'min' <= x         
+
+    Any keys that are omitted are filled in with the default
+    value. Note the syntax for using node properties, where the word
+    'property' is followed by a semicolon and the property name.
+
+    Node size
+    ---------
+
+    The node size is controlled with a syntax similar to that used
+    with colors. Node size is defined by dictionary `nodeSizes`, and
+    if a node is not in it, the default value given by
+    `defaultNodeSize` is used. 
+
+    The value can be a single integer, which gives the node size in
+    pixels. Alternatively the node size can be controlled by node
+    strength, degree or any property:
+    
+    node_size_scheme = {'by':'strength', 'scale':'log', 'min':2, 'max':10}
+    node_size_scheme = {'by':'degree', 'scale':'lin'}
+    node_size_scheme = {'by':'property:myProperty', 'scale':'log'}
+
+    The possible keys and their default values are
+        KEY        DEFAULT VALUE       OTHER POSSIBLE VALUES
+        'by'       'strength'          'degree', 'property:<property_name>'
+        'scale'    'lin'               'log'
+        'min'      (Min value in data) int;          1 <= x <= 'max'
+        'max'      (Max value in data) int;      'min' <= x         
+        'min_size'   1                 int;          1 <= x <= 'max_size'
+        'max_size'   6                 int; 'min_size' <= x         
+    Again, keys that are omitted are filled with default values.
+
+    Edge width
+    ----------
+
+    Edge width is defined by dictionary `edgeWidths`, and if an edge
+    is not in it, the default value given by `defaultEdgeWidth` is
+    used.
+
+    The value can be a single integer, which gives the edge width in
+    pixels. Alternatively the edge width can be controlled by edge
+    weight:
+    
+    edge_width_scheme = {'by':'weight', 'scale':'log', 'min':1, 'max':5}
+
+    The possible keys and their default values are
+    
+        KEY         DEFAULT VALUE       OTHER POSSIBLE VALUES
+        'by'        'weight'          
+        'scale'     'lin'               'log'
+        'min'       (Min value in data) int;   1 <= x <= 'max'
+        'max'       (Max value in data) int;   'min' <= x         
+        'min_size'    0.2               float; 1 <= x <= 'max_width'
+        'max_size'    2.0               float; 'min_width' <= x         
+
+    Note that the 'by'-key can always be omitted since it has only one
+    possible value.
+
+    Node labels
+    -----------
+
+    Node labels can be given in `nodeLabels` dictionary, where the key
+    is node index and the value is the corresponding labels. If
+    `labelAllNodes` is True, also the nodes not in `nodeLabels` will
+    receive a label. In this case the label is the node index.
+
+    The values in `nodeLabels` are converted to string with str().
+
+    Return
+    ------
+    fig : pylab.Figure (None if `axes` is given.)
+        Figure object with one axes containing the the plotted network
+        figure.
+
+    Examples
+    --------
+    >>> # Construct an example network.
+    >>> from netpython import pynet, visuals
+    >>> net = pynet.SymmNet()
+    >>> net[0][1] = 1.0
+    >>> net[1][2] = 3.5
+    >>> net[0][2] = 5.0
+
+    >>> # Simplest case: get coordinates from Himmeli, plot into a
+    >>> # new figure and save it to disk
+    >>> fig = visuals.drawNet(net)
+    >>> fig.savefig('myNet.eps')
+
+    >>> # Draw the figure in the upper left subfigure, with predefined
+    >>> # coordinates. Note that drawNet does not return anything.
+    >>> import pylab
+    >>> coords = {0:(0,0), 1:(4,0), 2:(2,3)}
+    >>> fig = pylab.figure()
+    >>> ax = fig.add_subplot(2,2,1)
+    >>> visuals.drawNet(net, coords=coords, axes=ax)
+    """
+
+    #
+    # DEFAULT VALUES. These will be used whenever the user has not
+    # defined a given value for defaultNodeColor etc.
+    # 
+    internal_defaultNodeColor = {'by':'strength', 'scale':'lin', 'cmap':'jet'}
+    internal_defaultEdgeColor = {'by':'weight', 'scale':'lin', 'cmap':'jet'}
+
+    internal_defaultNodeSize = {'by':'strength', 'scale':'lin',
+                                'min_size':2, 'max_size':6}
+    internal_defaultEdgeWidth = {'by':'weight', 'scale':'lin',
+                                 'min_size':0.2, 'max_size':2.0}
+
+    node_label_font_color = 'k'
+    node_label_font_size = 8
+
+    edge_margin = 0.05 # The space left on each side of the graph.
+    
+    #
+    # PROCESS INPUT PARAMETERS
+    #
+    
+    if coords is None:
+        coords = Himmeli(net).getCoordinates()
+
+    fig = None
+    if axes is None:
+        fig = figure()
+        axes = fig.add_subplot(111)
+
+    nodeColors = (nodeColors or {})
+    defaultNodeColor = (defaultNodeColor or {})
+    if isinstance(defaultNodeColor, dict):
+        for k,v in internal_defaultNodeColor.iteritems():
+            if k not in defaultNodeColor:
+                defaultNodeColor[k] = v
+
+    nodeEdgeColors = (nodeEdgeColors or {})
+                
+    edgeColors = (edgeColors or {})
+    defaultEdgeColor = (defaultEdgeColor or {})
+    if isinstance(defaultEdgeColor, dict):
+        for k,v in internal_defaultEdgeColor.iteritems():
+            if k not in defaultEdgeColor:
+                defaultEdgeColor[k] = v
+    
+    nodeSizes = (nodeSizes or {})
+    if defaultNodeSize is None:
+        defaultNodeSize = {}
+    if isinstance(defaultNodeSize, dict):
+        for k,v in internal_defaultNodeSize.iteritems():
+            if k not in defaultNodeSize:
+                defaultNodeSize[k] = v
+
+    edgeWidths = (edgeWidths or {})
+    if defaultEdgeWidth is None:
+        defaultEdgeWidth = {}
+    if isinstance(defaultEdgeWidth, dict):
+        for k,v in internal_defaultEdgeWidth.iteritems():
+            if k not in defaultEdgeWidth:
+                defaultEdgeWidth[k] = v
+
+    nodeEdgeWidths = (nodeEdgeWidths or {})
+
+    nodeLabels = (nodeLabels or {})
+
+    nodePlotOrders = (nodePlotOrders or {})
+    edgePlotOrders = (edgePlotOrders or {})
+
+    #
+    # AUXILIARY FUNCTIONS
+    #
+
+    def scaled(scaling_type, value, value_limits, final_limits):
+
+        def lin_scaling(value, value_limits, final_limits):
+            value_span = value_limits[1] - value_limits[0]
+            final_span = final_limits[1] - final_limits[0]
+            if final_span == 0:
+                return final_limits[0]
+            if value_span == 0:
+                p = 0.5
+            else:
+                p = float(value - value_limits[0])/value_span
+            return final_limits[0]+p*final_span
+
+        if value <= value_limits[0]:
+            return final_limits[0]
+        if value >= value_limits[1]:
+            return final_limits[1]
+
+        if scaling_type == 'log' or scaling_type == 'logarithmic':
+            return lin_scaling(np.log(value),
+                               np.log(value_limits),
+                               final_limits)
+        else:
+            return lin_scaling( value, value_limits, final_limits)
+
+    def determine_size(scheme, i, net, values, limits, defaults):
+        if not isinstance(scheme, dict):
+            return scheme
+        else:
+            # Determine what defines the size. Calculate the limits
+            # for this property if not yet done.
+            size_by = scheme.get('by', defaults['by'])
+            if size_by not in limits:
+                property_name = "".join(size_by.split(':')[1:])
+                np = sorted(net.nodeProperty[property_name].values())
+                limits[size_by] = (np[0], np[-1])
+            if size_by not in values:
+                property_name = "".join(size_by.split(':')[1:])
+                values[size_by] = net.nodeProperty[property_name][i]
+                
+            scale = scheme.get('scale', defaults['scale'])
+            val_min = scheme.get('min', limits[size_by][0])
+            val_max = scheme.get('max', limits[size_by][1])
+            size_min = scheme.get('min_size', defaults['min_size'])
+            size_max = scheme.get('max_size', defaults['max_size'])
+
+            #print size_by, scale, val_min, val_max, size_min, size_max
+            return scaled(scale, values[size_by], [val_min, val_max],
+                          [size_min, size_max])
+                    
+    def determine_color(scheme, i, net, values, limits, defaults):
+        if not isinstance(scheme, dict):
+            return scheme
+        else:
+            color_by = scheme.get('by', defaults['by'])
+            if color_by not in limits:
+                property_name = "".join(color_by.split(':')[1:])
+                np = sorted(net.nodeProperty[property_name].values())
+                limits[color_by] = (np[0], np[-1])
+            if color_by not in values:
+                property_name = "".join(color_by.split(':')[1:])
+                values[color_by] = net.nodeProperty[property_name][i]
+                
+            scale = scheme.get('scale', defaults['scale'])
+            cmap = scheme.get('cmap', defaults['cmap'])
+            val_min = scheme.get('min', limits[color_by][0])
+            val_max = scheme.get('max', limits[color_by][1])
+
+            cval = scaled(scale, values[color_by],
+                          [val_min, val_max], [0.0,1.0])
+            cm = setColorMap(cmap)
+            return cm(float(cval))
+
+    def draw_edge(axes, xcoords, ycoords, width, color, zorder):
+        axes.plot(xcoords, ycoords, '-', lw=width,
+                  color=color, zorder=zorder)
+
+    def draw_node(axes, x, y, color, size, edgecolor, edgewidth, zorder):
+        axes.plot([x], [y], 'o',
+                  markerfacecolor=color,
+                  markeredgecolor=edgecolor,
+                  markeredgewidth=edgewidth,
+                  markersize=size,
+                  zorder=zorder)
+    #
+    # DRAW EDGES
+    #
+
+    edges = list(net.edges)
+    if edges:
+        # Sort by edge weight.
+        edges.sort(key=operator.itemgetter(2))
+        limits = {'weight': (edges[0][2], edges[-1][2])}
+        
+        for i,j,w in edges:
+            values = {'weight': w}
+            
+            # Determine edge width.
+            if (i,j) in edgeWidths:
+                width = determine_size(edgeWidths[(i,j)], (i,j), net,
+                                       values, limits, defaultEdgeWidth)
+            elif (j,i) in edgeWidths:
+                width = determine_size(edgeWidths[(j,i)], (j,i), net,
+                                       values, limits, defaultEdgeWidth)
+            else:
+                width = determine_size(defaultEdgeWidth, (i,j), net,
+                                       values, limits, defaultEdgeWidth)
+                
+            # Determine edge color.
+            if (i,j) in edgeColors:
+                color = determine_color(edgeColors[(i,j)], (i,j), net,
+                                       values, limits, defaultEdgeColor)
+            elif (j,i) in edgeColors:
+                color = determine_color(edgeColors[(j,i)], (j,i), net,
+                                       values, limits, defaultEdgeColor)
+            else:
+                color = determine_color(defaultEdgeColor, (j,i), net,
+                                       values, limits, defaultEdgeColor)
+
+            if (i,j) in edgePlotOrders:
+                zorder = edgePlotOrders[(i,j)]
+            elif (j,i) in edgePlotOrders:
+                zorder = edgePlotOrders[(j,i)]
+            else:
+                zorder = defaultEdgePlotOrder
+                
+            draw_edge(axes, [coords[i][0], coords[j][0]],
+                      [coords[i][1], coords[j][1]], width, color, zorder)
+
+
+    #
+    # DRAW NODES
+    #
+
+    # Find out the minimum and maximum value for strength and degree.
+    strengths = netext.strengths(net)
+    smin, smax = min(strengths.values()), max(strengths.values())
+    degrees = netext.deg(net)
+    dmin, dmax = min(degrees.values()), max(degrees.values())
+
+    limits = {"strength":(smin, smax), "degree":(dmin,dmax)}
+    
+    for nodeIndex in net:
+        values = {"strength": strengths[nodeIndex],
+                  "degree": degrees[nodeIndex]}
+
+        # Determine node size.
+        size = determine_size(nodeSizes.get(nodeIndex, defaultNodeSize),
+                              nodeIndex, net, values, limits,
+                              defaultNodeSize)
+
+        # Determine node edge width.
+        edgewidth = determine_size(nodeEdgeWidths.get(nodeIndex, defaultNodeEdgeWidth),
+                                   nodeIndex, net, values, limits,
+                                   defaultNodeEdgeWidth)
+        
+
+        # Determine node color
+        color = determine_color(nodeColors.get(nodeIndex, defaultNodeColor),
+                                nodeIndex, net, values, limits,
+                                defaultNodeColor)
+
+        # Determine node edge color
+        edgecolor = determine_color(nodeEdgeColors.get(nodeIndex, defaultNodeEdgeColor),
+                                nodeIndex, net, values, limits,
+                                defaultNodeEdgeColor)
+
+        # Determine z-order.
+        zorder = nodePlotOrders.get(nodeIndex, defaultNodePlotOrder)
+
+        draw_node(axes, coords[nodeIndex][0], coords[nodeIndex][1],
+                  color, size, edgecolor, edgewidth, zorder)
+
+        # Add node labels.
+        if nodeIndex in nodeLabels or labelAllNodes:
+            if nodeIndex in nodeLabels:
+                label = str(nodeLabels[nodeIndex])
+            else:
+                label = str(nodeIndex)
+
+            nodeLabel_offset = int(np.ceil(float(size)/2))+1
+            axes.annotate(label,
+                          (coords[nodeIndex][0],coords[nodeIndex][1]),
+                          textcoords='offset points',
+                          xytext=(nodeLabel_offset, nodeLabel_offset),
+                          color=node_label_font_color,
+                          size=node_label_font_size)
+
+    # Set axis limits. Without this part the nodes on the edges would
+    # be clipped.
+    x_coords = sorted(map(operator.itemgetter(0), coords.values()))
+    axes.set_xlim(xmin=x_coords[0]-edge_margin*(x_coords[-1]-x_coords[0]),
+                  xmax=x_coords[-1]+edge_margin*(x_coords[-1]-x_coords[0]))
+    y_coords = sorted(map(operator.itemgetter(1), coords.values()))
+    axes.set_ylim(ymin=y_coords[0]-edge_margin*(y_coords[-1]-y_coords[0]),
+                  ymax=y_coords[-1]+edge_margin*(y_coords[-1]-y_coords[0]))
+
+    # Remove frame.
+    if not frame:
+        axes.set_axis_off()
+
+    # Return figure. Note that if `axes` was given as an input
+    # argument, the returned value is None.
+    return fig
+    
 
 def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
-        equalshape=True, labels=None, fontsize=7, showAllNodes=True,
-        nodeColor=None, nodeShape='o', nodeEdgeColor='k', nodeSize=1.0,
-        minnode=2.0, maxnode=6.0, nodeColors=None, nodeSizes=None,
-        nodeShapes=None, bgcolor='white', maxwidth=2.0, minwidth=0.2,
-        uselabels='none', edgeColorMap='winter', weightLimits=None,
-        setNodeColorsByProperty=None, nodeColorMap='winter',
-        nodePropertyLimits=None, nodeLabel_xOffset=None, coloredvertices=None,
-        vcolor=None, vsize=None, frame=False, showTicks=False, axisLimits=None,
-        baseFig=None): 
+                 equalshape=True, labels=None, fontsize=7, showAllNodes=True,
+                 nodeColor=None, nodeShape='o', nodeEdgeColor='k', nodeSize=1.0,
+                 minnode=2.0, maxnode=6.0, nodeColors=None, nodeSizes=None,
+                 nodeShapes=None, bgcolor='white', maxwidth=2.0, minwidth=0.2,
+                 uselabels='none', edgeColorMap='winter', weightLimits=None,
+                 setNodeColorsByProperty=None, nodeColorMap='winter',
+                 nodePropertyLimits=None, nodeLabel_xOffset=None, coloredvertices=None,
+                 vcolor=None, vsize=None, frame=False, showTicks=False, 
+                 axisLimits=None, baseFig=None): 
     """Visualizes a network.
 
     The coloring of the nodes is decided as follows:
@@ -587,7 +1022,12 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     baseFig : FigureCanvasBase
         If None, the network is drawn on an empty figure, otherwise
         baseFig is used as a starting point.
-
+    axes : matplotlib.axes object (default: None)
+        If given, the network will be drawn in this axis. Otherwise a
+        separate figure is created (which you then have to give as an
+        argument to the pylab.FigureCanvasBase method be able to plot
+        it.) Note that if `baseFig` is also give this parameter has no
+        effect.
 
     Return
     ------
@@ -655,8 +1095,9 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
             net=transforms.dist_to_weights(net)
 
     if baseFig==None:
-        thisfigure=Figure(figsize=figsize,dpi=100,facecolor=bgcolor)
-        axes=thisfigure.add_subplot(111)
+        thisfigure = Figure(figsize=figsize,dpi=100,facecolor=bgcolor)
+        if axes is None:
+            axes = thisfigure.add_subplot(111)
     else:
         thisfigure=baseFig.figure
         thisfigure.set_facecolor(bgcolor)
@@ -664,7 +1105,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
 
     axes.set_axis_bgcolor(bgcolor)
     
-    if frame == False and showTicks == False: 
+    if frame == False and showTicks == False:
         axes.set_axis_off()
 
     # Set the color for node labels
