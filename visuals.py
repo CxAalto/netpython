@@ -822,6 +822,9 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
                 zorder = edgePlotOrders[(j,i)]
             else:
                 zorder = defaultEdgePlotOrder
+
+            # FOR DEBUGGING:
+            #print "Edge (%d,%d) : %.1f %s %f" % (i,j,width,str(color),zorder)
                 
             draw_edge(axes, [coords[i][0], coords[j][0]],
                       [coords[i][1], coords[j][1]], width, color, zorder)
@@ -838,7 +841,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     dmin, dmax = min(degrees.values()), max(degrees.values())
 
     limits = {"strength":(smin, smax), "degree":(dmin,dmax)}
-    
+
     for nodeIndex in net:
         values = {"strength": strengths[nodeIndex],
                   "degree": degrees[nodeIndex]}
@@ -864,11 +867,14 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
 
         # Determine node edge color
         edgecolor = determine_color(nodeEdgeColors.get(nodeIndex, defaultNodeEdgeColor),
-                                nodeIndex, net, values, limits,
-                                defaultNodeEdgeColor)
+                                    nodeIndex, net, values, limits,
+                                    defaultNodeEdgeColor)
 
         # Determine z-order.
         zorder = nodePlotOrders.get(nodeIndex, defaultNodePlotOrder)
+    
+        # FOR DEBUGGING:
+        #print "Node %d : %f %s %f %s" % (nodeIndex, size, str(color), edgewidth, str(edgecolor))
 
         draw_node(axes, coords[nodeIndex][0], coords[nodeIndex][1],
                   shape, color, size, edgecolor, edgewidth, zorder)
@@ -1305,7 +1311,11 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
             else:
                 showthislabel = str(node)
 
-            axes.annotate(showthislabel,(xy[node][0]+nodeLabel_xOffset,xy[node][1]),
+            #axes.annotate(showthislabel,(xy[node][0]+nodeLabel_xOffset,xy[node][1]),
+            #              color=fontcolor,size=fontsize)
+            axes.annotate(showthislabel,(xy[node][0],xy[node][1]),
+                          textcoords='offset points',
+                          xytext=(nodeLabel_xOffset, 0),
                           color=fontcolor,size=fontsize)
 
     xylist = xy.values()
