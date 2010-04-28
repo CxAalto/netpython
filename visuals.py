@@ -424,10 +424,8 @@ def setColor(value,valueLimits,colorMap):
     colormap should take in values in the range (0...1) and produce a
     three-tuple containing an RGB color, as in (r,g,b).
     """
-    print value, valueLimits, colorMap
     if valueLimits[0] < valueLimits[1]: 
         normalizedValue = normalizeValue(value,valueLimits)
-        print "   ",normalizedValue
         color = colorMap(normalizedValue)
     else:
         color=(0.5,0.5,0.5)  # gray if all values are equal
@@ -733,8 +731,8 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
             size_by = scheme.get('by', defaults['by'])
             if size_by not in limits:
                 property_name = "".join(size_by.split(':')[1:])
-                np = sorted(net.nodeProperty[property_name].values())
-                limits[size_by] = (np[0], np[-1])
+                np_ = sorted(net.nodeProperty[property_name].values())
+                limits[size_by] = (np_[0], np_[-1])
             if size_by not in values:
                 property_name = "".join(size_by.split(':')[1:])
                 values[size_by] = net.nodeProperty[property_name][i]
@@ -756,8 +754,8 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
             color_by = scheme.get('by', defaults['by'])
             if color_by not in limits:
                 property_name = "".join(color_by.split(':')[1:])
-                np = sorted(net.nodeProperty[property_name].values())
-                limits[color_by] = (np[0], np[-1])
+                np_ = sorted(net.nodeProperty[property_name].values())
+                limits[color_by] = (np_[0], np_[-1])
             if color_by not in values:
                 property_name = "".join(color_by.split(':')[1:])
                 values[color_by] = net.nodeProperty[property_name][i]
@@ -1183,8 +1181,8 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     # property values in the network.
     if setNodeColorsByProperty != None:
         if nodePropertyLimits == None:
-            np=[net.nodeProperty[setNodeColorsByProperty][node] for node in net]
-            nodePropertyLimits=(min(np),max(np))
+            np_=[net.nodeProperty[setNodeColorsByProperty][node] for node in net]
+            nodePropertyLimits=(min(np_),max(np_))
 
     for node in nodelist:
 
@@ -1308,9 +1306,11 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
 
             #axes.annotate(showthislabel,(xy[node][0]+nodeLabel_xOffset,xy[node][1]),
             #              color=fontcolor,size=fontsize)
+
+            nodeLabel_offset = int(np.ceil(float(nodesize)/2))+1
             axes.annotate(showthislabel,(xy[node][0],xy[node][1]),
                           textcoords='offset points',
-                          xytext=(nodeLabel_xOffset, 0),
+                          xytext=(nodeLabel_offset, nodeLabel_offset),
                           color=fontcolor,size=fontsize)
 
     xylist = xy.values()
