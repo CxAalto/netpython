@@ -424,9 +424,11 @@ def setColor(value,valueLimits,colorMap):
     colormap should take in values in the range (0...1) and produce a
     three-tuple containing an RGB color, as in (r,g,b).
     """
+    print value, valueLimits, colorMap
     if valueLimits[0] < valueLimits[1]: 
-        normalizedValue = normalizeValue(value,valueLimits) 
-        color = colorMap(normalizedValue) 
+        normalizedValue = normalizeValue(value,valueLimits)
+        print "   ",normalizedValue
+        color = colorMap(normalizedValue)
     else:
         color=(0.5,0.5,0.5)  # gray if all values are equal
     return color
@@ -1034,12 +1036,6 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     baseFig : FigureCanvasBase
         If None, the network is drawn on an empty figure, otherwise
         baseFig is used as a starting point.
-    axes : matplotlib.axes object (default: None)
-        If given, the network will be drawn in this axis. Otherwise a
-        separate figure is created (which you then have to give as an
-        argument to the pylab.FigureCanvasBase method be able to plot
-        it.) Note that if `baseFig` is also give this parameter has no
-        effect.
 
     Return
     ------
@@ -1108,8 +1104,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
 
     if baseFig==None:
         thisfigure = Figure(figsize=figsize,dpi=100,facecolor=bgcolor)
-        if axes is None:
-            axes = thisfigure.add_subplot(111)
+        axes = thisfigure.add_subplot(111)
     else:
         thisfigure=baseFig.figure
         thisfigure.set_facecolor(bgcolor)
