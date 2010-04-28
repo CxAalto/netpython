@@ -465,6 +465,7 @@ def plot_node(plotobject,x,y,shape='o',color='w',size=8.0,edgecolor='w'):
                     markeredgecolor=edgecolor,markersize=size)
 
 def visualizeNet(net, coords=None, axes=None, frame=False,
+                 nodeShapes=None, defaultNodeShape='o',
                  nodeColors=None, defaultNodeColor=None,
                  nodeEdgeColors=None, defaultNodeEdgeColor='black',
                  edgeColors=None, defaultEdgeColor=None,
@@ -651,6 +652,8 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
         fig = figure()
         axes = fig.add_subplot(111)
 
+    nodeShapes = (nodeShapes or {})
+
     nodeColors = (nodeColors or {})
     defaultNodeColor = (defaultNodeColor or {})
     if isinstance(defaultNodeColor, dict):
@@ -771,8 +774,8 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
         axes.plot(xcoords, ycoords, '-', lw=width,
                   color=color, zorder=zorder)
 
-    def draw_node(axes, x, y, color, size, edgecolor, edgewidth, zorder):
-        axes.plot([x], [y], 'o',
+    def draw_node(axes, x, y, shape, color, size, edgecolor, edgewidth, zorder):
+        axes.plot([x], [y], shape,
                   markerfacecolor=color,
                   markeredgecolor=edgecolor,
                   markeredgewidth=edgewidth,
@@ -840,6 +843,9 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
         values = {"strength": strengths[nodeIndex],
                   "degree": degrees[nodeIndex]}
 
+        # Determine node shape.
+        shape = nodeShapes.get(nodeIndex, defaultNodeShape)
+
         # Determine node size.
         size = determine_size(nodeSizes.get(nodeIndex, defaultNodeSize),
                               nodeIndex, net, values, limits,
@@ -865,7 +871,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
         zorder = nodePlotOrders.get(nodeIndex, defaultNodePlotOrder)
 
         draw_node(axes, coords[nodeIndex][0], coords[nodeIndex][1],
-                  color, size, edgecolor, edgewidth, zorder)
+                  shape, color, size, edgecolor, edgewidth, zorder)
 
         # Add node labels.
         if nodeIndex in nodeLabels or labelAllNodes:
