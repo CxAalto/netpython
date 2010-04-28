@@ -54,7 +54,7 @@ class TestVisuals(unittest.TestCase):
     def test_unacceptable_input(self):
         # if input in wrong order: 
         # self.assertRaises(AttributeError, visuals.VisualizeNet, self.xy, self.m)
-        self.assertRaises(AssertionError, visuals.VisualizeNet, self.m, self.xy, edgeColorMap=self.wrongEdgeColorMapName) 
+        self.assertRaises(TypeError, visuals.VisualizeNet, self.m, self.xy, edgeColorMap=self.wrongEdgeColorMapName) 
                
     def test_simplePlot1(self):
         """ Test that a very simple plot without any parameters can be created """
