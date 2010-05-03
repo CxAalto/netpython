@@ -51,26 +51,50 @@ class MicrosatelliteData:
         Input variable should contain iterable object that outputs the row as a string
         at each iteration step: for example open('msfile.txt').
         """
+        self.diploid=True
 	lastNumberOfFields=None
-        self.alleles=[]
+
+        self._alleles=[] #The list of locus lists. Each locus list contains alleles as tuples.
+
         for lineNumber,line in enumerate(input):
             fields=line.split()
+
+            #At the first line, test if data is numerical
+            if lineNumber==0:
+                try:
+                    fields=map(int,fields)
+                    self.numeric=True
+                    missingValue=int(missingValue)
+                except ValueError:
+                    self.numeric=False
+
             if len(fields)%2!=0:
                 raise SyntaxError("Input should have even number of columns");
 	    elif lastNumberOfFields!=None and lastNumberOfFields!=len(fields):
 		raise SyntaxError("The input has inconsistent number of columns")
             else:
-                fields=map(int,fields)
-                if len(self.alleles)==0: #first time here                    
+                lastNumberOfFields=len(fields)
+                if self.numeric:
+                    try:
+                        fields=map(int,fields)
+                    except ValueError:
+                        raise SyntaxError("Input contains mixed numeric and not numeric alleles.")
+
+                #At the first line, add lists for loci
+                if len(self._alleles)==0:                    
                     for dummy in range(0,len(fields)/2):
-                        self.alleles.append([])
+                        self._alleles.append([])
+
                 for i in range(0,len(fields),2):                    
-                    #you could also sort the alleles here:
-                    if fields[i]>fields[i+1]:
-                        #print lineNumber #for debug
-                        #print line
-                        fields[i],fields[i+1]=fields[i+1],fields[i]
-                    self.alleles[i/2].append((fields[i],fields[i+1]))
+                    if fields[i]!=missingValue and fields[i+1]!=missingValue:
+                        if fields[i]>fields[i+1]:
+                            fields[i],fields[i+1]=fields[i+1],fields[i]
+                        self._alleles[i/2].append((fields[i],fields[i+1]))
+                    else:
+                        self._alleles[i/2].append(None)
+
+        if lastNumberOfFields!=None:
+            self.nLoci=lastNumberOfFields/2
 
     def copy(self):
         return self.getSubset(range(self.getNumberOfNodes()))
@@ -79,14 +103,14 @@ class MicrosatelliteData:
         """
         Shuffles the order of nodes
         """
-        nNodes=len(self.alleles[0])
+        nNodes=len(self._alleles[0])
         nLoci=self.getNumberofLoci()
         for i in range(nNodes):
             r=random.randint(i,nNodes-1)
             for li in range(nLoci):
-                tempA=self.alleles[li][i]
-                self.alleles[li][i]=self.alleles[li][r]
-                self.alleles[li][r]=tempA
+                tempA=self._alleles[li][i]
+                self._alleles[li][i]=self._alleles[li][r]
+                self._alleles[li][r]=tempA
 
 
     def getNode(self,index):
@@ -95,15 +119,15 @@ class MicrosatelliteData:
         are coupled together with a tuple object.
         """
         node=[]
-        for allele in self.alleles:
+        for allele in self._alleles:
             node.append(allele[index])
         return tuple(node)
 
     def getLocusforNodeIndex(self, locus, node):
-        return self.alleles[locus][node]
+        return self._alleles[locus][node]
 
     def getNumberofLoci(self):
-        return len(self.alleles)
+        return len(self._alleles)
 
     def getMSDistance_hybrid(self,x,y,lm_w=None,nsa_w=None):
         if lm_w==None:
@@ -119,9 +143,6 @@ class MicrosatelliteData:
             nsa_w=self.nsa_w
             distance=numpy.zeros(len(x))
         return nsa_w*self.getMSDistance_vectorNonsharedAlleles(x,y)+lm_w*self.getMSDistance_vectorLinearManhattan(x,y)
-
-    def getMSDistance_nonsharedAlleles(self,x,y):
-        return float(sum(self.getMSDistance_vectorNonsharedAlleles(x,y)))/float(len(x))
 
     def getGroupwiseDistance_DyerNason(self,x,y):
         """
@@ -214,22 +235,41 @@ class MicrosatelliteData:
                 matrix[groupNames[i],groupNames[j]]=getGroupwiseDistance(grouplist[i],grouplist[j])
         return matrix   
 
+    #--- Distances between individuals
+
     def getMSDistance_linearManhattan(self,x,y):
         """
         Returns the distance between two nodes/specimen
         """
-        return float(sum(self.getMSDistance_vectorLinearManhattan(x,y)))/float(len(x))
+        return self.getMSDistanceByVector(self.getMSDistance_vectorLinearManhattan(x,y))
 
+    def getMSDistance_nonsharedAlleles(self,x,y):
+        return self.getMSDistanceByVector(self.getMSDistance_vectorNonsharedAlleles(x,y))
+
+    def getMSDistance_alleleParsimony(self,x,y):
+        return self.getMSDistanceByVector(self.getMSDistance_vectorAlleleParsimony(x,y))
+
+
+    #-> Distance specific distance vectors
+    """
     def getMSDistance_vectorLinearManhattan(self,x,y):
         distance=numpy.zeros(len(x))
         for locus in range(0,len(x)):
-            distance[locus]=abs(x[locus][0]-y[locus][0])+abs(x[locus][1]-y[locus][1])
+            if x[locus]!=None and y[locus]!=None:
+                distance[locus]=abs(x[locus][0]-y[locus][0])+abs(x[locus][1]-y[locus][1])
+            else:
+                distance[locus]=numpy.nan
         return distance
-
+    """
+    def getMSDistance_vectorLinearManhattan(self,x,y):
+        return self.getMSDistanceVectorByAlleles(x,y,self.getMSDistance_singleLocus_LinearManhattan)
     def getMSDistance_vectorNonsharedAlleles(self,x,y):
-        return self.getMSDistance_vector(x,y,self.getMSDistance_singleLocus_NonsharedAlleles)
-       
+        return self.getMSDistanceVectorByAlleles(x,y,self.getMSDistance_singleLocus_NonsharedAlleles)
+    def getMSDistance_vectorAlleleParsimony(self,x,y):
+        return self.getMSDistanceVectorByAlleles(x,y,self.getMSDistance_singleLocus_AlleleParsimony)
+    #<-
 
+    #-> Distance specific single locus distances
     def getMSDistance_singleLocus_NonsharedAlleles(self,x,y):
         alleles=x+y
         distance=0
@@ -238,23 +278,40 @@ class MicrosatelliteData:
                 distance+=1
         return distance
             
-    def getMSDistance_vector(self,x,y,distance_singleLocus):
-        distance=numpy.zeros(len(x))
-        for locus in range(0,len(x)):
-            distance[locus]=distance_singleLocus(x[locus],y[locus])
-        return distance
-
     def getMSDistance_singleLocus_AlleleParsimony(self,x,y):
         first=len(set([x[0],y[0]]))+len(set([x[1],y[1]]))
         second=len(set([x[0],y[1]]))+len(set([x[1],y[0]]))
         return float(min([first,second]))-2.0
 
-    def getMSDistance_vectorAlleleParsimony(self,x,y):
-        return self.getMSDistance_vector(x,y,self.getMSDistance_singleLocus_AlleleParsimony)
+    def getMSDistance_singleLocus_LinearManhattan(self,x,y):
+        return abs(x[0]-y[0])+abs(x[1]-y[1])
+    #<-
 
-    def getMSDistance_alleleParsimony(self,x,y):
-        return float(sum(self.getMSDistance_vectorAlleleParsimony(x,y)))/float(len(x))
+    #->General functions for distance calculations
+    def getMSDistanceVectorByAlleles(self,x,y,distance_singleLocus):
+        distance=numpy.zeros(len(x))
+        for locus in range(0,len(x)):
+            if x[locus]!=None and y[locus]!=None:
+                distance[locus]=distance_singleLocus(x[locus],y[locus])
+            else:
+                distance[locus]=numpy.nan
+        return distance
 
+    def getMSDistanceByVector(self,distanceVector):
+        size=0
+        sum=0
+        for i in xrange(len(distanceVector)):
+            if distanceVector[i]>=-1: #distanceVector[i]!=numpy.nan
+                sum+=distanceVector[i]
+                size+=1
+        if size!=0:
+            return sum/float(size)
+        else:
+            return numpy.nan
+
+    def getMSDistanceByAlleles(self,x,y,distance_singleLocus):
+        return self.getMSDistanceByVector(self.getMSDistanceVectorByAlleles(x,y,distance_singleLocus))
+    #<-
     
     def getDistanceMatrix(self,distance="lm",nodeNames=None,progressUpdater=None):
         """
@@ -272,7 +329,7 @@ class MicrosatelliteData:
         else: #default
             getMSDistance=self.getMSDistance_linearManhattan
             
-        numberOfSpecimens=len(self.alleles[0])
+        numberOfSpecimens=len(self._alleles[0])
 
         j=0
         updateInterval=1000
@@ -298,12 +355,13 @@ class MicrosatelliteData:
         Returns a new MicrosatelliteData object containing only nodes given
         as a input. The input is a list of indices of the nodes.
         """
-        newData=MicrosatelliteData([])
-        for allele in self.alleles:
+        newData=self.__class__([])
+        for allele in self._alleles:
             newAllele=[]
             for node in nodes:
                 newAllele.append(allele[node])
-            newData.alleles.append(newAllele)
+            newData._alleles.append(newAllele)
+        newData.nLoci=self.nLoci
         return newData
 
     def randomize(self,full=False):
@@ -311,7 +369,7 @@ class MicrosatelliteData:
         Shuffles the homologous alleles in the whole dataset
         """
         if full:
-            for j,allele in enumerate(self.alleles):
+            for j,allele in enumerate(self._alleles):
                 newAlleles=[]
                 alleleList=[]
                 for apair in allele:
@@ -320,16 +378,16 @@ class MicrosatelliteData:
                 random.shuffle(alleleList)
                 for i in range(0,len(alleleList),2):
                     newAlleles.append((alleleList[i],alleleList[i+1]))
-                self.alleles[j]=newAlleles
+                self._alleles[j]=newAlleles
 
         #this really should shuffle all the homologous alleles
         #and not small and large alleles separately
         else:
-            for allele in self.alleles:
+            for allele in self._alleles:
                 random.shuffle(allele)
 
     def getNumberOfNodes(self):
-        return len(self.alleles[0])
+        return len(self._alleles[0])
     
     def getUniqueSubset(self,returnOldIndices=False):
         """
@@ -358,6 +416,115 @@ class MicrosatelliteData:
             alleleStr=reduce(lambda x,y:str(x)+" "+str(y),alleleList)
             theStr+=alleleStr+"\n"
         return theStr
+
+class MicrosatelliteDataHaploid(MicrosatelliteData):
+    def __init__(self,input,missingValue="999999"):
+        """
+        The microsatellite data must be given as a input where each row
+        has microsatellites for one node/specimen. Alleles should be given as
+        integer numbers representing the number of repetitions. The data should have
+        even number of columns where each pair represents two homologous alleles.
+        Input variable should contain iterable object that outputs the row as a string
+        at each iteration step: for example open('msfile.txt').
+        """
+        self.diploid=False
+	lastNumberOfFields=None
+
+        self._alleles=[] #The list of locus lists. Each locus list contains alleles as tuples.
+
+        for lineNumber,line in enumerate(input):
+            fields=line.split()
+
+            #At the first line, test if data is numerical
+            if lineNumber==0:
+                try:
+                    fields=map(int,fields)
+                    self.numeric=True
+                    missingValue=int(missingValue)
+                except ValueError:
+                    self.numeric=False
+
+	    if lastNumberOfFields!=None and lastNumberOfFields!=len(fields):
+		raise SyntaxError("The input has inconsistent number of columns")
+            else:
+                lastNumberOfFields=len(fields)
+                if self.numeric:
+                    try:
+                        fields=map(int,fields)
+                    except ValueError:
+                        raise SyntaxError("Input contains mixed numeric and not numeric alleles.")
+
+                #At the first line, add lists for loci
+                if len(self._alleles)==0:                    
+                    for dummy in range(0,len(fields)):
+                        self._alleles.append([])
+
+                for i in range(0,len(fields)):                    
+                    if fields[i]!=missingValue:
+                        self._alleles[i].append(fields[i])
+                    else:
+                        self._alleles[i].append(None)
+
+        if lastNumberOfFields!=None:
+            self.nLoci=lastNumberOfFields
+
+    def getMSDistance_singleLocus_NonsharedAlleles(self,x,y):
+        if x==y:
+            return 0.0
+        else:
+            return 1.0
+            
+    def getMSDistance_singleLocus_AlleleParsimony(self,x,y):
+        if x==y:
+            return 0.0
+        else:
+            return 1.0
+
+    def getMSDistance_singleLocus_LinearManhattan(self,x,y):
+        return abs(x-y)
+
+    def getGroupwiseDistance_Goldstein(self,x,y):
+        """
+        Returns the goldstein distance between two populations
+
+        Parameters
+        ----------
+        x and y are lists of sample indices correspoding to samples of two populations.
+        The distance between these populations is calculated.
+
+        Example
+        -------
+        >>> ms=eden.MicrosatelliteData(open("../data/microsatellites/microsatellites.txt",'r'))
+        >>> ms_u = ms.getUniqueSubset()
+        >>> ms_u.getGroupwiseDistance_Goldstein([1,2,3,4],[1,2,3,4]) == 1330.5
+        True
+        """
+        
+        distList = []
+        for locus in range(self.getNumberofLoci()):
+            
+            # calculates allele frequences
+            xdict = {}
+            for nodeIndex in x:
+                xlocus = self.getLocusforNodeIndex(locus,nodeIndex)
+                xdict[xlocus] = xdict.get(xlocus,0) + 1
+                    
+            ydict = {}
+            for nodeIndex in y:
+                ylocus = self.getLocusforNodeIndex(locus,nodeIndex)
+                ydict[ylocus] = ydict.get(ylocus,0) + 1 
+
+            # calculates goldstain distance
+            dist = 0
+            for i in xdict:
+                for j in ydict:
+                    dist += 1.0*(i-j)**2*xdict[i]/(len(x))*ydict[j]/(len(y))/self.getNumberofLoci()
+
+            distList.append(dist)
+
+        return sum(distList)
+
+
 
 class LocationData:
     def __init__(self,dir="../data/distancematrix_and_locations/"):
