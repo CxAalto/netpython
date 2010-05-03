@@ -383,18 +383,22 @@ class ProjectLaunchDialog(MySimpleDialog):
 
         self.bottompart=Frame(self.wholeframe)
 
-        r1=Radiobutton(self.bottompart,text='Genetic data, individual centred',value='ms',variable=masterclass.datatype)
-        r15=Radiobutton(self.bottompart,text='Genetic data, sampling site based',value='mpop',variable=masterclass.datatype)
+        r1=Radiobutton(self.bottompart,text='Genetic data, haploid, individual centred',value='ms_haploid',variable=masterclass.datatype)
+        r125=Radiobutton(self.bottompart,text='Genetic data, diploid, individual centred',value='ms_diploid',variable=masterclass.datatype)
+        r15=Radiobutton(self.bottompart,text='Genetic data, haploid, sampling site based',value='mpop_haploid',variable=masterclass.datatype)
+        r175=Radiobutton(self.bottompart,text='Genetic data, diploid, sampling site based',value='mpop_diploid',variable=masterclass.datatype)
         r2=Radiobutton(self.bottompart,text='Distance matrix',value='dmat',variable=masterclass.datatype)
         r3=Radiobutton(self.bottompart,text='Network data',value='net',variable=masterclass.datatype)
         r1.grid(row=1,column=0,sticky=W)
+        r125.grid(row=3,column=0,sticky=W)
         r15.grid(row=2,column=0,sticky=W)
-        r2.grid(row=3,column=0,sticky=W)
-        r3.grid(row=4,column=0,sticky=W)
+        r175.grid(row=4,column=0,sticky=W)
+        r2.grid(row=5,column=0,sticky=W)
+        r3.grid(row=6,column=0,sticky=W)
 
         self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
 
-        masterclass.datatype.set('ms')
+        masterclass.datatype.set('ms_haploid')
 
         self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
        
@@ -1367,13 +1371,15 @@ class MsLoadWaiter(MySimpleDialog):
     """Used when loading a matrix. Asks if the matrix contains weights or distances"""
     
 
-    def __init__(self,parent,inputfile,removeclones,measuretype,title="Processing microsatellite data",titlemsg="Please wait",nodeNames=None):
+    def __init__(self,parent,inputfile,removeclones,measuretype,title="Processing microsatellite data",titlemsg="Please wait",nodeNames=None,datatype=None):
 
         Toplevel.__init__(self,parent)
         
         self.title(title)
         self.titlemsg=titlemsg
         self.parent=parent
+
+        self.datatype=datatype
 
         self.result=None
 
@@ -1405,7 +1411,10 @@ class MsLoadWaiter(MySimpleDialog):
             self.l2['fg']='black'
             self.l2.update()
 
-        msdata_initial=eden.MicrosatelliteData(inputfile)
+        if datatype=="ms_diploid":
+            msdata_initial=eden.MicrosatelliteData(inputfile)
+        else:
+            msdata_initial=eden.MicrosatelliteDataHaploid(inputfile)
 
         if removeclones:
 
@@ -1439,6 +1448,7 @@ class MsLoadWaiter(MySimpleDialog):
         self.l2.update()
     
         m=msdata.getDistanceMatrix(measuretype,nodeNames=nodeNames,progressUpdater=self.progressbar.set)        
+
         if removeclones:
             Nclones=msdata_initial.getNumberOfNodes()-len(keeptheserows)
         else:
