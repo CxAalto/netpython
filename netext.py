@@ -31,11 +31,13 @@ class Net_edges:
 
     def __len__(self):
         lenght=0
-        for nodeIndex in self.net:
-            lenght+=len(self.net[nodeIndex].edges)
         if self.net.isSymmetric():
+            for nodeIndex in self.net:
+                lenght+=len(self.net[nodeIndex].edges)
             return lenght/2
         else:
+            for nodeIndex in self.net:
+                lenght+=self.net[nodeIndex].outDeg()
             return lenght
     def __str__(self):
         return str(list(self))
