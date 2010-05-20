@@ -17,12 +17,18 @@ class Net_edges:
     def __init__(self,net):
         self.net=net
     def __iter__(self):
-         for node1Index in self.net:
-            node1=self.net[node1Index]
-            for node2Index in node1:
-                #if self.net.__class__!=pynet.SymmNet or node1Index<node2Index:
-		if (not self.net.isSymmetric()) or node1Index.__hash__()<node2Index.__hash__():
+        if self.net.isSymmetric():
+            for node1Index in self.net:
+                node1=self.net[node1Index]
+                for node2Index in node1:
+                    if node1Index.__hash__()<node2Index.__hash__():
+                        yield [node1Index,node2Index,self.net[node1Index,node2Index]]       
+        else:
+            for node1Index in self.net:
+                node1=self.net[node1Index]
+                for node2Index in node1.iterOut():
                     yield [node1Index,node2Index,self.net[node1Index,node2Index]]       
+
     def __len__(self):
         lenght=0
         for nodeIndex in self.net:
