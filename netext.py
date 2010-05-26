@@ -156,49 +156,39 @@ def getNumericProperties(net):
 
 def getPropertyTypes(net):
     """Returns a dictionary where keys are nodeProperties
-    and values indicate their type ('int','float','string','string/color','mixed')
+    and values indicate their type ('int','float','number','string','string/color','mixed')
     """
-
     propertylist=list(net.nodeProperty)
-
     propertydict={}
 
     for prop in propertylist:
-
         intprop=True
         floatprop=True
+        numprop=True
         strprop=True
 
         for node in net:
-
             if not(isinstance(net.nodeProperty[prop][node],int)):
-
                    intprop=False
-
             if not(isinstance(net.nodeProperty[prop][node],float)):
-
                    floatprop=False
-
+            if not(isinstance(net.nodeProperty[prop][node],float)) and not(isinstance(net.nodeProperty[prop][node],int)):
+                   numprop=False
             if not(isinstance(net.nodeProperty[prop][node],str)):
-
                    strprop=False
 
         if intprop==True:
-
             propertydict[prop]='int'
-
         elif floatprop==True:
-
             propertydict[prop]='float'
-
+        elif numprop==True:
+            propertydict[prop]='number'
         elif strprop==True:
             if visuals.isListOfColors(set(net.nodeProperty[prop].values())):
                 propertydict[prop]='string/color'
             else:
                 propertydict[prop]='string'
-
         else:
-
             propertydict[prop]='mixed'
 
     return propertydict
