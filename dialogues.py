@@ -527,14 +527,15 @@ class ChooseDistanceMeasure(MySimpleDialog):
         self.bottompart=Frame(self.wholeframe)
 
 
-        r1=Radiobutton(self.bottompart,text='Non-shared alleles',value='nsa',variable=masterclass.measuretype)
+        #r1=Radiobutton(self.bottompart,text='Non-shared alleles',value='nsa',variable=masterclass.measuretype)
+        r1=Radiobutton(self.bottompart,text='Allele Sharing',value='ap',variable=masterclass.measuretype)
         r2=Radiobutton(self.bottompart,text='Linear Manhattan',value='lm',variable=masterclass.measuretype)
-        r3=Radiobutton(self.bottompart,text='Allele parsimony',value='ap',variable=masterclass.measuretype)
-        r4=Radiobutton(self.bottompart,text='Hybrid',value="hybrid",variable=masterclass.measuretype)
+        #r3=Radiobutton(self.bottompart,text='Allele parsimony',value='ap',variable=masterclass.measuretype)
+        #r4=Radiobutton(self.bottompart,text='Hybrid',value="hybrid",variable=masterclass.measuretype)
         r1.grid(row=1,column=0,sticky=W)
         r2.grid(row=2,column=0,sticky=W)
-        r3.grid(row=3,column=0,sticky=W)
-        r4.grid(row=4,column=0,sticky=W)
+        #r3.grid(row=3,column=0,sticky=W)
+        #r4.grid(row=4,column=0,sticky=W)
 
         self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
         
