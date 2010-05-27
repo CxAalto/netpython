@@ -255,7 +255,7 @@ def clustering_valuelist(net):
         tempc=0
         for j in net[i]:
             for k in net[j]:
-                if net[i][k]!=0:
+                if k in net[i]:
                     tempc+=1
         k=net[i].deg()
         if k>1:
@@ -465,7 +465,7 @@ def clustering(net):
         c[i]=0
         for j in net[i]:
             for k in net[j]:
-                if net[i][k]!=0:
+                if k in net[i]:
                     c[i]=c[i]+1
         k=net[i].deg()
         if k>1:
@@ -505,7 +505,7 @@ def overlap(net,node1,node2):
     else:
         small,large=node1,node2
     for neigh in net[small]:
-        if net[neigh,large]!=0: #assume no self-links.
+        if large in net[neigh]: #assume no self-links.
             nTriangles+=1
     d=net[node1].deg()+net[node2].deg()-2-nTriangles
     if d>0:
