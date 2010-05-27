@@ -152,6 +152,9 @@ class Node(object):
 		 self.net[self.name, name]=val
 		 return val
 
+	def __contains__(self,nodeName):
+		return self[nodeName]!=0
+
 	def deg(self):
 		return self.net.deg(self.name)
 
