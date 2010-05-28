@@ -168,7 +168,7 @@ def collapseIndices(net, returnIndexMap=False):
         return newNet
 
 
-def threshold_by_value(net,threshold,mode,keepIsolatedNodes=False):
+def threshold_by_value(net,threshold,accept="<",keepIsolatedNodes=False):
     '''Generates a new network by thresholding the input network. 
        If using option keepIsolatedNodes=True, all nodes in the
        original network will be included in the thresholded network;
@@ -176,21 +176,29 @@ def threshold_by_value(net,threshold,mode,keepIsolatedNodes=False):
        is the default). 
     
        Inputs: net = network, threshold = threshold value,
-       mode = 0 (accept weights < threshold), 1 (accept weights > threshold)
+       accept = "foobar": accept weights foobar threshold (e.g accept = "<": accept weights < threshold)
        Returns a network.'''
 
     newnet=pynet.SymmNet()
     edges=list(net.edges)
-    if mode == 0:
+    if accept == "<":
         for edge in edges:
             if (edge[2] < threshold):
                 newnet[edge[0],edge[1]]=edge[2]
-    elif mode == 1:
+    elif accept == ">":
         for edge in edges:
             if (edge[2] > threshold):
                 newnet[edge[0],edge[1]]=edge[2] 
+    elif accept == ">=":
+        for edge in edges:
+            if (edge[2] >= threshold):
+                newnet[edge[0],edge[1]]=edge[2] 
+    elif accept == "<=":
+        for edge in edges:
+            if (edge[2] <= threshold):
+                newnet[edge[0],edge[1]]=edge[2] 
     else:
-        raise Exception("mode must be either 0 or 1.")
+        raise Exception("Parameter 'accept' must be either '<', '>', '<=' or '>='.")
 
     # Add isolated nodes to the network.
     if keepIsolatedNodes==True:
