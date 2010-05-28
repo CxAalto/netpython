@@ -14,6 +14,7 @@ import shutil
 from PIL import Image
 from math import ceil
 from Tkinter import *
+import tkMessageBox
 #from pylab import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,NavigationToolbar2TkAgg
 
@@ -331,6 +332,23 @@ class AskNumberOfBins(MySimpleDialog):
 
     def applyme(self):
         self.result=float(self.numbins.get())
+
+    def validate(self):
+        userstr=self.numbins.get()
+        try:
+            nbins=int(userstr)
+        except Exception:
+            tkMessageBox.showerror(
+                    "Error:",
+                    "Number of bins must be an integer.")
+            return 0
+        if nbins<2:
+            tkMessageBox.showerror(
+                    "Error:",
+                    "Number of bins must be larger than one.")
+            return 0
+        return 1    
+        
 
 class ProjectLaunchDialog(MySimpleDialog):
     """First window shown when launching a new analysis wizard.
