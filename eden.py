@@ -90,8 +90,13 @@ class MicrosatelliteData:
                         if fields[i]>fields[i+1]:
                             fields[i],fields[i+1]=fields[i+1],fields[i]
                         self._alleles[i/2].append((fields[i],fields[i+1]))
+                    elif fields[i]==missingValue: #None comes first
+                        if fields[i+1]==missingValue:
+                            self._alleles[i/2].append((None,None))
+                        else:
+                            self._alleles[i/2].append((None,fields[i+1]))
                     else:
-                        self._alleles[i/2].append(None)
+                        self._alleles[i/2].append((None,fields[i]))
 
         if lastNumberOfFields!=None:
             self.nLoci=lastNumberOfFields/2
@@ -185,7 +190,7 @@ class MicrosatelliteData:
         -------
         >>> ms=eden.MicrosatelliteData(open("../data/microsatellites/microsatellites.txt",'r'))
         >>> ms_u = ms.getUniqueSubset()
-        >>> ms_u.getGroupwiseDistance_Goldstein([1,2,3,4],[1,2,3,4]) == 1330.5
+        >>> ms_u.getGroupwiseDistance_Goldstein([1,2,3,4],[1,2,3,4]) == 47.517857142857146
         True
         """
         
@@ -205,15 +210,20 @@ class MicrosatelliteData:
                 ydict[ylocus[0]] = ydict.get(ylocus[0],0) + 1 
                 ydict[ylocus[1]] = ydict.get(ylocus[1],0) + 1
 
-            # calculates goldstain distance
+            # calculates goldstein distance
             dist = 0
+            NElementsX=float(sum(xdict.itervalues())-xdict.get(None,0))
+            NElementsY=float(sum(ydict.itervalues())-ydict.get(None,0))
             for i in xdict:
-                for j in ydict:
-                    dist += 1.0*(i-j)**2*xdict[i]/(2*len(x))*ydict[j]/(2*len(y))/self.getNumberofLoci()
+                if i!=None:
+                    for j in ydict:
+                        if j!=None:
+                            dist += float(i-j)**2*xdict[i]/NElementsX*ydict[j]/NElementsY
+                            #dist += float(i-j)**2*xdict[i]/(2*len(x))*ydict[j]/(2*len(y))/self.getNumberofLoci()
 
             distList.append(dist)
 
-        return sum(distList)
+        return sum(distList)/self.getNumberofLoci()
 
     def getGroupwiseDistanceMatrix(self,groups,distance='goldstein',groupNames=None):
         """
@@ -291,7 +301,7 @@ class MicrosatelliteData:
     def getMSDistanceVectorByAlleles(self,x,y,distance_singleLocus):
         distance=numpy.zeros(len(x))
         for locus in range(0,len(x)):
-            if x[locus]!=None and y[locus]!=None:
+            if x[locus][0]!=None and y[locus][0]!=None:
                 distance[locus]=distance_singleLocus(x[locus],y[locus])
             else:
                 distance[locus]=numpy.nan
@@ -482,6 +492,16 @@ class MicrosatelliteDataHaploid(MicrosatelliteData):
 
     def getMSDistance_singleLocus_LinearManhattan(self,x,y):
         return abs(x-y)
+
+    def getMSDistanceVectorByAlleles(self,x,y,distance_singleLocus):
+        distance=numpy.zeros(len(x))
+        for locus in range(0,len(x)):
+            if x[locus]!=None and y[locus]!=None:
+                distance[locus]=distance_singleLocus(x[locus],y[locus])
+            else:
+                distance[locus]=numpy.nan
+        return distance
+
 
     def getGroupwiseDistance_Goldstein(self,x,y):
         """
