@@ -210,20 +210,20 @@ class MicrosatelliteData:
                 ydict[ylocus[0]] = ydict.get(ylocus[0],0) + 1 
                 ydict[ylocus[1]] = ydict.get(ylocus[1],0) + 1
 
-            # calculates goldstein distance
+
             dist = 0
             NElementsX=float(sum(xdict.itervalues())-xdict.get(None,0))
             NElementsY=float(sum(ydict.itervalues())-ydict.get(None,0))
-            for i in xdict:
-                if i!=None:
-                    for j in ydict:
-                        if j!=None:
-                            dist += float(i-j)**2*xdict[i]/NElementsX*ydict[j]/NElementsY
-                            #dist += float(i-j)**2*xdict[i]/(2*len(x))*ydict[j]/(2*len(y))/self.getNumberofLoci()
+            if NElementsX!=0 and NElementsY!=0:
+                for i in xdict:
+                    if i!=None:
+                        for j in ydict:
+                            if j!=None:
+                                dist += float(i-j)**2*xdict[i]/NElementsX*ydict[j]/NElementsY
 
-            distList.append(dist)
+                distList.append(dist)
 
-        return sum(distList)/self.getNumberofLoci()
+        return sum(distList)/len(distList)
 
     def getGroupwiseDistanceMatrix(self,groups,distance='goldstein',groupNames=None):
         """
@@ -502,7 +502,6 @@ class MicrosatelliteDataHaploid(MicrosatelliteData):
                 distance[locus]=numpy.nan
         return distance
 
-
     def getGroupwiseDistance_Goldstein(self,x,y):
         """
         Returns the goldstein distance between two populations
@@ -511,13 +510,6 @@ class MicrosatelliteDataHaploid(MicrosatelliteData):
         ----------
         x and y are lists of sample indices correspoding to samples of two populations.
         The distance between these populations is calculated.
-
-        Example
-        -------
-        >>> ms=eden.MicrosatelliteData(open("../data/microsatellites/microsatellites.txt",'r'))
-        >>> ms_u = ms.getUniqueSubset()
-        >>> ms_u.getGroupwiseDistance_Goldstein([1,2,3,4],[1,2,3,4]) == 1330.5
-        True
         """
         
         distList = []
@@ -534,15 +526,20 @@ class MicrosatelliteDataHaploid(MicrosatelliteData):
                 ylocus = self.getLocusforNodeIndex(locus,nodeIndex)
                 ydict[ylocus] = ydict.get(ylocus,0) + 1 
 
-            # calculates goldstain distance
+            # calculates goldstein distance
             dist = 0
-            for i in xdict:
-                for j in ydict:
-                    dist += 1.0*(i-j)**2*xdict[i]/(len(x))*ydict[j]/(len(y))/self.getNumberofLoci()
+            NElementsX=float(sum(xdict.itervalues())-xdict.get(None,0))
+            NElementsY=float(sum(ydict.itervalues())-ydict.get(None,0))
+            if NElementsX!=0 and NElementsY!=0:
+                for i in xdict:
+                    if i!=None:
+                        for j in ydict:
+                            if j!=None:
+                                dist += float(i-j)**2*xdict[i]/NElementsX*ydict[j]/NElementsY
 
-            distList.append(dist)
+                distList.append(dist)
 
-        return sum(distList)
+        return sum(distList)/len(distList)
 
 
 
