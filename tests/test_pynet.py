@@ -94,5 +94,5 @@ def test_pynet():
     unittest.TextTestRunner().run(suite)    
 
 if __name__ == '__main__':
-    runTests()
+    test_pynet()
 
