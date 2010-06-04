@@ -57,7 +57,7 @@ def mst_kruskal(net,randomize=True,maximum=False):
     return mst
 
 
-def snowball(net, seed, depth, includeLeafNeighbors=False):
+def snowball(net, seed, depth, includeLeafEdges=False):
     """Snowball sampling
 
     Works for both directed and undirected networks. For directed
@@ -74,7 +74,7 @@ def snowball(net, seed, depth, includeLeafNeighbors=False):
     depth : int
         The depth of the snowball. Depth 1 corresponds to first
         neighbors of the seed only.
-    includeLeafNeighbors : bool (default: False)
+    includeLeafEdges : bool (default: False)
         If True, then the edges between the leaves (i.e. the nodes at
         final depth) will also be included in the snowball network. By
         default these edges are not included.
@@ -118,10 +118,10 @@ def snowball(net, seed, depth, includeLeafNeighbors=False):
                     if inIndex not in visited:
                         newToVisit.add(inIndex)
 
-        # If this is the last depth and `includeLeafNeighbors` is
+        # If this is the last depth and `includeLeafEdges` is
         # True, we add the edges between the most recently added
         # nodes, that is, those currently in the set `newToVisit`.
-        if d == depth and includeLeafNeighbors:
+        if d == depth and includeLeafEdges:
             for nodeIndex in newToVisit:
                 node = net[nodeIndex]
 
