@@ -581,11 +581,12 @@ class NodePartition(NodeCover):
     def _getOverlapNetwork(self, other):
         """Create a bipartite network from overlapping nodes.
 
-        Nodes correspond to communities and edge weight is the number
-        of common nodes between two communities. Nodes [0
-        ... len(self)-1] correspond to communities in self, and nodes
-        [len(self) ... len(self)+len(otherCover)] correspond to
-        communities in `other`.
+        In the overlap network the nodes correspond to communities and
+        edge weight is the number of common nodes between two
+        communities. Nodes [0 ... len(self)-1] correspond to
+        communities in self, and nodes [len(self)
+        ... len(self)+len(otherCover)] correspond to communities in
+        `other`.
         """
         commNet = pynet.SymmNet()
         for node in self._commIDs:
@@ -679,7 +680,31 @@ class NodePartition(NodeCover):
         return 1.0 - (self.getMutualInformation(otherPartition)
                       /max(self.entropy, otherPartition.entropy))
         
+    def modularity(self, net):
+        """Return modularity of this community structure.
 
+        Parameters
+        ----------
+        net : pynet.SymmNet of pynet.Net object
+            The network for which the modularity is calculated. This
+            network must have the same nodes as the community
+            partition.
+    
+        Return
+        ------
+        modularity : float
+            The modularity of the partition.
+        """
+
+        modularity = 0.0
+        m2 = 2.0*sum(net.weights)
+        for c in self.comm:
+            c = list(c)
+            for n_i,i in enumerate(c):
+                for j in c[n_i+1:]:
+                    modularity += m2*net[i][j] - net[i].strength()*net[j].strength()
+
+        return modularity/(m2)**2
 
 
 class communityTree:
