@@ -1,4 +1,5 @@
 import pynet,netext
+import numpy as np
 
 def makeER(n,p):
     """
@@ -9,6 +10,6 @@ def makeER(n,p):
     net=pynet.SymmNet()
     for i in range(0,n):
         for j in range(0,i):
-            if p>random.uniform(0,1):
+            if p > np.random.ranf():
                 net[i,j]=1
     return net
