@@ -104,13 +104,13 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
     If `mutualEdges` is False and the same edge is encountered
     multiple times, the edge weight will be the sum of all weights.
 
-    If 'allowSelfEdges', the self edges are translated as nodes with no edges. Otherwise
-    those edges are just thrown out.
+    If 'allowSelfEdges', the self edges are translated as nodes with
+    no edges. Otherwise those edges are just thrown out.
 
-    If hasHeaderLine is True the first line is skipped, if it is False the first line is
-    read normally, and if it is None the first line is skanned for "from to weight" string
-    to decide if it is a header line.
-
+    If hasHeaderLine is True the first line is skipped, if it is False
+    the first line is read normally, and if it is None the first line
+    is skanned for "from to weight" string to decide if it is a header
+    line.
     """
     def isNumerical(input):
 	try:
@@ -417,7 +417,8 @@ def loadNet(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
 
     return newNet
     
-def loadNodeProperties(net,input,splitterChar=None,propertyNames=None,allowMissingData=False,allowExtraData=False):
+def loadNodeProperties(net,input,splitterChar=None,propertyNames=None,
+                       allowMissingData=False,allowExtraData=False):
     """Read metadata (properties for nodes) from a file.
 
     The metadata file can contain any number of columns. The first
