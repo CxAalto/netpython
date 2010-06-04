@@ -489,7 +489,8 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
         new figure is created for the plot and the figure handle is
         then returned.
     frame : bool
-        If False, the frame and axis will be not be shown in the plot.
+        If False, the frame will be not be shown in the plot. You can
+        still use axis labels.
 
     Defining node and edge colors
     -----------------------------
@@ -905,7 +906,15 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
 
     # Remove frame.
     if not frame:
-        axes.set_axis_off()
+        #Using 'axes.set_axis_off()' would also turn of the axis
+        #labels, which might be too much. The following lines are
+        #required to turn of the frame and tick labels while keeping
+        #axis labels.
+        axes.set_frame_on(False)
+        axes.set_xticklabels([])
+        axes.xaxis.set_ticks_position('none')
+        axes.set_yticklabels([])
+        axes.yaxis.set_ticks_position('none')
 
     # Return figure. Note that if `axes` was given as an input
     # argument, the returned value is None.
