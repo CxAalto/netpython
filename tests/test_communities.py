@@ -1,5 +1,6 @@
 import unittest
 from netpython import communities
+from netpython import pynet
 
 class TestNodeCover(unittest.TestCase):
     
@@ -99,12 +100,26 @@ class TestNodePartition(unittest.TestCase):
                 self.assertEqual(ci.getMutualInformation(cj), 
                                  ci.getMutualInformation_slow(cj))
 
+    def test_modularity(self):
+        net = pynet.SymmNet()
+        np = self.comms[0]
+        for c in np.comm:
+            c = list(c)
+            for n_i,i in enumerate(c):
+                for j in c[n_i+1:]:
+                    net[i][j] = 1
+        net[3][4] = 1
+        m2 = 2.0*(6+6+1)
+        correct_modularity = (6*(1-3*3/m2) + 6*(1-3*4/m2))/m2
+        self.assertEqual(np.modularity(net), correct_modularity)
+                
+
 if __name__ == '__main__':
     if False:
         # If true, run only the tests listed below, otherwise run all
         # tests (this option is for testing the tests :-) ).
         suite = unittest.TestSuite()
-        suite.addTest(TestNodeCover("test_getMaxVariationOfInformation_compare"))
+        suite.addTest(TestNodePartition("test_modularity"))
         unittest.TextTestRunner().run(suite)
     else:
         # Run all tests.
