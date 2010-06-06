@@ -76,6 +76,7 @@ class VirtualNet(object):
 				if self.sizeLimit!=0 and newIndex>self.sizeLimit:
 					raise Exception,"Size limit for the network reached." 
 				self._indexToName.append(nodeName)
+				self._addNode()
 			self._nodes[nodeName]=newIndex
 
 	def delNode(self,nodeName): #override for directed
@@ -121,6 +122,8 @@ class VirtualNet(object):
 	symmetric=True
 
 	#--- Virtual functions to override
+	def _addNode(self):
+		pass
 	def _degIndex(self,nodeIndex):
 		raise NotImplemented
 	def _getEdge(self,src,dest):
