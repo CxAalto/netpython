@@ -63,6 +63,10 @@ class TestPynet(unittest.TestCase):
         self.assertEqual(myNet2[1,2],0)
         self.assertEqual(myNet2[2,3],1)
 
+        #test adding empty nodes
+        myNet2.addNode("empty")
+        self.assertEqual(myNet2["empty"].deg(),0)
+
 
     def test_basic_dir_ScipySparseDirNet(self):
         self.test_basic_dir(pynet.ScipySparseDirNet)
