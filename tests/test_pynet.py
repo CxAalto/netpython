@@ -34,6 +34,12 @@ class TestPynet(unittest.TestCase):
         self.assertEqual(myNet[3].inDeg(),1)
         self.assertEqual(myNet[3].outDeg(),0)
 
+        #test deleting nodes
+        del myNet[1]
+        self.assertEqual(myNet[1,2],0.0)
+        self.assertEqual(list(myNet[2]),[3])
+        myNet[1,4]=4.0
+        self.assertEqual(myNet[1,4],4.0)
 
     def test_basic_symm(self,netType):
         myNet=netType(sizeLimit=10)
