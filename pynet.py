@@ -182,9 +182,10 @@ class Node(object):
 
 class VirtualDirNet(VirtualNet):
 	def _removeNodeEdges(self,nodeName):
-		for neigh in self[nodeName]:
-			self[node,neigh]=0
-			self[neigh,node]=0
+		for neigh in list(self[nodeName]):
+			self[nodeName,neigh]=0
+			self[neigh,nodeName]=0
+
 	symmetric=False
 
 	#--- Virtual functions to override
