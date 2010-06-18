@@ -78,17 +78,57 @@ class TestVisuals(unittest.TestCase):
         f.print_eps(self.folder+'test_nodecolors1.eps',dpi=80.0)
 
         
+class Test_visualizeNet(unittest.TestCase):
+    
+    def setUp(self):
+        self.dirnet = pynet.Net()
+        self.dirnet[0][1] = 1
+        self.dirnet[0][2] = 1
+        self.dirnet[1][2] = 1
+        self.dirnet[2][1] = 1
 
+        self.symmnet = pynet.SymmNet()
+        self.symmnet[0][1] = 1
+        self.symmnet[0][2] = 1
+        self.symmnet[1][2] = 1
+
+        self.folder = ("%s/tests/test_visuals_figures/current/" 
+                       % (os.path.dirname(visuals.__file__),))
+
+    def test_dirnet(self):
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        visuals.visualizeNet(self.dirnet, axes=ax, frame=True,
+                             defaultNodeColor='white',
+                             defaultNodeEdgeColor='blue',
+                             defaultEdgeColor='red',
+                             defaultNodeSize=40,
+                             defaultEdgeWidth=2,
+                             defaultNodeEdgeWidth=2.0,
+                             labelAllNodes=True,
+                             defaultLabelPosition='in')
+        fig.savefig(self.folder + "test_dirnet.eps")
+
+    def test_symmnet(self):
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        visuals.visualizeNet(self.symmnet, axes=ax, frame=True,
+                             defaultNodeColor='white',
+                             defaultNodeEdgeColor='blue',
+                             defaultEdgeColor='red',
+                             defaultNodeSize=20,
+                             defaultEdgeWidth=2,
+                             defaultNodeEdgeWidth=2.0,
+                             labelAllNodes=True,
+                             defaultLabelPosition='in')
+        fig.savefig(self.folder + "test_symmnet.eps")
 
 if __name__ == '__main__':
     if True:
         # If true, run only the tests listed below, otherwise run all tests
         # (this option is for testing the tests :-) )
         suite = unittest.TestSuite()
-        suite.addTest(TestVisuals("test_simplePlot1"))
-        suite.addTest(TestVisuals("test_missing_input"))
-        suite.addTest(TestVisuals("test_unacceptable_input"))
-        suite.addTest(TestVisuals("test_input_combinations"))
+        suite.addTest(Test_visualizeNet("test_dirnet"))
         unittest.TextTestRunner().run(suite)
     else:
         # Run all tests.
