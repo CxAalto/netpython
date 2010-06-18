@@ -12,7 +12,6 @@ import shutil
 import Image
 import operator
 
-
 # --------------------------------------        
 
 class Myplot(object):
@@ -473,6 +472,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
                  edgeWidths=None, defaultEdgeWidth=None,
                  nodeEdgeWidths=None, defaultNodeEdgeWidth=0.2,
                  nodeLabels=None, labelAllNodes=False,
+                 labelPositions=None, defaultLabelPosition='out',
                  nodePlotOrders=None, defaultNodePlotOrder=1,
                  edgePlotOrders=None, defaultEdgePlotOrder=0):
     """Visualize a network.
@@ -481,9 +481,10 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     ----------------
     net : pynet.SymmNet
         The network to visualize
-    coords : dictionary of tuples {node_ID: (x,y,z)}
+    coords : dictionary of tuples {node_ID: (x,y)}
         Coordinates of all nodes. If None, the coordinates will be
-        calculated by Himmeli.
+        calculated by Himmeli. The x and y coordinates are assumed to
+        have the same scale.
     axes : pylab.axes object
         If given, the network will be drawn in this axis. Otherwise a
         new figure is created for the plot and the figure handle is
@@ -595,6 +596,14 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
 
     The values in `nodeLabels` are converted to string with str().
 
+    There are two possibilities for the positioning of node labels:
+    'in' and 'out' (default). 'in' means that the label is printed at
+    the exact position of the node; if the node is hollow, this
+    effectively prints the node labes inside the nodes. 'out' prints
+    the label next to the node.
+
+    Labels are always plotted on top of the node.
+
     Return
     ------
     fig : pylab.Figure (None if `axes` is given.)
@@ -639,8 +648,6 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     node_label_font_color = 'k'
     node_label_font_size = 8
 
-    edge_margin = 0.05 # The space left on each side of the graph.
-    
     #
     # PROCESS INPUT PARAMETERS
     #
@@ -690,6 +697,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     nodeEdgeWidths = (nodeEdgeWidths or {})
 
     nodeLabels = (nodeLabels or {})
+    labelPositions = (labelPositions or {})
 
     nodePlotOrders = (nodePlotOrders or {})
     edgePlotOrders = (edgePlotOrders or {})
@@ -697,6 +705,18 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     #
     # AUXILIARY FUNCTIONS
     #
+
+    def pointWidth_to_data(ax, x_points):
+        ax_pos = ax.get_position()
+        V = ax.axis()
+        width_inches = ax_pos.width*ax.get_figure().get_figwidth()
+        return (V[1]-V[0])*x_points/(72*width_inches)
+
+    def pointHeight_to_data(ax, y_points):
+        ax_pos = ax.get_position()
+        V = ax.axis()
+        height_inches = ax_pos.height*ax.get_figure().get_figheight()
+        return (V[3]-V[2])*y_points/(72*height_inches)
 
     def scaled(scaling_type, value, value_limits, final_limits):
 
@@ -771,9 +791,42 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
             cm = setColorMap(cmap)
             return cm(float(cval))
 
-    def draw_edge(axes, xcoords, ycoords, width, color, zorder):
-        axes.plot(xcoords, ycoords, '-', lw=width,
-                  color=color, zorder=zorder)
+    def draw_edge(axes, xcoords, ycoords, width, color, symmetric, zorder,
+                  nodesize):
+        if symmetric:
+            axes.plot(xcoords, ycoords, '-', lw=width,
+                      color=color, zorder=zorder)
+        else:
+            dx, dy = xcoords[1]-xcoords[0], ycoords[1]-ycoords[0]
+            
+            if dx == 0:
+                if dy > 0: theta = np.pi/2
+                else: theta = -np.pi/2
+            elif dx > 0:
+                theta = np.arctan(dy/dx)
+            else:
+                theta = np.arctan(dy/dx) + np.pi
+                
+            x_diff = pointWidth_to_data(axes, 0.5*nodesize*np.cos(theta))
+            y_diff = pointHeight_to_data(axes, 0.5*nodesize*np.sin(theta))
+            x, y = xcoords[0]+x_diff, ycoords[0]+y_diff
+            dx, dy = dx-2*x_diff, dy-2*y_diff
+
+            #print ("Start (%.4f, %.4f), End (%.4f, %.4f)" 
+            #       % (x, y, xcoords[0]+dx, ycoords[0]+dy))
+            
+            arrow_width = pointWidth_to_data(axes, width)
+
+            # See pylab.matplotlib.patches.FancyArrow for
+            # documentation of the arrow command.
+            axes.arrow(x, y, dx, dy,
+                       color=color, width=arrow_width,
+                       head_width=10*arrow_width,
+                       head_length=10*arrow_width,
+                       shape='full', overhang=0.2,
+                       length_includes_head=True, 
+                       head_starts_at_zero=False,
+                       zorder=zorder)
 
     def draw_node(axes, x, y, shape, color, size, edgecolor, edgewidth, zorder):
         axes.plot([x], [y], shape,
@@ -782,6 +835,71 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
                   markeredgewidth=edgewidth,
                   markersize=size,
                   zorder=zorder)
+
+    #
+    # INITIALIZE SOME DATA STRUCTURES
+    #
+        
+    # Find out the minimum and maximum value for strength and degree.
+    strengths = netext.strengths(net)
+    smin, smax = min(strengths.values()), max(strengths.values())
+    degrees = netext.deg(net)
+    dmin, dmax = min(degrees.values()), max(degrees.values())
+
+    limits = {"strength":(smin, smax), "degree":(dmin,dmax)}
+
+    #
+    # INITIALIZE AXES SIZE
+    #
+
+    node_diameters = {};
+    for nodeIndex in net:
+        values = {"strength": strengths[nodeIndex],
+                  "degree": degrees[nodeIndex]}
+        node_diameters[nodeIndex] = (determine_size(nodeSizes.get(nodeIndex, defaultNodeSize),
+                                                    nodeIndex, net, values, limits,
+                                                    defaultNodeSize) +
+                                     determine_size(nodeEdgeWidths.get(nodeIndex, 
+                                                                       defaultNodeEdgeWidth),
+                                                    nodeIndex, net, values, limits,
+                                                    defaultNodeEdgeWidth))
+
+    # Make axis equal making sure the nodes on the edges are not
+    # clipped. We cannot use `axis('equal')` because nothing has been
+    # drawn yet, but we still need to do this so the arrows will be
+    # draw properly in the plotting phase. This is a bit tricky
+    # because the axes might not be square.
+    max_node_diameter = max(node_diameters.values())
+    y_coords = sorted(map(operator.itemgetter(1), coords.values()))
+    x_coords = sorted(map(operator.itemgetter(0), coords.values()))
+    ax_pos = axes.get_position()
+    x_span = x_coords[-1] - x_coords[0]
+    y_span = y_coords[-1] - y_coords[0]
+    ax_width_inches = ax_pos.width*axes.get_figure().get_figwidth()
+    ax_height_inches = ax_pos.height*axes.get_figure().get_figheight()
+    if (x_span*ax_pos.height > y_span*ax_pos.width):
+        # The x-span dictates the coordinates. Calculate the margin
+        # necessary to fit in the nodes on the edges.
+        rad_frac = 0.5*max_node_diameter/(72*ax_width_inches)
+        x_margin = x_span*rad_frac/(1-2*rad_frac)
+        x_min, x_max = x_coords[0]-x_margin, x_coords[-1]+x_margin
+        y_mid = 0.5*(y_coords[-1] + y_coords[0])
+        y_axis_span = (x_max-x_min)*ax_height_inches/ax_width_inches
+        y_min, y_max = y_mid - 0.5*y_axis_span, y_mid + 0.5*y_axis_span,
+    else:
+        # The y-span dictates the coordinates. Calculate the margin
+        # necessary to fit in the nodes on the edges.
+        rad_frac = 0.5*max_node_diameter/(72*ax_height_inches)
+        y_margin = y_span*rad_frac/(1-2*rad_frac)
+        y_min, y_max = y_coords[0]-y_margin, y_coords[-1]+y_margin
+        x_mid = 0.5*(x_coords[-1] + x_coords[0])
+        x_axis_span = (y_max-y_min)*ax_width_inches/ax_height_inches
+        x_min, x_max = x_mid - 0.5*x_axis_span, x_mid + 0.5*x_axis_span,
+
+    axes.set_ylim(ymin=y_min, ymax=y_max)
+    axes.set_xlim(xmin=x_min, xmax=x_max)
+    axes.set_autoscale_on(False)
+
     #
     # DRAW EDGES
     #
@@ -790,10 +908,12 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     if edges:
         # Sort by edge weight.
         edges.sort(key=operator.itemgetter(2))
-        limits = {'weight': (edges[0][2], edges[-1][2])}
+        limits['weight'] = (edges[0][2], edges[-1][2])
         
         for i,j,w in edges:
-            values = {'weight': w}
+            values = {"weight": w,
+                      "strength": strengths[j],
+                      "degree": degrees[j]}
             
             # Determine edge width.
             if (i,j) in edgeWidths:
@@ -826,22 +946,16 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
 
             # FOR DEBUGGING:
             #print "Edge (%d,%d) : %.1f %s %f" % (i,j,width,str(color),zorder)
-                
             draw_edge(axes, [coords[i][0], coords[j][0]],
-                      [coords[i][1], coords[j][1]], width, color, zorder)
+                      [coords[i][1], coords[j][1]], width, color, net.isSymmetric(),
+                      zorder, node_diameters[j])
 
 
     #
     # DRAW NODES
     #
 
-    # Find out the minimum and maximum value for strength and degree.
-    strengths = netext.strengths(net)
-    smin, smax = min(strengths.values()), max(strengths.values())
-    degrees = netext.deg(net)
-    dmin, dmax = min(degrees.values()), max(degrees.values())
-
-    limits = {"strength":(smin, smax), "degree":(dmin,dmax)}
+    max_node_diameter = 0;
 
     for nodeIndex in net:
         values = {"strength": strengths[nodeIndex],
@@ -850,7 +964,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
         # Determine node shape.
         shape = nodeShapes.get(nodeIndex, defaultNodeShape)
 
-        # Determine node size.
+        # Determine node size (and update max size).
         size = determine_size(nodeSizes.get(nodeIndex, defaultNodeSize),
                               nodeIndex, net, values, limits,
                               defaultNodeSize)
@@ -859,7 +973,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
         edgewidth = determine_size(nodeEdgeWidths.get(nodeIndex, defaultNodeEdgeWidth),
                                    nodeIndex, net, values, limits,
                                    defaultNodeEdgeWidth)
-        
+        max_node_diameter = max(max_node_diameter, size+edgewidth)
 
         # Determine node color
         color = determine_color(nodeColors.get(nodeIndex, defaultNodeColor),
@@ -880,29 +994,32 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
         draw_node(axes, coords[nodeIndex][0], coords[nodeIndex][1],
                   shape, color, size, edgecolor, edgewidth, zorder)
 
-        # Add node labels.
+        # Add node label.
         if nodeIndex in nodeLabels or labelAllNodes:
             if nodeIndex in nodeLabels:
                 label = str(nodeLabels[nodeIndex])
             else:
                 label = str(nodeIndex)
 
-            nodeLabel_offset = int(np.ceil(float(size)/2))+1
-            axes.annotate(label,
-                          (coords[nodeIndex][0],coords[nodeIndex][1]),
-                          textcoords='offset points',
-                          xytext=(nodeLabel_offset, nodeLabel_offset),
-                          color=node_label_font_color,
-                          size=node_label_font_size)
-
-    # Set axis limits. Without this part the nodes on the edges would
-    # be clipped.
-    x_coords = sorted(map(operator.itemgetter(0), coords.values()))
-    axes.set_xlim(xmin=x_coords[0]-edge_margin*(x_coords[-1]-x_coords[0]),
-                  xmax=x_coords[-1]+edge_margin*(x_coords[-1]-x_coords[0]))
-    y_coords = sorted(map(operator.itemgetter(1), coords.values()))
-    axes.set_ylim(ymin=y_coords[0]-edge_margin*(y_coords[-1]-y_coords[0]),
-                  ymax=y_coords[-1]+edge_margin*(y_coords[-1]-y_coords[0]))
+            label_pos = labelPositions.get(nodeIndex, defaultLabelPosition)
+            if label_pos == 'out':
+                nodeLabel_offset = int(np.ceil(float(size)/2))+1
+                axes.annotate(label,
+                              (coords[nodeIndex][0],coords[nodeIndex][1]),
+                              textcoords='offset points',
+                              xytext=(nodeLabel_offset, nodeLabel_offset),
+                              color=node_label_font_color,
+                              size=node_label_font_size,
+                              zorder=zorder+0.5)
+            elif label_pos == 'in':
+                axes.annotate(label,
+                              (coords[nodeIndex][0],coords[nodeIndex][1]),
+                              color=node_label_font_color,
+                              size=max(3, min(size-1, 0.7*size)),
+                              horizontalalignment='center',
+                              verticalalignment='center',
+                              zorder=zorder+0.5)
+ 
 
     # Remove frame.
     if not frame:
