@@ -464,7 +464,7 @@ def plot_node(plotobject,x,y,shape='o',color='w',size=8.0,edgecolor='w'):
                     markeredgecolor=edgecolor,markersize=size)
 
 def visualizeNet(net, coords=None, axes=None, frame=False,
-                 scaling=True, margin=0.0,
+                 scaling=True, margin=0.025,
                  nodeShapes=None, defaultNodeShape='o',
                  nodeColors=None, defaultNodeColor=None,
                  nodeEdgeColors=None, defaultNodeEdgeColor='black',
@@ -474,6 +474,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
                  nodeEdgeWidths=None, defaultNodeEdgeWidth=0.2,
                  nodeLabels=None, labelAllNodes=False,
                  labelPositions=None, defaultLabelPosition='out',
+                 edgeLabels=None, labelAllEdges=False,
                  nodePlotOrders=None, defaultNodePlotOrder=1,
                  edgePlotOrders=None, defaultEdgePlotOrder=0):
     """Visualize a network.
@@ -611,12 +612,22 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     effectively prints the node labes inside the nodes. 'out' prints
     the label next to the node.
 
-    Labels are always plotted on top of the node.
+    Edge labels
+    -----------
+
+    Also edges can have labels, given in `edgeLabels` dictionary,
+    where the key is a tuple (i,j) of end nodes. The edge labels are
+    always printed on right side of each edge (direction defined from
+    i to j).
+
+    If `labelAllEdges` is True, also the edges not listed in
+    `edgeLabels` will be given a label. In this case the label is
+    '(i,j)', where i and j are the indices of the end nodes.
 
     Return
     ------
     fig : pylab.Figure (None if `axes` is given.)
-        Figure object with one axes containing the the plotted network
+        Figure object with one axes containing the plotted network
         figure.
 
     Examples
@@ -656,6 +667,8 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
 
     node_label_font_color = 'k'
     node_label_font_size = 8
+    edge_label_font_color = 'k'
+    edge_label_font_size = 5
 
     #
     # PROCESS INPUT PARAMETERS
@@ -708,6 +721,8 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     nodeLabels = (nodeLabels or {})
     labelPositions = (labelPositions or {})
 
+    edgeLabels = (edgeLabels or {})
+
     nodePlotOrders = (nodePlotOrders or {})
     edgePlotOrders = (edgePlotOrders or {})
 
@@ -717,17 +732,15 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     # AUXILIARY FUNCTIONS
     #
 
-    def pointWidth_to_data(ax, x_points):
+    def points_to_data(ax, x_points):
+        """Converts point length `x_points` (1/72th of inch) to length
+        in data coordinates. Note that this only works (in general) if
+        the axis are equal; otherwise converting x and y-coordinates
+        gives different results."""
         ax_pos = ax.get_position()
         V = ax.axis()
         width_inches = ax_pos.width*ax.get_figure().get_figwidth()
         return (V[1]-V[0])*x_points/(72*width_inches)
-
-    def pointHeight_to_data(ax, y_points):
-        ax_pos = ax.get_position()
-        V = ax.axis()
-        height_inches = ax_pos.height*ax.get_figure().get_figheight()
-        return (V[3]-V[2])*y_points/(72*height_inches)
 
     def scaled(scaling_type, value, value_limits, final_limits):
 
@@ -802,6 +815,39 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
             cm = setColorMap(cmap)
             return cm(float(cval))
 
+    def get_edge_angle(xcoords, ycoords):
+        """Return the edge angle in [-pi/2, 3*pi/2]."""
+        dx, dy = xcoords[1]-xcoords[0], ycoords[1]-ycoords[0]
+        if dx == 0:
+            if dy > 0: theta = np.pi/2
+            else: theta = -np.pi/2
+        elif dx > 0:
+            theta = np.arctan(dy/dx)
+        else:
+            theta = np.arctan(dy/dx) + np.pi
+        return theta
+
+    def edge_label_pos(axes, xcoords, ycoords, edge_width, label_size, offset=1.5):
+        """Return the baseline position and label rotation (in angles)
+        for an edge label. The label will be on the right side of the
+        edge, in proper orientation for reading, and located `offset`
+        points from the edge.
+        """
+        theta = get_edge_angle(xcoords, ycoords)
+        if theta > -np.pi/2 and theta < np.pi/2:
+            # Edge goes from left to right.
+            label_rotation = theta
+        else:
+            # Edge goes from right to left.
+            label_rotation = theta - np.pi
+
+        offset_points = offset+0.5*edge_width+0.5*label_size
+        label_position = (0.5*sum(xcoords), 0.5*sum(ycoords))
+        offset_dir = theta - np.pi/2
+        label_offset = (offset_points*np.cos(offset_dir),
+                        offset_points*np.sin(offset_dir))
+        return label_position, label_offset, 180*label_rotation/np.pi
+
     def draw_edge(axes, xcoords, ycoords, width, color, symmetric, zorder,
                   nodesize):
         if width == 0: return
@@ -810,32 +856,25 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
                       color=color, zorder=zorder)
         else:
             dx, dy = xcoords[1]-xcoords[0], ycoords[1]-ycoords[0]
-            
-            if dx == 0:
-                if dy > 0: theta = np.pi/2
-                else: theta = -np.pi/2
-            elif dx > 0:
-                theta = np.arctan(dy/dx)
-            else:
-                theta = np.arctan(dy/dx) + np.pi
+            theta = get_edge_angle(xcoords, ycoords)
                 
-            x_diff = pointWidth_to_data(axes, 0.5*nodesize*np.cos(theta))
-            y_diff = pointHeight_to_data(axes, 0.5*nodesize*np.sin(theta))
+            x_diff = points_to_data(axes, 0.5*nodesize*np.cos(theta))
+            y_diff = points_to_data(axes, 0.5*nodesize*np.sin(theta))
             x, y = xcoords[0]+x_diff, ycoords[0]+y_diff
             dx, dy = dx-2*x_diff, dy-2*y_diff
 
             #print ("Start (%.4f, %.4f), End (%.4f, %.4f)" 
             #       % (x, y, xcoords[0]+dx, ycoords[0]+dy))
             
-            arrow_width = pointWidth_to_data(axes, width)
+            arrow_width = points_to_data(axes, width)
 
             # See pylab.matplotlib.patches.FancyArrow for
             # documentation of the arrow command.
             axes.arrow(x, y, dx, dy,
                        color=color, width=arrow_width,
-                       head_width=10*arrow_width,
-                       head_length=10*arrow_width,
-                       shape='full', overhang=0.2,
+                       head_width=12*arrow_width,
+                       head_length=14*arrow_width,
+                       shape='left', overhang=0.4,
                        length_includes_head=True, 
                        head_starts_at_zero=False,
                        zorder=zorder)
@@ -883,6 +922,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
         # drawn yet, but we still need to do this so the arrows will be
         # draw properly in the plotting phase. This is a bit tricky
         # because the axes might not be square.
+
         max_node_diameter = max(node_diameters.values())
         y_coords = sorted(map(operator.itemgetter(1), coords.values()))
         x_coords = sorted(map(operator.itemgetter(0), coords.values()))
@@ -891,6 +931,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
         y_span = y_coords[-1] - y_coords[0]
         ax_width_inches = ax_pos.width*axes.get_figure().get_figwidth()
         ax_height_inches = ax_pos.height*axes.get_figure().get_figheight()
+
         if (x_span*ax_height_inches > y_span*ax_width_inches):
             # The x-span dictates the coordinates. Calculate the margin
             # necessary to fit in the nodes on the edges.
@@ -963,9 +1004,31 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
             # FOR DEBUGGING:
             #print "Edge (%d,%d) : %.1f %s %f" % (i,j,width,str(color),zorder)
             draw_edge(axes, [coords[i][0], coords[j][0]],
-                      [coords[i][1], coords[j][1]], width, color, net.isSymmetric(),
-                      zorder, node_diameters[j])
+                      [coords[i][1], coords[j][1]], width, color,
+                      net.isSymmetric(), zorder, node_diameters[j])
 
+            # Add edge label.
+            if (labelAllEdges or (i,j) in edgeLabels or 
+                (net.isSymmetric() and (j,i) in edgeLabels)):
+                if (i,j) in edgeLabels:
+                    label = str(edgeLabels[(i,j)])
+                elif (net.isSymmetric() and (j,i) in edgeLabels):
+                    label = str(edgeLabels[(j,i)])
+                else:
+                    label = "(%d,%d)" % (i,j)
+
+                lpos, loffset, lrot = edge_label_pos(axes, 
+                                                         (coords[i][0],coords[j][0]),
+                                                         (coords[i][1],coords[j][1]),
+                                                         width, edge_label_font_size)
+                axes.annotate(label, lpos, xytext=loffset,
+                              textcoords='offset points',
+                              color=edge_label_font_color,
+                              size=edge_label_font_size,
+                              horizontalalignment='center',
+                              verticalalignment='center',
+                              rotation=lrot,
+                              zorder=zorder+0.5)
 
     #
     # DRAW NODES
@@ -1031,7 +1094,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
                 axes.annotate(label,
                               (coords[nodeIndex][0],coords[nodeIndex][1]),
                               color=node_label_font_color,
-                              size=max(3, min(size-1, 0.7*size)),
+                              size=max(5, min(size-1, 0.7*size)),
                               horizontalalignment='center',
                               verticalalignment='center',
                               zorder=zorder+0.5)
