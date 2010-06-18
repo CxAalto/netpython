@@ -621,7 +621,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
 
     >>> # Simplest case: get coordinates from Himmeli, plot into a
     >>> # new figure and save it to disk
-    >>> fig = visuals.drawNet(net)
+    >>> fig = visuals.visualizeNet(net)
     >>> fig.savefig('myNet.eps')
 
     >>> # Draw the figure in the upper left subfigure, with predefined
@@ -630,7 +630,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     >>> coords = {0:(0,0), 1:(4,0), 2:(2,3)}
     >>> fig = pylab.figure()
     >>> ax = fig.add_subplot(2,2,1)
-    >>> visuals.drawNet(net, coords=coords, axes=ax)
+    >>> visuals.visualizeNet(net, coords=coords, axes=ax)
     """
 
     #
