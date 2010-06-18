@@ -464,6 +464,7 @@ def plot_node(plotobject,x,y,shape='o',color='w',size=8.0,edgecolor='w'):
                     markeredgecolor=edgecolor,markersize=size)
 
 def visualizeNet(net, coords=None, axes=None, frame=False,
+                 scaling=True, margin=0.0,
                  nodeShapes=None, defaultNodeShape='o',
                  nodeColors=None, defaultNodeColor=None,
                  nodeEdgeColors=None, defaultNodeEdgeColor='black',
@@ -492,6 +493,14 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     frame : bool
         If False, the frame will be not be shown in the plot. You can
         still use axis labels.
+    scaling : bool
+        If True, the coordinate axes will be scaled for best fit. If
+        false, the coordinate axes will not be altered.
+    margin : float (>= 0)
+        The relative size of empty margin around the network. Margin
+        of 0.0 means that some nodes touch the edge, margin of 0.2
+        adds 20 % on all sides etc. This has an effect only if scaling
+        is True.
 
     Defining node and edge colors
     -----------------------------
@@ -702,6 +711,8 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     nodePlotOrders = (nodePlotOrders or {})
     edgePlotOrders = (edgePlotOrders or {})
 
+    if margin < 0: margin = 0.0
+
     #
     # AUXILIARY FUNCTIONS
     #
@@ -793,6 +804,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
 
     def draw_edge(axes, xcoords, ycoords, width, color, symmetric, zorder,
                   nodesize):
+        if width == 0: return
         if symmetric:
             axes.plot(xcoords, ycoords, '-', lw=width,
                       color=color, zorder=zorder)
@@ -829,6 +841,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
                        zorder=zorder)
 
     def draw_node(axes, x, y, shape, color, size, edgecolor, edgewidth, zorder):
+        if size == 0: return
         axes.plot([x], [y], shape,
                   markerfacecolor=color,
                   markeredgecolor=edgecolor,
@@ -864,40 +877,43 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
                                                     nodeIndex, net, values, limits,
                                                     defaultNodeEdgeWidth))
 
-    # Make axis equal making sure the nodes on the edges are not
-    # clipped. We cannot use `axis('equal')` because nothing has been
-    # drawn yet, but we still need to do this so the arrows will be
-    # draw properly in the plotting phase. This is a bit tricky
-    # because the axes might not be square.
-    max_node_diameter = max(node_diameters.values())
-    y_coords = sorted(map(operator.itemgetter(1), coords.values()))
-    x_coords = sorted(map(operator.itemgetter(0), coords.values()))
-    ax_pos = axes.get_position()
-    x_span = x_coords[-1] - x_coords[0]
-    y_span = y_coords[-1] - y_coords[0]
-    ax_width_inches = ax_pos.width*axes.get_figure().get_figwidth()
-    ax_height_inches = ax_pos.height*axes.get_figure().get_figheight()
-    if (x_span*ax_pos.height > y_span*ax_pos.width):
-        # The x-span dictates the coordinates. Calculate the margin
-        # necessary to fit in the nodes on the edges.
-        rad_frac = 0.5*max_node_diameter/(72*ax_width_inches)
-        x_margin = x_span*rad_frac/(1-2*rad_frac)
-        x_min, x_max = x_coords[0]-x_margin, x_coords[-1]+x_margin
-        y_mid = 0.5*(y_coords[-1] + y_coords[0])
-        y_axis_span = (x_max-x_min)*ax_height_inches/ax_width_inches
-        y_min, y_max = y_mid - 0.5*y_axis_span, y_mid + 0.5*y_axis_span,
-    else:
-        # The y-span dictates the coordinates. Calculate the margin
-        # necessary to fit in the nodes on the edges.
-        rad_frac = 0.5*max_node_diameter/(72*ax_height_inches)
-        y_margin = y_span*rad_frac/(1-2*rad_frac)
-        y_min, y_max = y_coords[0]-y_margin, y_coords[-1]+y_margin
-        x_mid = 0.5*(x_coords[-1] + x_coords[0])
-        x_axis_span = (y_max-y_min)*ax_width_inches/ax_height_inches
-        x_min, x_max = x_mid - 0.5*x_axis_span, x_mid + 0.5*x_axis_span,
+    if scaling:
+        # Make axis equal making sure the nodes on the edges are not
+        # clipped. We cannot use `axis('equal')` because nothing has been
+        # drawn yet, but we still need to do this so the arrows will be
+        # draw properly in the plotting phase. This is a bit tricky
+        # because the axes might not be square.
+        max_node_diameter = max(node_diameters.values())
+        y_coords = sorted(map(operator.itemgetter(1), coords.values()))
+        x_coords = sorted(map(operator.itemgetter(0), coords.values()))
+        ax_pos = axes.get_position()
+        x_span = x_coords[-1] - x_coords[0]
+        y_span = y_coords[-1] - y_coords[0]
+        ax_width_inches = ax_pos.width*axes.get_figure().get_figwidth()
+        ax_height_inches = ax_pos.height*axes.get_figure().get_figheight()
+        if (x_span*ax_height_inches > y_span*ax_width_inches):
+            # The x-span dictates the coordinates. Calculate the margin
+            # necessary to fit in the nodes on the edges.
+            rad_frac = 0.5*max_node_diameter/(72*ax_width_inches)
+            x_margin = x_span*rad_frac/(1-2*rad_frac)
+            x_min, x_max = x_coords[0]-x_margin, x_coords[-1]+x_margin
+            y_mid = 0.5*(y_coords[-1] + y_coords[0])
+            y_axis_span = (x_max-x_min)*ax_height_inches/ax_width_inches
+            y_min, y_max = y_mid - 0.5*y_axis_span, y_mid + 0.5*y_axis_span,
+        else:
+            # The y-span dictates the coordinates. Calculate the margin
+            # necessary to fit in the nodes on the edges.
+            rad_frac = 0.5*max_node_diameter/(72*ax_height_inches)
+            y_margin = y_span*rad_frac/(1-2*rad_frac)
+            y_min, y_max = y_coords[0]-y_margin, y_coords[-1]+y_margin
+            x_mid = 0.5*(x_coords[-1] + x_coords[0])
+            x_axis_span = (y_max-y_min)*ax_width_inches/ax_height_inches
+            x_min, x_max = x_mid - 0.5*x_axis_span, x_mid + 0.5*x_axis_span,
 
-    axes.set_ylim(ymin=y_min, ymax=y_max)
-    axes.set_xlim(xmin=x_min, xmax=x_max)
+        y_span, x_span = y_max - y_min, x_max - x_min
+        axes.set_ylim(ymin=y_min-margin*y_span, ymax=y_max+margin*y_span)
+        axes.set_xlim(xmin=x_min-margin*x_span, xmax=x_max+margin*x_span)
+    prev_autoscale = axes.get_autoscale_on()
     axes.set_autoscale_on(False)
 
     #
@@ -925,7 +941,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
             else:
                 width = determine_size(defaultEdgeWidth, (i,j), net,
                                        values, limits, defaultEdgeWidth)
-                
+
             # Determine edge color.
             if (i,j) in edgeColors:
                 color = determine_color(edgeColors[(i,j)], (i,j), net,
@@ -1033,7 +1049,10 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
         axes.set_yticklabels([])
         axes.yaxis.set_ticks_position('none')
 
-    # Return figure. Note that if `axes` was given as an input
+    # Return autoscaling to the original value.
+    axes.set_autoscale_on(prev_autoscale)
+
+    # Return figure. Note that if `axes` was given as a input
     # argument, the returned value is None.
     return fig
     
@@ -1223,7 +1242,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     # The following is for the EDEN software, where "nets" or nets
     # derived from matrices can have edge distances instead of weights.
     if hasattr(net,'matrixtype'):
-        if net.matrixtype==0:        
+        if net.matrixtype == 0:        
             net=transforms.dist_to_weights(net)
 
     if baseFig==None:
