@@ -13,3 +13,73 @@ def makeER(n,p):
             if p > np.random.ranf():
                 net[i,j]=1
     return net
+
+def girvanNewman(communitySize,numberOfCommunities,kIn,kOut):
+    """
+    A network model producing equally sized communities with equal expected 
+    link density inside the communities and between the communities. The model
+    was first defined in the article:
+    M. Girvan and M.E.J. Newman: Community structure in social and biological networks,
+    PNAS 99, 7821 (2002)
+
+    Parameters
+    ----------
+    communitySize : int 
+      Size of a single community in nodes.
+    numberOfCommunities : int
+      Number of communities
+    kIn : int
+      Expected value for inside community node degrees. That is, the expected
+      number of links from each node going to other nodes in the same community. This
+      parameter is used to calculate the probability of links inside communities. If
+      kIn > communitySize-1, then kIn is set to communitySize-1.
+    kOut : int
+      Expected value for outside community node degrees. That is, the expected
+      number of links from each node going to nodes in other communities. This
+      parameter is used to calculate the probability of links between communities. If
+      kOut > (numberOfCommunities-1)*communitySize, then kOut is set to (numberOfCommunities-1)*communitySize.
+
+    Return
+    ------
+    net : SymmNet 
+      A realisation of the model network.
+      
+    Complexity
+    ----------
+    For a network with N nodes:
+    Time complexity: O(N**2)
+    Memory complexity: Memory used by the returned network object. 
+
+    Time complexity can be improved for sparse networks.
+
+    """
+    
+    #Calculate pIn and pOut from kIn and kOut
+    if (communitySize-1)<kIn:
+        kIn=communitySize-1 
+    if (numberOfCommunities-1)*communitySize<kOut:
+        kOut=(numberOfCommunities-1)*communitySize
+    pIn=float(kIn)/float(communitySize-1)
+    if numberOfCommunities>1:
+        pOut=float(kOut)/float((numberOfCommunities-1)*communitySize)        
+    else:
+        pOut=0.0
+
+    net=pynet.SymmNet() #the net object to be returned
+    
+    #First, put the internal edges:
+    for communityIndex in range(numberOfCommunities):
+        for node1Index in range(communitySize):
+            for node2Index in range(node1Index+1,communitySize):
+                if pIn > np.random.ranf():
+                    net[communityIndex*communitySize+node1Index,communityIndex*communitySize+node2Index]=1
+
+    #Second, put the external edges:
+    for community1Index in range(numberOfCommunities):
+        for community2Index in range(community1Index+1,numberOfCommunities):
+            for node1Index in range(communitySize):
+                for node2Index in range(communitySize):
+                    if pOut > np.random.ranf():
+                        net[community1Index*communitySize+node1Index,community2Index*communitySize+node2Index]=1
+
+    return net
