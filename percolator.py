@@ -382,8 +382,11 @@ class EvaluationList:
             yield EvaluationEvent()
         
 def getComponents(net):
-    """
-    Finds connected components of a network.
+    """Get connected components of a network
+
+    NOTE! This method currently discards nodes with no edges (proper
+    behaviour would be to turn them into components, so this should be
+    fixed).
     
     Parameters
     ----------
@@ -392,6 +395,7 @@ def getComponents(net):
     Returns
     -------
     Connected components as a NodePartition object.
+
     """
     edges=net.edges
     ee=EvaluationList(edges)
