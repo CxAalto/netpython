@@ -466,14 +466,14 @@ def plot_node(plotobject,x,y,shape='o',color='w',size=8.0,edgecolor='w'):
 def visualizeNet(net, coords=None, axes=None, frame=False,
                  scaling=True, margin=0.025,
                  nodeShapes=None, defaultNodeShape='o',
+                 nodeSizes=None, defaultNodeSize=None,
                  nodeColors=None, defaultNodeColor=None,
                  nodeEdgeColors=None, defaultNodeEdgeColor='black',
-                 edgeColors=None, defaultEdgeColor=None,
-                 nodeSizes=None, defaultNodeSize=None,
-                 edgeWidths=None, defaultEdgeWidth=None,
-                 nodeEdgeWidths=None, defaultNodeEdgeWidth=0.2,
                  nodeLabels=None, labelAllNodes=False,
                  labelPositions=None, defaultLabelPosition='out',
+                 edgeColors=None, defaultEdgeColor=None,
+                 edgeWidths=None, defaultEdgeWidth=None,
+                 nodeEdgeWidths=None, defaultNodeEdgeWidth=0.2,
                  edgeLabels=None, labelAllEdges=False,
                  nodePlotOrders=None, defaultNodePlotOrder=1,
                  edgePlotOrders=None, defaultEdgePlotOrder=0):
@@ -486,7 +486,9 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     coords : dictionary of tuples {node_ID: (x,y)}
         Coordinates of all nodes. If None, the coordinates will be
         calculated by Himmeli. The x and y coordinates are assumed to
-        have the same scale.
+        have the same scale, so for example an edge between nodes 0
+        and 1 with `coords[0]=(0,0)` and `coords[1]=(2,2)` will be at
+        an angle of 45 degrees.
     axes : pylab.axes object
         If given, the network will be drawn in this axis. Otherwise a
         new figure is created for the plot and the figure handle is
@@ -499,9 +501,9 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
         false, the coordinate axes will not be altered.
     margin : float (>= 0)
         The relative size of empty margin around the network. Margin
-        of 0.0 means that some nodes touch the edge, margin of 0.2
-        adds 20 % on all sides etc. This has an effect only if scaling
-        is True.
+        of 0.0 means that some nodes touch the edge of the plot,
+        margin of 0.2 adds 20 % on all sides etc. This parameter has
+        an effect only if scaling is True.
 
     Defining node and edge colors
     -----------------------------
@@ -616,9 +618,9 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     -----------
 
     Also edges can have labels, given in `edgeLabels` dictionary,
-    where the key is a tuple (i,j) of end nodes. The edge labels are
-    always printed on right side of each edge (direction defined from
-    i to j).
+    where the key is a tuple (i,j) of end node indices. The edge
+    labels are always printed on the right side of each edge
+    (with direction defined from i to j).
 
     If `labelAllEdges` is True, also the edges not listed in
     `edgeLabels` will be given a label. In this case the label is
@@ -1003,8 +1005,8 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
 
             # FOR DEBUGGING:
             #print "Edge (%d,%d) : %.1f %s %f" % (i,j,width,str(color),zorder)
-            draw_edge(axes, [coords[i][0], coords[j][0]],
-                      [coords[i][1], coords[j][1]], width, color,
+            xcoords, ycoords = (coords[i][0], coords[j][0]), (coords[i][1], coords[j][1])
+            draw_edge(axes, xcoords, ycoords, width, color,
                       net.isSymmetric(), zorder, node_diameters[j])
 
             # Add edge label.
@@ -1017,10 +1019,8 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
                 else:
                     label = "(%d,%d)" % (i,j)
 
-                lpos, loffset, lrot = edge_label_pos(axes, 
-                                                         (coords[i][0],coords[j][0]),
-                                                         (coords[i][1],coords[j][1]),
-                                                         width, edge_label_font_size)
+                lpos, loffset, lrot = edge_label_pos(axes, xcoords, ycoords,
+                                                     width, edge_label_font_size)
                 axes.annotate(label, lpos, xytext=loffset,
                               textcoords='offset points',
                               color=edge_label_font_color,
