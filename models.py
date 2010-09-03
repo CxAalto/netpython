@@ -14,6 +14,30 @@ def makeER(n,p):
                 net[i,j]=1
     return net
 
+def makeSparseER(n,p):
+    """
+    Make a realisation of Erdos-Renyi network
+    * fast for sparse networks
+    * 0 < p < 1
+    * Algorithm: 
+    Efficient generation of large random networks
+    Phys. Rev. E 71, 036113 (2005) 
+    """
+
+    net=pynet.SymmNet()
+    v = 1 
+    w = -1
+    while (v < n):
+        r = np.random.ranf()
+        w = w+1+int(np.floor(np.log(1-r)/np.log(1-p)))
+        while ((w >= v) and (v < n)):
+            w = w-v
+            v = v+1
+        if (v < n):
+            net[v,w]=1
+
+    return net
+
 def girvanNewman(communitySize,numberOfCommunities,kIn,kOut):
     """
     A network model producing equally sized communities with equal expected 
