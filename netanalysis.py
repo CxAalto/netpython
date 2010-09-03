@@ -513,4 +513,26 @@ def overlap(net,node1,node2):
     else:
         return 0.0
 
-
+def edgeClustering(net,node1,node2):
+    """
+    Returns the edge-clustering of the edge between the two nodes 
+    given as input. Edge clustering is defined as:
+    n_ij/(min(k_i,k_j)-1)
+    where n_ij is the number of common neighbors of nodes i and j
+    (=number of triangles) and k_i and k_j are the degrees of nodes i
+    and j.
+    In case min(k_i,k_j)=1; we define it as 0.
+    """
+    nTriangles=0
+    if net[node1].deg()>net[node2].deg():
+        small,large=node2,node1
+    else:
+        small,large=node1,node2
+    for neigh in net[small]:
+        if large in net[neigh]: #assume no self-links.
+            nTriangles+=1
+    d=net[small].deg()-1.0
+    if d>0:
+        return nTriangles/float(d)
+    else:
+        return 0.0
