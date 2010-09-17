@@ -11,8 +11,8 @@ from operator import mul
 
 class KtreeInteger_new:
     def __init__(self,size=0):
-        self.ktree=numpy.ones(size)
-        self.subTreeWeight=numpy.ones(size)
+        self.ktree=numpy.ones(size,dtype="uint")
+        self.subTreeWeight=numpy.ones(size,dtype="uint")
         self.mappingOn=False
         self.sizeDistribution={}
         self.sizeDistribution[1]=size
