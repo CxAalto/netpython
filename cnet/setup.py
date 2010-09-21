@@ -8,7 +8,7 @@ from distutils.core import setup, Extension
 
 
 example_module = Extension('_cnet',
-                           sources=['sn_wrap.cxx', 'sn.cpp','netext.cpp','transforms.cpp'],
+                           sources=['sn_wrap.cxx', 'sn.cpp','dn.cpp','netext.cpp','transforms.cpp'],
                            )
 
 setup (name = 'sn',
