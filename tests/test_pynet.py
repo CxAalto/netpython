@@ -80,6 +80,9 @@ class TestPynet(unittest.TestCase):
     def test_basic_dir_NumpyFullDirNet(self):
         self.test_basic_dir(pynet.NumpyFullDirNet)
 
+    def test_basic_dir_LCELibSparseDirNet(self):
+        self.test_basic_dir(pynet.LCELibSparseDirNet)
+
     def test_basic_symm_ScipySparseSymmNet(self):
         self.test_basic_symm(pynet.ScipySparseSymmNet)
 
@@ -100,6 +103,7 @@ def test_pynet():
     #dir tests:
     suite.addTest(TestPynet("test_basic_dir_ScipySparseDirNet"))
     suite.addTest(TestPynet("test_basic_dir_NumpyFullDirNet"))
+    suite.addTest(TestPynet("test_basic_dir_LCELibSparseDirNet"))
 
     unittest.TextTestRunner().run(suite)    
 
