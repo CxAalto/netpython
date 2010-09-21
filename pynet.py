@@ -387,12 +387,58 @@ class LCELibSparseSymmNet(VirtualNet):
 			next=_cnet.NeighborIterator_getNext(citerator)
 		_cnet.delete_NeighborIterator(citerator)
 
+class LCELibSparseDirNet(VirtualDirNet):
+	def __init__(self,sizeLimit=0):
+		VirtualNet.__init__(self,sizeLimit=sizeLimit)
+		self._net=_cnet.new_Dn(0)
+	def __del__(self):
+		_cnet.delete_Dn(self._net)
+		
+
+	#--- Methods used by VirtualNet:
+	def _degIndex(self,nodeIndex):
+		return _cnet.Dn_getDegree(self._net,nodeIndex)
+	def _getEdge(self,src,dest):
+		return _cnet.Dn_getEdge(self._net,src,dest)
+	def _setEdge(self,src,dest,val):
+		_cnet.Dn_setEdge(self._net,src,dest, float(val))
+	def _iterNode(self,nodeIndex):
+		citerator=_cnet.Dn_getNeighborIteratorAll(self._net,nodeIndex)
+		next=_cnet.NeighborIteratorAll_getNext(citerator)
+		while next!=-1:
+			yield next
+			next=_cnet.NeighborIteratorAll_getNext(citerator)
+		_cnet.delete_NeighborIteratorAll(citerator)
+
+	#--- Methods used by VirtualDirNet:
+	def _iterNodeIn(self,nodeIndex):
+		citerator=_cnet.Dn_getNeighborIteratorIn(self._net,nodeIndex)
+		next=_cnet.NeighborIteratorIn_getNext(citerator)
+		while next!=-1:
+			yield next
+			next=_cnet.NeighborIteratorIn_getNext(citerator)
+		_cnet.delete_NeighborIteratorIn(citerator)
+	def _iterNodeOut(self,nodeIndex):
+		citerator=_cnet.Dn_getNeighborIteratorOut(self._net,nodeIndex)
+		next=_cnet.NeighborIteratorOut_getNext(citerator)
+		while next!=-1:
+			yield next
+			next=_cnet.NeighborIteratorOut_getNext(citerator)
+		_cnet.delete_NeighborIteratorOut(citerator)
+	def _inDegIndex(self,nodeIndex):
+		return _cnet.Dn_getInDegree(self._net,nodeIndex)
+	def _outDegIndex(self,nodeIndex):
+		return _cnet.Dn_getOutDegree(self._net,nodeIndex)
+
+
+
+
 #--- Implementation lists
-SymmBackends=[ScipySparseSymmNet,NumpyFullSymmNet]
-DirBackends=[ScipySparseDirNet,NumpyFullDirNet]
+SymmBackends=[LCELibSparseSymmNet,ScipySparseSymmNet,NumpyFullSymmNet]
+DirBackends=[LCELibSparseDirNet,ScipySparseDirNet,NumpyFullDirNet]
 
 #--- Default implementations
-DirNet=ScipySparseDirNet 
+DirNet=ScipySparseDirNet #LCELibSparseDirNet overrides this
 Net=DirNet
 SymmNet=ScipySparseSymmNet #LCELibSparseSymmNet overrides this
 SymmFullNet=NumpyFullSymmNet
@@ -403,6 +449,8 @@ FullNet=NumpyFullDirNet
 try:
         from cnet import _cnet
 	SymmNet=LCELibSparseSymmNet
+	DirNet=LCELibSparseDirNet
+	Net=DirNet
 	SymmBackends.append(LCELibSparseSymmNet)
 except ImportError:
         print "Importing the LCELib network data structure failed."
