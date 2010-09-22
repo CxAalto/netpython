@@ -735,11 +735,10 @@ class communityTree:
                self.tree[thisLevel].append(None)
                for fatherIndex in range(0,len(cslist[thisLevel-1])):
                     if cslist[thisLevel][communityIndex]<=cslist[thisLevel-1][fatherIndex]:
-                        self.tree[thisLevel][communityIndex]=fatherIndex
-                        #self.net[str((thisLevel,communityIndex)),str((thisLevel-1,fatherIndex))]=1
-                        self.net[self._getNameByNode((thisLevel,communityIndex)),self._getNameByNode((thisLevel-1,fatherIndex))]=len(cslist)+1-thisLevel
-                        #self.net[self._getNameByNode((thisLevel-1,fatherIndex)),self._getNameByNode((thisLevel,communityIndex))]=1
-                        break
+                        bestFatherIndex=fatherIndex #there might be multiple candidates for father, choose the smallest one
+               self.tree[thisLevel][communityIndex]=bestFatherIndex                        
+               self.net[self._getNameByNode((thisLevel,communityIndex)),self._getNameByNode((thisLevel-1,bestFatherIndex))]=len(cslist)+1-thisLevel
+
         cslist.reverse()
 
     def _getNodeByName(self,name):
@@ -752,7 +751,8 @@ class communityTree:
         #return node[0]+node[1]*self.multiplier        
 
     def _getLeafOrderInTree(self):
-        order=[(0,0)]
+        #order=[(0,0)]
+        order=map(lambda x:(0,x),range(len(self.tree[0])))
         for level in range(1,len(self.tree)):
             replace={}
             for i in range(0,len(self.tree[level])):
@@ -844,6 +844,12 @@ class communityTree:
                         newNet[node,l[0]]=0
                         newNet[node,l[1]]=0
                         newNet[self._getNameByNode(parent),self._getNameByNode(child)]=1
+            deletedNodes=[]
+            for node in newNet:
+                if newNet[node].deg()==0:
+                    deletedNodes.append(node)
+            for node in deletedNodes:
+                del newNet[node]
             return newNet
         else:
             return self.net
