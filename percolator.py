@@ -665,11 +665,11 @@ def cliquePercolator(net,k,evaluations,weightFunction="minweight",evaluationType
     if weightFunction=="minweight":
         edges=list(net.edges)
         edges.sort(lambda x, y: cmp(x[2],y[2]),reverse=reverse)
-        edgesAndEvaluations=EvaluationList(edges,evaluations,evaluationType)
+        edgesAndEvaluations=EvaluationList(edges,evaluations=evaluations,evaluationType=evaluationType)
         kcliques=kcliquesByEdges(edgesAndEvaluations,k) #unweighted clique percolation        
     elif weightFunction=="intensity":
         kcliqueList=kcliquesWeight(net,k,getIntensity)
-        kcliques=EvaluationList(kcliqueList,evaluations,evaluationType,weightFunction=lambda x:getIntensity(x,net))
+        kcliques=EvaluationList(kcliqueList,evaluations=evaluations,evaluationType=evaluationType,weightFunction=lambda x:getIntensity(x,net))
     else:
         raise Exception("No such weight function: "+str(weightFunction))
 
