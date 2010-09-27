@@ -679,6 +679,57 @@ class NodePartition(NodeCover):
         """
         return 1.0 - (self.getMutualInformation(otherPartition)
                       /max(self.entropy, otherPartition.entropy))
+
+    def getTilingImperfection(self, otherPartition):
+        """Return tiling imperfection
+
+        Parameters
+        ----------
+        otherPartition : NodePartition object
+           The other community sructure to compare with.
+
+        Return
+        ------
+        ti : list of 2 numpy.arrays with sizes (len(self), len(otherPartition))
+           The tiling imperfections; ti[0] contains the tiling
+           imperfection when `self` is tiled with `otherPartition` and
+           ti[1] the tiling imperfection when `otherPartition` is
+           tiled with `self`.
+        pm : list of 2 numpy.arrays with sizes (len(self), len(otherPartition))
+           The communities that match perfectly; pm[0][c_i] = 1 if
+           community c_i of `self` matches perfectly some community of
+           `otherPartition`, and 0 otherwise. pm[1] contains the same
+           information for `otherPartition`.
+        """
+        commNet = self._getOverlapNetwork(otherPartition)
+        ti_0 = np.ones(len(self), dtype=float)
+        ti_1 = np.ones(len(otherPartition), dtype=float)
+        pm_0 = np.zeros(len(self), dtype=int)
+        pm_1 = np.zeros(len(otherPartition), dtype=int)
+
+        for comm_id_i, comm_id_j, isect in commNet.edges:
+            if comm_id_i < comm_id_j:
+                comm_id_j -= len(self)
+            else:
+                comm_id_i, comm_id_j = comm_id_j, comm_id_i-len(self)
+            comm_i, comm_j = self[comm_id_i], otherPartition[comm_id_j]
+            
+            if isect == len(comm_i) and isect == len(comm_j):
+                # Perfect match.
+                ti_0[comm_id_i] = 0
+                ti_1[comm_id_j] = 0
+                pm_0[comm_id_i] = 1
+                pm_1[comm_id_j] = 1
+            else:
+                # `self` tiled by `otherPartition`
+                if isect > len(comm_j)/2.0:
+                    ti_0[comm_id_i] += float(len(comm_j) - 2*isect)/len(comm_i)
+
+                # `otherPartition` tiled by `self`
+                if isect > len(comm_i)/2.0:
+                    ti_1[comm_id_j] += float(len(comm_i) - 2*isect)/len(comm_j)
+                
+        return [ti_0, ti_1], [pm_0, pm_1]
         
     def modularity(self, net):
         """Return modularity of this community structure.
