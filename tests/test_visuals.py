@@ -84,8 +84,7 @@ class Test_visualizeNet(unittest.TestCase):
         self.dirnet = pynet.Net()
         self.dirnet[0][1] = 1
         self.dirnet[0][2] = 1
-        self.dirnet[1][2] = 1
-        self.dirnet[2][1] = 1
+        self.dirnet[0][3] = 1
 
         self.symmnet = pynet.SymmNet()
         self.symmnet[0][1] = 1
@@ -96,17 +95,21 @@ class Test_visualizeNet(unittest.TestCase):
                        % (os.path.dirname(visuals.__file__),))
 
     def test_dirnet(self):
-        fig = pylab.figure()
-        ax = fig.add_subplot(111)
+        fig = pylab.figure(figsize=(6,6/np.sqrt(2)))
+        ax = fig.add_axes([0.2,0.2,0.2,0.2])
+        coords = {0:(0,0),1:(2,0),2:(-2/np.sqrt(2),2/np.sqrt(2)),
+                  3:(-2/np.sqrt(2),-2/np.sqrt(2))}
         visuals.visualizeNet(self.dirnet, axes=ax, frame=True,
+                             coords=coords, margin=0.05,
                              defaultNodeColor='white',
                              defaultNodeEdgeColor='blue',
                              defaultEdgeColor='red',
-                             defaultNodeSize=40,
-                             defaultEdgeWidth=2,
-                             defaultNodeEdgeWidth=2.0,
+                             defaultNodeSize=6,
+                             defaultEdgeWidth=0.1,
+                             defaultNodeEdgeWidth=0.4,
                              labelAllNodes=True,
-                             defaultLabelPosition='in')
+                             defaultLabelPosition='in',
+                             labelAllEdges=True)
         fig.savefig(self.folder + "test_dirnet.eps")
 
     def test_symmnet(self):
