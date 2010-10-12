@@ -101,7 +101,11 @@ class NodeCover(object):
     def getGiantSize(self):
         """Get the size of the largest component.
         """
-        return self.getCommunitySizes()[0]
+        communitySizes=self.getCommunitySizes()
+        if len(communitySizes)>0:
+            return communitySizes[0]
+        else:
+            return 0
 
     def getSizeDist(self):
         """Get size distribution.
