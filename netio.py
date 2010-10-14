@@ -147,6 +147,7 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
         fields=line.split(splitterChar)
         if len(fields)>1:
             if len(fields)==2: #if weight is missing:
+                fields[1]=fields[1].strip('\n') #strip the endline from the node name
                 fields.append(1) #add one as the weight
             if fields[0]!=fields[1] or allowSelfEdges:
                 if numerical:
