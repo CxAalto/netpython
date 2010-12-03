@@ -213,7 +213,7 @@ def threshold_by_value(net,threshold,accept="<",keepIsolatedNodes=False):
 
 def dist_to_weights(net,epsilon=0.001):
     '''Transforms a distance matrix / network to a weight
-    matrix / network using the formula W = 1 - D / max(D).
+    matrix / network using the formula W = 1 - D / max(D)+epsilon.
     Returns a matrix/network'''
 
     N=len(net._nodes)
@@ -231,13 +231,10 @@ def dist_to_weights(net,epsilon=0.001):
             maxd=edge[2]
 
     # epsilon trick; lowest weight will be almost but
-    # not entirely zero
-    
-    maxd=maxd+epsilon
-
+    # not entirely zero    
     for edge in edges:
         if not(edge[2]==maxd):
-            newmat[edge[0]][edge[1]]=1-edge[2]/maxd
+            newmat[edge[0]][edge[1]]=1-edge[2]/maxd+epsilon
 
     netext.copyNodeProperties(net,newmat)
 
