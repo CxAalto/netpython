@@ -447,21 +447,6 @@ def setEdgeWidth(value,weightLimits,minwidth,maxwidth):
         width=minwidth 
     return width
 
-   
-def plot_edge(plotobject, xcoords, ycoords, width=1.0, colour='k',
-              symmetric=True):
-    if symmetric:
-        plotobject.plot(xcoords,ycoords,'-',lw=width,color=colour)
-    else:
-        arr = Arrow(xcoords[0], ycoords[0], xcoords[1]-xcoords[0], 
-                    ycoords[1]-ycoords[0], edgecolor='none',
-                    facecolor=colour,linewidth=width)
-        plotobject.add_patch(arr)
-
-
-def plot_node(plotobject,x,y,shape='o',color='w',size=8.0,edgecolor='w'):
-    plotobject.plot([x], [y], 'yo', marker=shape,markerfacecolor=color,
-                    markeredgecolor=edgecolor,markersize=size)
 
 def visualizeNet(net, coords=None, axes=None, frame=False,
                  scaling=True, margin=0.025,
@@ -1129,7 +1114,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
                  setNodeColorsByProperty=None, nodeColorMap='winter',
                  nodePropertyLimits=None, nodeLabel_xOffset=None, coloredvertices=None,
                  vcolor=None, vsize=None, frame=False, showTicks=False, 
-                 axisLimits=None, baseFig=None): 
+                 axisLimits=None, baseFig=None,interactive=False): 
     """Visualizes a network.
 
     The coloring of the nodes is decided as follows:
@@ -1242,6 +1227,10 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     baseFig : FigureCanvasBase
         If None, the network is drawn on an empty figure, otherwise
         baseFig is used as a starting point.
+    interactive : bool
+        If True, the nodes can be moved around in the figure. Interaction needs to be
+        started by calling fig.startInteraction(). It can be stopped by calling
+        fig.stopInteraction().
 
     Return
     ------
@@ -1279,6 +1268,29 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     than using FigureCanvasBase? How can I have a look at the figures
     from within python, without saving them to .eps files?)
     """
+
+   
+    def plot_edge(plotobject, xcoords, ycoords, width=1.0, colour='k',
+                  symmetric=True):
+        if symmetric:
+            return plotobject.plot(xcoords,ycoords,'-',lw=width,color=colour)[0]
+        else:
+            arr = Arrow(xcoords[0], ycoords[0], xcoords[1]-xcoords[0], 
+                        ycoords[1]-ycoords[0], edgecolor='none',
+                        facecolor=colour,linewidth=width)
+            return plotobject.add_patch(arr)[0]
+
+
+    def plot_node(plotobject,x,y,shape='o',color='w',size=8.0,edgecolor='w'):
+        return plotobject.plot([x], [y], 'yo', marker=shape,markerfacecolor=color,
+                        markeredgecolor=edgecolor,markersize=size)[0]
+
+
+    if interactive:
+        edgeObjectIndices=pynet.SymmNet()
+        edgeObjects=[]
+        nodeObjects={}
+        nodeLabelObjects={}
 
     # Warn about obsolete input arguments
     if coloredvertices!=None or vcolor!=None or vsize!=None:
@@ -1358,8 +1370,12 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
             colour=setColor(edge[2],weightLimits,myEdgeColorMap)
             xcoords=[xy[edge[0]][0],xy[edge[1]][0]]
             ycoords=[xy[edge[0]][1],xy[edge[1]][1]]
-            plot_edge(axes, xcoords, ycoords, width=width, colour=colour,
+            edgeObject=plot_edge(axes, xcoords, ycoords, width=width, colour=colour,
                       symmetric=net.isSymmetric())
+            if interactive:
+                #0.1 is because 0 is not added as an edge. The offset of 0.1 is dropped in int()
+                edgeObjectIndices[edge[0],edge[1]]=len(edgeObjects)+0.1 
+                edgeObjects.append(edgeObject)
 
 
     # Then draw nodes, depending on given options showAllNodes
@@ -1500,7 +1516,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         # don't coincide on the nodes
         nodeLabel_xOffset = (nodeLabel_xOffset or float(nodesize)/40)
 
-        plot_node(axes, x=xy[node][0], y=xy[node][1], shape=nodeshape,
+        nodeObject=plot_node(axes, x=xy[node][0], y=xy[node][1], shape=nodeshape,
                   color=color, size=nodesize,edgecolor=nodeEdgeColor)
 
         if node in labels or uselabels == 'all':
@@ -1516,10 +1532,18 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
             #              color=fontcolor,size=fontsize)
 
             nodeLabel_offset = int(np.ceil(float(nodesize)/2))+1
-            axes.annotate(showthislabel,(xy[node][0],xy[node][1]),
+            nodeLabelObject=axes.annotate(showthislabel,(xy[node][0],xy[node][1]),
                           textcoords='offset points',
                           xytext=(nodeLabel_offset, nodeLabel_offset),
                           color=fontcolor,size=fontsize)
+            if interactive:
+                nodeLabelObjects[node]=nodeLabelObject
+        elif interactive:
+            nodeLabelObjects[node]=None
+
+        if interactive:
+            nodeObjects[node]=nodeObject
+
 
     xylist = xy.values()
     xlist=[]
@@ -1548,6 +1572,169 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         setp(axes,
              'xlim', (minx-xdelta,maxx+xdelta),
              'ylim', (miny-ydelta,maxy+ydelta))
+
+    if interactive:
+        # Save everything that is needed later
+        thisfigure.nodeObjects=nodeObjects
+        thisfigure.edgeObjectIndices=edgeObjectIndices
+        thisfigure.edgeObjects=edgeObjects
+        thisfigure.nodeLabelObjects=nodeLabelObjects
+        thisfigure.coords=xy
+        thisfigure.selectedNode=None
+
+        def on_press(fig, event):
+            """Find the right node and animate it.
+            """
+            #if event.inaxes != fig.axes: return
+            if fig.selectedNode!=None: return
+
+            candidateNodes=[]
+            xlim=fig.axes[0].get_xlim()
+            ylim=fig.axes[0].get_ylim()
+            xScalingFactor=1./72./fig.get_figwidth()*(xlim[1]-xlim[0])
+            yScalingFactor=1./72./fig.get_figheight()*(ylim[1]-ylim[0])
+            for node in fig.nodeObjects:
+                d=(nodeObjects[node].get_xydata()-np.array([event.xdata,event.ydata]))[0]
+                d[0]=d[0]/xScalingFactor
+                d[1]=d[1]/yScalingFactor
+                d=np.sqrt(sum(d*d))
+                if d<max(nodeObjects[node].get_markersize(),5.0):
+                    candidateNodes.append(node)
+            if len(candidateNodes)==0:
+                return
+
+            sd=None
+            closestNode=None
+            for node in candidateNodes:
+                d=nodeObjects[node].get_xydata()-np.array([event.xdata,event.ydata])
+                d=np.sqrt(sum(d*d))
+                if sd==None or d<sd:
+                    sd=d
+                    closestNode=node
+
+            fig.selectedNode=closestNode
+            nodeObject=fig.nodeObjects[closestNode]
+            nodeLabelObject=fig.nodeLabelObjects[closestNode]
+            
+            x0,y0=nodeObject.get_xydata()[0]
+            if nodeLabelObject!=None:
+                xl0,yl0=nodeLabelObject.xy
+            else:
+                xl0,yl0=None,None
+            
+            fig.press=x0,y0,event.xdata,event.ydata,xl0,yl0
+
+            # draw everything but the selected rectangle and store the pixel buffer
+            canvas = fig.canvas
+            axes = fig.axes[0]
+            bbox=fig.bbox
+
+            #set the node and all its edges animated
+            nodeObject.set_animated(True)
+            if nodeLabelObject!=None:
+                nodeLabelObject.set_animated(True)
+            for edgeIndex in fig.edgeObjectIndices[closestNode].weights:
+                edgeObject=fig.edgeObjects[int(edgeIndex)]
+                edgeObject.set_animated(True)
+
+            canvas.draw()
+            fig.background=canvas.copy_from_bbox(bbox)
+
+            # now redraw just the rectangle
+            axes.draw_artist(nodeObject)
+
+            # and blit just the redrawn area
+            canvas.blit(bbox)
+
+        def on_motion(fig, event):
+            'on motion we will move the rect if the mouse is over us'
+            #if event.inaxes != fig.axes: return
+            if fig.selectedNode==None: return
+            if event.xdata==None: return
+            
+            x0, y0, xpress, ypress, xl0,yl0 = fig.press
+            dx = event.xdata - xpress
+            dy = event.ydata - ypress
+            
+            nodeObject=fig.nodeObjects[fig.selectedNode]
+            nodeLabelObject=fig.nodeLabelObjects[fig.selectedNode]
+            for edgeIndex in fig.edgeObjectIndices[fig.selectedNode].weights:
+                edgeObject=fig.edgeObjects[int(edgeIndex)]
+                #select the right end of the edge
+                if np.all(edgeObject.get_xydata()[0]==nodeObject.get_xydata()):
+                    thisEnd=0
+                else:
+                    thisEnd=1
+                xy=edgeObject.get_xydata()
+                xy[thisEnd]=[x0+dx,y0+dy]
+                edgeObject.set_xdata(xy[:,0])
+                edgeObject.set_ydata(xy[:,1])
+            nodeObject.set_xdata([x0+dx])
+            nodeObject.set_ydata([y0+dy])
+            if nodeLabelObject!=None:
+                nodeLabelObject.xy=(xl0+dx,yl0+dy)
+
+            canvas = fig.canvas
+            axes = fig.axes[0]
+            # restore the background region
+            canvas.restore_region(fig.background)
+
+            # redraw just the current rectangle
+            for edgeIndex in fig.edgeObjectIndices[fig.selectedNode].weights:
+                edgeObject=fig.edgeObjects[int(edgeIndex)]
+                axes.draw_artist(edgeObject)
+            axes.draw_artist(nodeObject)
+            if nodeLabelObject!=None:
+                axes.draw_artist(nodeLabelObject)
+
+            # blit just the redrawn area
+            canvas.blit(axes.bbox)
+
+        def on_release(fig, event):
+            'on release we reset the press data'
+            if fig.selectedNode==None: return
+
+            # turn off the rect animation property and reset the background
+            nodeObject=fig.nodeObjects[fig.selectedNode]
+            nodeLabelObject=fig.nodeLabelObjects[fig.selectedNode]
+            nodeObject.set_animated(False)
+            if nodeLabelObject!=None:
+                nodeLabelObject.set_animated(False)
+            for edgeIndex in fig.edgeObjectIndices[fig.selectedNode].weights:
+                edgeObject=fig.edgeObjects[int(edgeIndex)]
+                edgeObject.set_animated(False)
+
+            fig.coords[fig.selectedNode]=tuple(nodeObject.get_xydata())
+
+            fig.background = None
+
+            # redraw the full figure
+            fig.canvas.draw()
+
+            fig.press = None
+            fig.selectedNode = None
+
+
+
+        def connect(fig):
+            'connect to all the events we need'
+            fig.cidpress = fig.canvas.mpl_connect(
+                'button_press_event', lambda event:on_press(fig,event))
+            fig.cidrelease = fig.canvas.mpl_connect(
+                'button_release_event', lambda event:on_release(fig,event))
+            fig.cidmotion = fig.canvas.mpl_connect(
+                'motion_notify_event', lambda event:on_motion(fig,event))
+
+        def disconnect(fig):
+            'disconnect all the stored connection ids'
+            fig.canvas.mpl_disconnect(fig.cidpress)
+            fig.canvas.mpl_disconnect(fig.cidrelease)
+            fig.canvas.mpl_disconnect(fig.cidmotion)
+
+
+
+        thisfigure.startInteraction=lambda:connect(thisfigure)
+        thisfigure.stopInteraction=lambda:disconnect(thisfigure)
 
     return thisfigure
             
