@@ -1230,7 +1230,8 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     interactive : bool
         If True, the nodes can be moved around in the figure. Interaction needs to be
         started by calling fig.startInteraction(). It can be stopped by calling
-        fig.stopInteraction().
+        fig.stopInteraction(). Note that the coordinates in the xy dict are modified
+        when user move the nodes around.
 
     Return
     ------
@@ -1704,7 +1705,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
                 edgeObject=fig.edgeObjects[int(edgeIndex)]
                 edgeObject.set_animated(False)
 
-            fig.coords[fig.selectedNode]=tuple(nodeObject.get_xydata())
+            fig.coords[fig.selectedNode]=tuple(nodeObject.get_xydata()[0])
 
             fig.background = None
 
