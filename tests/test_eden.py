@@ -9,8 +9,8 @@ class TestEden(unittest.TestCase):
 		self.folder=os.path.dirname(eden.__file__)+os.path.join("a","tests","")[1:]
 		self.data1=["100 101 200 220 330 300",
 			    "101 102 201 221 301 331"]
-		self.data2=["100 101 200 220 330 999999",
-			    "101 999999 201 221 301 331"]
+		self.data2=["100 101 200 220 330 999",
+			    "101 999 201 221 301 331"]
 
 
 	def test_distances_individuals(self):

@@ -42,7 +42,7 @@ def loadNet_microsatellite(input,removeClones=True,distance="lm"):
 class MicrosatelliteData:
     """ A class for parsing and using microsatellite data
     """
-    def __init__(self,input,missingValue="999999"):
+    def __init__(self,input,missingValue="999"):
         """
         The microsatellite data must be given as a input where each row
         has microsatellites for one node/specimen. Alleles should be given as
@@ -428,7 +428,7 @@ class MicrosatelliteData:
         return theStr
 
 class MicrosatelliteDataHaploid(MicrosatelliteData):
-    def __init__(self,input,missingValue="999999"):
+    def __init__(self,input,missingValue="999"):
         """
         The microsatellite data must be given as a input where each row
         has microsatellites for one node/specimen. Alleles should be given as
