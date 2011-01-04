@@ -9,7 +9,6 @@ import numpy as np
 import copy
 import random
 import shutil
-import Image
 import operator
 
 # --------------------------------------        
@@ -1962,10 +1961,6 @@ class Himmeli:
     def saveEps(self,filename):
         shutil.copyfile(self.netName+"_0001.eps",filename)
 
-    def draw(self):
-        im = Image.open(self.netName+"_0001.eps")
-        im.show()
-
     def _parseCoordinates(self, coordFileName):
         coordFile = open(coordFileName, 'r')
         coordFile.readline()
@@ -2134,9 +2129,21 @@ class Himmeli:
 def drawNet(net,labels={},coordinates=None,showAllNodes=False):
     """Display a picture of the network using Himmeli
     """
-    h=Himmeli(net, labels=labels, coordinates=coordinates,
-              showAllNodes=showAllNodes)
-    h.draw()
+    from Tkinter import Tk,TOP,BOTH,YES
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+    if coordinates==None:
+        h=Himmeli(net, labels=labels, coordinates=coordinates,
+                  showAllNodes=showAllNodes)
+        coordinates=h.getCoordinates()
+
+
+    f=VisualizeNet(net,coordinates,interactive=True,uselabels='all',labels=labels)
+    w=Tk()
+    canvas=FigureCanvasTkAgg(f,master=w)
+    canvas.show()
+    canvas._tkcanvas.pack(side=TOP,fill=BOTH,expand=YES)
+    f.startInteraction()
 
 
 # ---------------------------------------        
