@@ -11,7 +11,6 @@ import heapq
 import string
 import percolator
 import shutil
-from PIL import Image
 from math import ceil
 from Tkinter import *
 

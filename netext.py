@@ -10,7 +10,6 @@ import shutil
 import copy
 import visuals
 import numpy
-from PIL import Image
 
 
 class Net_edges:
@@ -33,7 +32,7 @@ class Net_edges:
         lenght=0
         if self.net.isSymmetric():
             for nodeIndex in self.net:
-                lenght+=len(self.net[nodeIndex].edges)
+                lenght+=self.net[nodeIndex].deg()
             return lenght/2
         else:
             for nodeIndex in self.net:
@@ -41,10 +40,6 @@ class Net_edges:
             return lenght
     def __str__(self):
         return str(list(self))
-        #rs=""
-        #for edge in self:
-        #    rs+=str(edge)+" "
-        #return rs
 pynet.VirtualNet.edges=property(Net_edges)
 
 class Net_weights:
@@ -59,25 +54,59 @@ class Net_weights:
         return reduce(lambda x,y: str(x)+" "+str(y),self)
 pynet.VirtualNet.weights=property(Net_weights)
 
-class Node_edges:
+class Node_weights:
     def __init__(self,node):
         self.node=node
     def __iter__(self):
-        for index in self.node:
-            yield self.node.net[self.node.name,index]       
+        if self.node.net.isSymmetric():
+            for index in self.node:
+                yield self.node.net[self.node.name,index]       
+        else:
+            for index in self.node:
+                yield self.node.net[self.node.name,index],self.node.net[index,self.node.name]      
     def __len__(self):
         return self.node.deg()
-        #return len(self.node.net._nodes[self.node.index])
     def __str__(self):
         rs=""
         for edge in self:
-            rs+=str(edge)+"\t"
+            rs+=str(edge)+" "
         return rs
-pynet.Node.edges=property(Node_edges)
+pynet.Node.weights=property(Node_weights)
 
+class Node_inWeights:
+    def __init__(self,node):
+        self.node=node
+    def __iter__(self):
+        for otherNodeName in self.node.iterIn():
+            yield self.node.net[otherNodeName,self.node.name]
+    def __len__(self):
+        return self.node.inDeg()
+    def __str__(self):
+        return " ".join(self)
+pynet.Node.inWeights=property(Node_inWeights)
+
+class Node_outWeights:
+    def __init__(self,node):
+        self.node=node
+    def __iter__(self):
+        for otherNodeName in self.node.iterOut():
+            yield self.node.net[self.node.name,otherNodeName]
+    def __len__(self):
+        return self.node.outDeg()
+    def __str__(self):
+        return " ".join(self)
+pynet.Node.outWeights=property(Node_outWeights)
+
+def getInStrength(node):
+    return sum(node.inWeights)
+pynet.Node.inStrength=property(getInStrength)
+
+def getOutStrength(node):
+    return sum(node.outWeights)
+pynet.Node.outStrength=property(getOutStrength)
 
 def getStrength(node):
-    return sum(node.edges)
+    return sum(node.weights)
 pynet.Node.strength=getStrength
 
 def strengths(net,nodes=None):
