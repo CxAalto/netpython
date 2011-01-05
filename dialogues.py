@@ -400,10 +400,10 @@ class ProjectLaunchDialog(MySimpleDialog):
 
         self.bottompart=Frame(self.wholeframe)
 
-        r1=Radiobutton(self.bottompart,text='Genetic data, haploid, individual centred',value='ms_haploid',variable=masterclass.datatype)
-        r125=Radiobutton(self.bottompart,text='Genetic data, diploid, individual centred',value='ms_diploid',variable=masterclass.datatype)
-        r15=Radiobutton(self.bottompart,text='Genetic data, haploid, sampling site based',value='mpop_haploid',variable=masterclass.datatype)
-        r175=Radiobutton(self.bottompart,text='Genetic data, diploid, sampling site based',value='mpop_diploid',variable=masterclass.datatype)
+        r1=Radiobutton(self.bottompart,text='Genotype matrix, haploid, individual centred',value='ms_haploid',variable=masterclass.datatype)
+        r125=Radiobutton(self.bottompart,text='Genotype matrix, diploid, individual centred',value='ms_diploid',variable=masterclass.datatype)
+        r15=Radiobutton(self.bottompart,text='Genotype matrix, haploid, sampling site based',value='mpop_haploid',variable=masterclass.datatype)
+        r175=Radiobutton(self.bottompart,text='Genotype matrix, diploid, sampling site based',value='mpop_diploid',variable=masterclass.datatype)
         r2=Radiobutton(self.bottompart,text='Distance matrix',value='dmat',variable=masterclass.datatype)
         r3=Radiobutton(self.bottompart,text='Network data',value='net',variable=masterclass.datatype)
         r1.grid(row=1,column=0,sticky=W)
