@@ -1595,20 +1595,19 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
             xScalingFactor=1./72./fig.get_figwidth()*(xlim[1]-xlim[0])
             yScalingFactor=1./72./fig.get_figheight()*(ylim[1]-ylim[0])
             for node in fig.nodeObjects:
-                d=(nodeObjects[node].get_xydata()-np.array([event.xdata,event.ydata]))[0]
+                xy=np.array([[nodeObjects[node].get_xdata()[0],nodeObjects[node].get_ydata()[0]]])
+                d=(xy-np.array([event.xdata,event.ydata]))[0]
                 d[0]=d[0]/xScalingFactor
                 d[1]=d[1]/yScalingFactor
                 d=np.sqrt(sum(d*d))
                 if d<max(nodeObjects[node].get_markersize(),5.0):
-                    candidateNodes.append(node)
+                    candidateNodes.append((node,d))
             if len(candidateNodes)==0:
                 return
 
             sd=None
             closestNode=None
-            for node in candidateNodes:
-                d=nodeObjects[node].get_xydata()-np.array([event.xdata,event.ydata])
-                d=np.sqrt(sum(d*d))
+            for node,d in candidateNodes:
                 if sd==None or d<sd:
                     sd=d
                     closestNode=node
@@ -1617,7 +1616,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
             nodeObject=fig.nodeObjects[closestNode]
             nodeLabelObject=fig.nodeLabelObjects[closestNode]
             
-            x0,y0=nodeObject.get_xydata()[0]
+            x0,y0=nodeObject.get_xdata()[0],nodeObject.get_ydata()[0]
             if nodeLabelObject!=None:
                 xl0,yl0=nodeLabelObject.xy
             else:
@@ -1667,14 +1666,15 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
             for edgeIndex in fig.edgeObjectIndices[fig.selectedNode].weights:
                 edgeObject=fig.edgeObjects[int(edgeIndex)]
                 #select the right end of the edge
-                if np.all(edgeObject.get_xydata()[0]==nodeObject.get_xydata()):
+                if nodeObject.get_xdata()[0]==edgeObject.get_xdata()[0] and nodeObject.get_ydata()[0]==edgeObject.get_ydata()[0]:
                     thisEnd=0
                 else:
                     thisEnd=1
-                xy=edgeObject.get_xydata()
-                xy[thisEnd]=[x0+dx,y0+dy]
-                edgeObject.set_xdata(xy[:,0])
-                edgeObject.set_ydata(xy[:,1])
+                x,y=list(edgeObject.get_xdata()),list(edgeObject.get_ydata())
+                x[thisEnd]=x0+dx
+                y[thisEnd]=y0+dy
+                edgeObject.set_xdata(x)
+                edgeObject.set_ydata(y)
             nodeObject.set_xdata([x0+dx])
             nodeObject.set_ydata([y0+dy])
             if nodeLabelObject!=None:
@@ -1710,7 +1710,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
                 edgeObject=fig.edgeObjects[int(edgeIndex)]
                 edgeObject.set_animated(False)
 
-            fig.coords[fig.selectedNode]=tuple(nodeObject.get_xydata()[0])
+            fig.coords[fig.selectedNode]=tuple([nodeObject.get_xdata()[0],nodeObject.get_ydata()[0]])
 
             fig.background = None
 
