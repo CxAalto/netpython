@@ -1587,6 +1587,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
             """
             #if event.inaxes != fig.axes: return
             if fig.selectedNode!=None: return
+            if event.xdata==None or event.ydata==None: return 
 
             candidateNodes=[]
             xlim=fig.axes[0].get_xlim()
@@ -1624,7 +1625,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
             
             fig.press=x0,y0,event.xdata,event.ydata,xl0,yl0
 
-            # draw everything but the selected rectangle and store the pixel buffer
+            # draw everything but the selected objects and store the pixel buffer
             canvas = fig.canvas
             axes = fig.axes[0]
             bbox=fig.bbox
@@ -1640,10 +1641,15 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
             canvas.draw()
             fig.background=canvas.copy_from_bbox(bbox)
 
-            # now redraw just the rectangle
+            # now redraw the animated objects
+            if nodeLabelObject!=None:
+                axes.draw_artist(nodeLabelObject)
+            for edgeIndex in fig.edgeObjectIndices[closestNode].weights:
+                edgeObject=fig.edgeObjects[int(edgeIndex)]
+                axes.draw_artist(edgeObject)
             axes.draw_artist(nodeObject)
 
-            # and blit just the redrawn area
+            # and blit the redrawn area
             canvas.blit(bbox)
 
         def on_motion(fig, event):
