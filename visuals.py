@@ -652,9 +652,9 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
                                  'min_size':0.2, 'max_size':2.0}
 
     node_label_font_color = 'k'
-    node_label_font_size = (if nodeLabelSize==None then 8 else nodeLabelSize)
+    node_label_font_size = 8 if nodeLabelSize==None else nodeLabelSize
     edge_label_font_color = 'k'
-    edge_label_font_size = (if edgeLabelSize==None then 5 else edgeLabelSize)
+    edge_label_font_size = 5 if edgeLabelSize==None else edgeLabelSize
 
     #
     # PROCESS INPUT PARAMETERS
