@@ -453,12 +453,12 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
                  nodeSizes=None, defaultNodeSize=None,
                  nodeColors=None, defaultNodeColor=None,
                  nodeEdgeColors=None, defaultNodeEdgeColor='black',
-                 nodeLabels=None, labelAllNodes=False,
+                 nodeLabels=None, nodeLabelSize=None, labelAllNodes=False,
                  labelPositions=None, defaultLabelPosition='out',
                  edgeColors=None, defaultEdgeColor=None,
                  edgeWidths=None, defaultEdgeWidth=None,
                  nodeEdgeWidths=None, defaultNodeEdgeWidth=0.2,
-                 edgeLabels=None, labelAllEdges=False,
+                 edgeLabels=None, edgeLabelSize=None, labelAllEdges=False,
                  nodePlotOrders=None, defaultNodePlotOrder=1,
                  edgePlotOrders=None, defaultEdgePlotOrder=0):
     """Visualize a network.
@@ -652,9 +652,9 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
                                  'min_size':0.2, 'max_size':2.0}
 
     node_label_font_color = 'k'
-    node_label_font_size = 8
+    node_label_font_size = (if nodeLabelSize==None then 8 else nodeLabelSize)
     edge_label_font_color = 'k'
-    edge_label_font_size = 5
+    edge_label_font_size = (if edgeLabelSize==None then 5 else edgeLabelSize)
 
     #
     # PROCESS INPUT PARAMETERS
