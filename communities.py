@@ -122,7 +122,7 @@ class NodeCover(object):
             dist[cs] = 1 + dist.get(cs, 0)
         return dist
 
-    def getSusceptibility(self, size=None):
+    def getSusceptibility1(self, size=None):
         """Return the susceptibility.
 
         Susceptibility is defined as: 
@@ -158,6 +158,53 @@ class NodeCover(object):
         # Remove largest component
         gc = max(sd.keys())
         sd[gc] = 0
+
+        # Calculate the susceptibility
+        for key, value in sd.iteritems():
+            sus += value*key**2
+        if (size-gc) == 0:
+            return 0.0
+        else:
+            return float(sus)/float(size-gc)
+
+    def getSusceptibility(self, size=None):
+        """Return the susceptibility.
+
+        Susceptibility is defined as: 
+        
+        (Sum_{s'} n_s * s * s) / (Sum_{s'} n_s * s)
+        Sum_{s'} means sum over all sizes except the largest connected
+        component (LCC). However, in case there are more than one LCC, only one
+        of them is thrown out.
+        Size is the number of nodes in the network. If it is given, it
+        is assumed that communities of size 1 are not included in this
+        community structure.  If there is only 0 or 1 community, zero
+        is returned.
+        """
+        sd = self.getSizeDist()
+        
+        if len(sd) < 1:
+            if size==None or size==0:
+                return 0.0
+            else:
+                return 1.0
+
+        sizeSum = 0
+        for key, value in sd.iteritems():
+            sizeSum += key*value
+
+        # If no size is given, assume that also communities of size 1
+        # are included.
+        if size==None:
+            sus=0
+            size=sizeSum
+        else:
+            sus=size-sizeSum #s=1
+            assert(sus>=0)
+
+        # Remove largest component
+        gc = max(sd.keys())
+        sd[gc] = sd[gc]-1
 
         # Calculate the susceptibility
         for key, value in sd.iteritems():
