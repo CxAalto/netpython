@@ -233,8 +233,7 @@ def dist_to_weights(net,epsilon=0.001):
     # epsilon trick; lowest weight will be almost but
     # not entirely zero    
     for edge in edges:
-        if not(edge[2]==maxd):
-            newmat[edge[0]][edge[1]]=1-edge[2]/maxd+epsilon
+        newmat[edge[0]][edge[1]]=1-edge[2]/maxd+epsilon
 
     netext.copyNodeProperties(net,newmat)
 
