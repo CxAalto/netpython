@@ -507,7 +507,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     ----------------
 
     A constant color can be defined in any way allowed by pylab. For
-    example 'k', 'black' and (0,0,0) all result in black color.
+    example 'k', 'black' and (0,0,0) all give black color.
 
     Alternatively the color can be based on the node strength, degree
     or any node property. In this case the coloring definition is a
@@ -521,7 +521,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     
         KEY      DEFAULT VALUE       OTHER POSSIBLE VALUES
         'by'     'strength'/'weight' 'degree', 'property:<property_name>'
-        'scale'  'lin'               'log'
+        'scale'  'log'               'lin'
         'cmap'   'jet'               Any colormap
         'min'    (Min value in data) Any integer x,     1 <= x <= 'max'
         'max'    (Max value in data) Any integer x, 'min' <= x         
@@ -549,7 +549,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     The possible keys and their default values are
         KEY        DEFAULT VALUE       OTHER POSSIBLE VALUES
         'by'       'strength'          'degree', 'property:<property_name>'
-        'scale'    'lin'               'log'
+        'scale'    'log'               'lin'
         'min'      (Min value in data) int;          1 <= x <= 'max'
         'max'      (Max value in data) int;      'min' <= x         
         'min_size'   1                 int;          1 <= x <= 'max_size'
@@ -573,7 +573,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     
         KEY         DEFAULT VALUE       OTHER POSSIBLE VALUES
         'by'        'weight'          
-        'scale'     'lin'               'log'
+        'scale'     'log'               'lin'
         'min'       (Min value in data) int;   1 <= x <= 'max'
         'max'       (Max value in data) int;   'min' <= x         
         'min_size'    0.2               float; 1 <= x <= 'max_width'
@@ -643,18 +643,18 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     # DEFAULT VALUES. These will be used whenever the user has not
     # defined a given value for defaultNodeColor etc.
     # 
-    internal_defaultNodeColor = {'by':'strength', 'scale':'lin', 'cmap':'jet'}
-    internal_defaultEdgeColor = {'by':'weight', 'scale':'lin', 'cmap':'jet'}
+    internal_defaultNodeColor = {'by':'strength', 'scale':'log', 'cmap':'jet'}
+    internal_defaultEdgeColor = {'by':'weight', 'scale':'log', 'cmap':'jet'}
 
-    internal_defaultNodeSize = {'by':'strength', 'scale':'lin',
+    internal_defaultNodeSize = {'by':'strength', 'scale':'log',
                                 'min_size':2, 'max_size':6}
-    internal_defaultEdgeWidth = {'by':'weight', 'scale':'lin',
+    internal_defaultEdgeWidth = {'by':'weight', 'scale':'log',
                                  'min_size':0.2, 'max_size':2.0}
 
     node_label_font_color = 'k'
-    node_label_font_size = 8 if nodeLabelSize==None else nodeLabelSize
+    node_label_font_size = (8 if nodeLabelSize==None else nodeLabelSize)
     edge_label_font_color = 'k'
-    edge_label_font_size = 5 if edgeLabelSize==None else edgeLabelSize
+    edge_label_font_size = (5 if edgeLabelSize==None else edgeLabelSize)
 
     #
     # PROCESS INPUT PARAMETERS
@@ -751,7 +751,7 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
                                np.log(value_limits),
                                final_limits)
         else:
-            return lin_scaling( value, value_limits, final_limits)
+            return lin_scaling(value, value_limits, final_limits)
 
     def determine_size(scheme, i, net, values, limits, defaults):
         if not isinstance(scheme, dict):
@@ -1087,9 +1087,9 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
     # Remove frame.
     if not frame:
         #Using 'axes.set_axis_off()' would also turn of the axis
-        #labels, which might be too much. The following lines are
-        #required to turn of the frame and tick labels while keeping
-        #axis labels.
+        #labels, which is too much. The following lines are required
+        #to turn of the frame and tick labels while keeping axis
+        #labels.
         axes.set_frame_on(False)
         axes.set_xticklabels([])
         axes.xaxis.set_ticks_position('none')
