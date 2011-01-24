@@ -11,6 +11,9 @@ class TestEden(unittest.TestCase):
 			    "101 102 201 221 301 331"]
 		self.data2=["100 101 200 220 330 999",
 			    "101 999 201 221 301 331"]
+		self.data3=["123 999 999",
+			    "123 123 999",
+			    "999 123 123"]
 
 
 	def test_distances_individuals(self):
@@ -54,6 +57,14 @@ class TestEden(unittest.TestCase):
 		assert dm3[0,1]==(3*1.0+29.0)/4.0,"Haploid data: Error calculating the linear manhattan distance."
 		dm4=ms2.getDistanceMatrix(distance="ap")
 		assert dm4[0,1]==1.0,"Haploid data: Error calculating the allele parsimony distance."	
+
+		#Haploid, large amounts of missing data
+		ms3=eden.MicrosatelliteDataHaploid(self.data3)
+		dm5=ms3.getDistanceMatrix(distance="lm")
+		assert dm5[0,1]==0.0,"Missing data: Error."
+		assert dm5[0,2]==-1, "Missing data: No matchind data fields should lead to -1 distance."
+		print list(dm5.edges)
+
 
 	def test_distances_populations_missing_data(self):
 		#Diploid
