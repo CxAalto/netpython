@@ -317,7 +317,7 @@ class MicrosatelliteData:
         if size!=0:
             return sum/float(size)
         else:
-            return numpy.nan
+            return -1 #numpy.nan
 
     def getMSDistanceByAlleles(self,x,y,distance_singleLocus):
         return self.getMSDistanceByVector(self.getMSDistanceVectorByAlleles(x,y,distance_singleLocus))
