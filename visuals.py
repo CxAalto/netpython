@@ -463,6 +463,9 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
                  edgePlotOrders=None, defaultEdgePlotOrder=0):
     """Visualize a network.
     
+    Note that all sizes (node size, link width, etc.) are given in
+    points: one point equals 1/72th of an inch.
+
     Basic parameters
     ----------------
     net : pynet.SymmNet
