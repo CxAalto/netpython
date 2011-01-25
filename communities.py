@@ -785,6 +785,10 @@ class NodePartition(NodeCover):
     def modularity(self, net):
         """Return modularity of this community structure.
 
+        NB! This implementation is very slow if there is even one big
+        community because the current code iterates through all node
+        pairs (not just links!) inside each community.
+
         Parameters
         ----------
         net : pynet.SymmNet of pynet.Net object
