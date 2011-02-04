@@ -177,9 +177,10 @@ class MicrosatelliteData:
                 
         raise NotImplementedError()
 
-    def getGroupwiseDistance_Goldstein(self,x,y):
+    def getGroupwiseDistance_Goldstein_D1(self,x,y):
         """
         Returns the goldstein distance between two populations
+        This is the ASD (average square distance) of the Goldstein distances.
 
         Parameters
         ----------
@@ -222,6 +223,51 @@ class MicrosatelliteData:
                                 dist += float(i-j)**2*xdict[i]/NElementsX*ydict[j]/NElementsY
 
                 distList.append(dist)
+
+        return sum(distList)/len(distList)
+
+    def getGroupwiseDistance_Goldstein(self,x,y):
+        """
+        Returns the goldstein distance between two populations. 
+        For each allele this is the square of the averages. This function
+        returns the average of the values for each allele.
+
+        Parameters
+        ----------
+        x and y are lists of sample indices correspoding to samples of two populations.
+        The distance between these populations is calculated.
+
+        """
+
+
+        distList=[]
+        for locus in range(self.getNumberofLoci()):
+            #Calculate the averages
+            mx=0.0
+            nx=0.0
+            for nodeIndex in x:
+                xlocus = self.getLocusforNodeIndex(locus,nodeIndex)
+                if xlocus[0]!=None:
+                    mx+=xlocus[0]
+                    nx+=1
+                if xlocus[1]!=None:
+                    mx+=xlocus[1]
+                    nx+=1
+            mx=mx/float(nx)
+
+            my=0.0
+            ny=0.0
+            for nodeIndex in y:
+                ylocus = self.getLocusforNodeIndex(locus,nodeIndex)
+                if ylocus[0]!=None:
+                    my+=ylocus[0]
+                    ny+=1
+                if ylocus[1]!=None:
+                    my+=ylocus[1]
+                    ny+=1
+            my=my/float(ny)
+
+            distList.append((mx-my)**2)
 
         return sum(distList)/len(distList)
 
