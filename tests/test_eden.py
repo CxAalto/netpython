@@ -34,13 +34,19 @@ class TestEden(unittest.TestCase):
 	def test_distances_populations(self):
 		#Diploid
 		ms1=eden.MicrosatelliteData(self.data1)
-		dm1=ms1.getGroupwiseDistanceMatrix(groups=[[0],[1]],distance="goldstein")
-		assert dm1[0,1]==0.25*((1+4+1)+(1+21*21+19*19+1)+(29*29+1+1+31*31))/3.0,"Diploid data: Error calculating the goldstein distance."
+		dm1=ms1.getGroupwiseDistanceMatrix(groups=[[0],[1]],distance="goldstein_d1")
+		assert dm1[0,1]==0.25*((1+4+1)+(1+21*21+19*19+1)+(29*29+1+1+31*31))/3.0,"Diploid data: Error calculating the goldstein D1 distance."
+
+		dm3=ms1.getGroupwiseDistanceMatrix(groups=[[0],[1]],distance="goldstein")
+		assert dm3[0,1]==(((100+101)/2.-(101+102)/2.)**2+((200+220)/2.-(201+221)/2.)**2+((330+300)/2.-(301+331)/2.)**2)/3.,"Diploid data: Error calculating the goldstein distance."
 
 		#Haploid
 		ms2=eden.MicrosatelliteDataHaploid(self.data1)
-		dm2=ms2.getGroupwiseDistanceMatrix(groups=[[0],[1]],distance="goldstein")
-		assert dm2[0,1]==(1+1+1+1+29*29+31*31)/6.0,"Haploid data: Error calculating the goldstein distance."
+		dm2=ms2.getGroupwiseDistanceMatrix(groups=[[0],[1]],distance="goldstein_d1")
+		assert dm2[0,1]==(1+1+1+1+29*29+31*31)/6.0,"Haploid data: Error calculating the goldstein D1 distance."
+
+		dm4=ms2.getGroupwiseDistanceMatrix(groups=[[0],[1]],distance="goldstein")
+		assert dm4[0,1]==(1+1+1+1+29*29+31*31)/6.0,"Haploid data: Error calculating the goldstein distance."
 
 
 	def test_distances_individuals_missing_data(self):		
@@ -63,19 +69,25 @@ class TestEden(unittest.TestCase):
 		dm5=ms3.getDistanceMatrix(distance="lm")
 		assert dm5[0,1]==0.0,"Missing data: Error."
 		assert dm5[0,2]==-1, "Missing data: No matchind data fields should lead to -1 distance."
-		print list(dm5.edges)
+		#print list(dm5.edges)
 
 
 	def test_distances_populations_missing_data(self):
 		#Diploid
 		ms1=eden.MicrosatelliteData(self.data2)
-		dm1=ms1.getGroupwiseDistanceMatrix(groups=[[0],[1]],distance="goldstein")
-		assert dm1[0,1]==(0.5*1+0.25*(1+21*21+19*19+1)+0.5*(29*29+1))/3.0,"Diploid data: Error calculating the goldstein distance."
+		dm1=ms1.getGroupwiseDistanceMatrix(groups=[[0],[1]],distance="goldstein_d1")
+		assert dm1[0,1]==(0.5*1+0.25*(1+21*21+19*19+1)+0.5*(29*29+1))/3.0,"Diploid data: Error calculating the goldstein D1 distance."
+
+		dm3=ms1.getGroupwiseDistanceMatrix(groups=[[0],[1]],distance="goldstein")
+		assert dm3[0,1]==(((100+101)/2.-(101)/1.)**2+((200+220)/2.-(201+221)/2.)**2+((330)/1.-(301+331)/2.)**2)/3.,"Diploid data: Error calculating the goldstein distance."
 
 		#Haploid
 		ms2=eden.MicrosatelliteDataHaploid(self.data2)
-		dm2=ms2.getGroupwiseDistanceMatrix(groups=[[0],[1]],distance="goldstein")
-		assert dm2[0,1]==(1+1+1+29*29)/4.0,"Haploid data: Error calculating the goldstein distance."
+		dm2=ms2.getGroupwiseDistanceMatrix(groups=[[0],[1]],distance="goldstein_d1")
+		assert dm2[0,1]==(1+1+1+29*29)/4.0,"Haploid data: Error calculating the goldstein D1 distance."
+
+		dm4=ms2.getGroupwiseDistanceMatrix(groups=[[0],[1]],distance="goldstein")
+		assert dm4[0,1]==(1+1+1+29*29)/4.0,"Haploid data: Error calculating the goldstein distance."
 
 
 
