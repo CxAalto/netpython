@@ -253,7 +253,10 @@ class MicrosatelliteData:
                 if xlocus[1]!=None:
                     mx+=xlocus[1]
                     nx+=1
-            mx=mx/float(nx)
+            if nx!=0.0:
+                mx=mx/float(nx)
+            else:
+                mx=None
 
             my=0.0
             ny=0.0
@@ -265,11 +268,18 @@ class MicrosatelliteData:
                 if ylocus[1]!=None:
                     my+=ylocus[1]
                     ny+=1
-            my=my/float(ny)
+            if ny!=0:
+                my=my/float(ny)
+            else:
+                my=None
 
-            distList.append((mx-my)**2)
+            if mx != None and my != None:
+                distList.append((mx-my)**2)
 
-        return sum(distList)/len(distList)
+        if len(distList)!=0:
+            return sum(distList)/len(distList)
+        else:
+            return 0.0
 
     def getGroupwiseDistanceMatrix(self,groups,distance='goldstein',groupNames=None):
         """
@@ -278,7 +288,12 @@ class MicrosatelliteData:
         the indices of the nodes belonging to each group.
         """
         #only distance measure implemented so far:
-        getGroupwiseDistance=self.getGroupwiseDistance_Goldstein
+        if distance=="goldstein":
+            getGroupwiseDistance=self.getGroupwiseDistance_Goldstein
+        elif distance=="goldstein_d1":
+            getGroupwiseDistance=self.getGroupwiseDistance_Goldstein_D1
+        else:
+            raise NotImplementedError("Distance '"+distance+"' is not implemented.")
         
         grouplist=list(groups)
         ngroups=len(grouplist)
@@ -548,7 +563,56 @@ class MicrosatelliteDataHaploid(MicrosatelliteData):
                 distance[locus]=numpy.nan
         return distance
 
+
     def getGroupwiseDistance_Goldstein(self,x,y):
+        """
+        Returns the goldstein distance between two populations. 
+        For each allele this is the square of the averages. This function
+        returns the average of the values for each allele.
+
+        Parameters
+        ----------
+        x and y are lists of sample indices correspoding to samples of two populations.
+        The distance between these populations is calculated.
+
+        """
+        distList=[]
+        for locus in range(self.getNumberofLoci()):
+            #Calculate the averages
+            mx=0.0
+            nx=0.0
+            for nodeIndex in x:
+                xlocus = self.getLocusforNodeIndex(locus,nodeIndex)
+                if xlocus!=None:
+                    mx+=xlocus
+                    nx+=1
+            if nx!=0.0:
+                mx=mx/float(nx)
+            else:
+                mx=None
+
+            my=0.0
+            ny=0.0
+            for nodeIndex in y:
+                ylocus = self.getLocusforNodeIndex(locus,nodeIndex)
+                if ylocus!=None:
+                    my+=ylocus
+                    ny+=1
+            if ny!=0.0:
+                my=my/float(ny)
+            else:
+                my=None
+
+            if mx!=None and my!=None:
+                distList.append((mx-my)**2)
+
+        if len(distList)!=0:
+            return sum(distList)/len(distList)
+        else:
+            return 0.0
+
+
+    def getGroupwiseDistance_Goldstein_D1(self,x,y):
         """
         Returns the goldstein distance between two populations
 
