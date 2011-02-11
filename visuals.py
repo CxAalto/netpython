@@ -1116,7 +1116,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
                  setNodeColorsByProperty=None, nodeColorMap='winter',
                  nodePropertyLimits=None, nodeLabel_xOffset=None, coloredvertices=None,
                  vcolor=None, vsize=None, frame=False, showTicks=False, 
-                 axisLimits=None, baseFig=None,interactive=False): 
+                 axisLimits=None, baseFig=None,interactive=False,keepAspectRatio=False): 
     """Visualizes a network.
 
     The coloring of the nodes is decided as follows:
@@ -1234,6 +1234,11 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         started by calling fig.startInteraction(). It can be stopped by calling
         fig.stopInteraction(). Note that the coordinates in the xy dict are modified
         when user move the nodes around.
+    keepAspectRatio : bool
+        If axisLimits are not given, they are inferred from the xy-data. If keepAspectRatio 
+        is true, the aspect ratio in the aspect ratios is kept same in axis limits as in the
+        given figsize argument. Otherwise the axis are streched to the whole figure.
+         
 
     Return
     ------
@@ -1559,6 +1564,18 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
     maxx=max(xlist)
     miny=min(ylist)
     maxy=max(ylist)
+
+    if keepAspectRatio:
+        ywidth=maxy-miny
+        xwidth=maxx-minx
+        if xwidth!=0 and figsize[1]/float(figsize[0])>ywidth/float(xwidth): #if x is limiting
+            maxy=miny+ywidth/2.+figsize[1]/float(figsize[0])*xwidth/2.
+            miny=miny+ywidth/2.-figsize[1]/float(figsize[0])*xwidth/2.
+            ywidth=maxy-miny
+        else:
+            maxx=minx+xwidth/2.+figsize[0]/float(figsize[1])*ywidth/2.
+            minx=minx+xwidth/2.-figsize[0]/float(figsize[1])*ywidth/2.
+            xwidth=maxx-minx
 
     xdelta=0.05*(maxx-minx)
     ydelta=0.05*(maxy-miny)
