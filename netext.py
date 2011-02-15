@@ -379,6 +379,29 @@ def getMeanPathLength(net,maxSamples=1000):
         m+=numpy.mean(getPathLengths(net,node).values())
     return float(m)/float(len(nodes))
 
+def getPathLengthDistribution(net,maxSamples=1000):
+    """
+    Returns the shortest unweighted path length distribution of a network. If maxSample is not negative
+    only at maxSample number of nodes is used as a starting point for finding
+    paths instead of exhaustively going through all the paths.
+    """
+    nodes=list(net)
+    if len(net)>maxSamples and maxSamples>0:
+        random.shuffle(nodes)
+        nodes=nodes[:maxSamples]
+    m=0
+    distanceDist={}
+    for node in nodes:
+        distances=getPathLengths(net,node).values()
+        m+=len(distances)
+        for distance in distances:
+            distanceDist[distance]=distanceDist.get(distance,0)+1
+
+    #Normalize the distribution
+    for distance in distanceDist:
+        distanceDist[distance]=distanceDist[distance]/float(m)
+
+    return distanceDist
 
 def getBetweennessCentrality(net,edgeBC=False):
     """
