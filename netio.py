@@ -275,12 +275,21 @@ def writeNet_net(net, outputFile):
 
     del nodeNameToIndex
 
-def writeNet_mat(net, outputFile):
+def writeNet_mat(net, outputFile,type="square"):
     """
-    Writes network into file in weight matrix format. That is, the outputfile
-    is a text file where weight of an edge between node i an j is in row i and
-    column j. Nodes are ordered in ascending order by their names.
+    Writes network into file in weight matrix format. Nodes are ordered in ascending order by their names.
     
+    Parameters
+    ----------
+    type : string
+        "square": Outputs the matrix in a square format. Weight of an edge between node i an j 
+        is in row i and column j of that row. 
+        "upperdiag": Same as the square matrix, but now only the elements at the diagonal and above
+        are writen. 
+        "lowerdiag": See upperdiag
+        "supperdiag": Strictly upper diagonal. The diagonal elements are not written.
+        "slowerdiag": see supperdiag.
+
     The list of the node names in the order they are used in the weight matrix is 
     returned.
     """
@@ -289,15 +298,48 @@ def writeNet_mat(net, outputFile):
 
     nodes=list(net)
     nodes.sort()
-    for i in nodes:
-        first=True
-        for j in nodes:
-            if first:
-                first=False
-            else:
-                outputFile.write(" ")
-            outputFile.write(str(net[i,j]))
-        outputFile.write("\n")
+    if type=="square":
+        for i in nodes:
+            first=True
+            for j in nodes:
+                if first:first=False
+                else:outputFile.write("\t")
+                outputFile.write(str(net[i,j]))
+            outputFile.write("\n")
+    elif type=="upperdiag":
+        for iindex,i in enumerate(nodes):
+            first=True
+            for jindex,j in enumerate(nodes):
+                if first:first=False
+                else:outputFile.write("\t")
+                if iindex<=jindex:
+                    outputFile.write(str(net[i,j]))
+            outputFile.write("\n")
+    elif type=="supperdiag":
+        for iindex,i in enumerate(nodes):
+            if iindex!=len(nodes)-1:
+                for jindex,j in enumerate(nodes):
+                    if jindex>1:outputFile.write("\t")
+                    if iindex<jindex:
+                        outputFile.write(str(net[i,j]))
+                outputFile.write("\n")
+    elif type=="lowerdiag":
+        for iindex,i in enumerate(nodes):
+            for jindex,j in enumerate(nodes):
+                if jindex!=0 and jindex<=iindex: outputFile.write("\t")
+                if iindex>=jindex:
+                    outputFile.write(str(net[i,j]))
+            outputFile.write("\n")    
+    elif type=="slowerdiag":
+        for iindex,i in enumerate(nodes):
+            if iindex!=0:
+                for jindex,j in enumerate(nodes):
+                    if jindex!=0 and jindex<iindex:outputFile.write("\t")
+                    if iindex>jindex:
+                        outputFile.write(str(net[i,j]))
+                outputFile.write("\n")
+    else:
+        raise ValueError("Invalid value for parameter 'type'.")
     return nodes
 
 def writeNet_adj(net,outputFile,splitterChar=" "):

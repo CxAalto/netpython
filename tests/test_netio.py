@@ -1,4 +1,5 @@
 import unittest
+import cStringIO
 from operator import itemgetter
 from netpython import pynet
 from netpython import netio
@@ -52,17 +53,41 @@ class TestNetio(unittest.TestCase):
     def test_loadingNodeProperties_brokenFiles(self):
         pass
 
+    def test_writeNet_mat(self):
+        tempfile = cStringIO.StringIO() #virtual file
+        netio.writeNet_mat(self.simpleWeightedNet,tempfile,type="square")
+        self.assertEqual(tempfile.getvalue(),"0\t1.0\t2.0\t3.0\n1.0\t0\t4.0\t0.0\n2.0\t4.0\t0\t0.0\n3.0\t0.0\t0.0\t0\n")
+
+        tempfile = cStringIO.StringIO()
+        netio.writeNet_mat(self.simpleWeightedNet,tempfile,type="upperdiag")
+        self.assertEqual(tempfile.getvalue(),"0\t1.0\t2.0\t3.0\n\t0\t4.0\t0.0\n\t\t0\t0.0\n\t\t\t0\n")
+
+        tempfile = cStringIO.StringIO()
+        netio.writeNet_mat(self.simpleWeightedNet,tempfile,type="supperdiag")
+        self.assertEqual(tempfile.getvalue(),"1.0\t2.0\t3.0\n\t4.0\t0.0\n\t\t0.0\n")
+
+        tempfile = cStringIO.StringIO()
+        netio.writeNet_mat(self.simpleWeightedNet,tempfile,type="lowerdiag")
+        self.assertEqual(tempfile.getvalue(),"0\n1.0\t0\n2.0\t4.0\t0\n3.0\t0.0\t0.0\t0\n")
+
+        tempfile = cStringIO.StringIO()
+        netio.writeNet_mat(self.simpleWeightedNet,tempfile,type="slowerdiag")
+        self.assertEqual(tempfile.getvalue(),"1.0\n2.0\t4.0\n3.0\t0.0\t0.0\n")
+
+
 if __name__ == '__main__':
     if True:
         # If true, run only the tests listed below, otherwise run all tests
         # (this option is for testing the tests :-) )
         suite = unittest.TestSuite()
+        """
         suite.addTest(TestNetio("test_loadingNodeProperties_workingFiles_sparse1"))
         suite.addTest(TestNetio("test_loadingNodeProperties_workingFiles_sparse2"))
         suite.addTest(TestNetio("test_loadingNodeProperties_workingFiles_sparse3"))
         suite.addTest(TestNetio("test_loadingNodeProperties_workingFiles_full1"))
         suite.addTest(TestNetio("test_loadingNodeProperties_workingFiles_full2"))
         suite.addTest(TestNetio("test_loadingNodeProperties_brokenFiles"))
+        """
         unittest.TextTestRunner().run(suite)
     else:
         # Run all tests.
