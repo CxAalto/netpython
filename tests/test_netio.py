@@ -74,6 +74,23 @@ class TestNetio(unittest.TestCase):
         netio.writeNet_mat(self.simpleWeightedNet,tempfile,type="slowerdiag")
         self.assertEqual(tempfile.getvalue(),"1.0\n2.0\t4.0\n3.0\t0.0\t0.0\n")
 
+    def test_mat_readwrite_consistency(self):
+        def testConsistency(type):
+            tempfile = cStringIO.StringIO()
+            nodeNames=netio.writeNet_mat(self.simpleWeightedNet,tempfile,type=type)
+            string1=tempfile.getvalue()
+            tempfile.seek(0)
+            tempnet=netio.loadNet_mat(tempfile,nodeNames=nodeNames,type=type)
+            tempfile = cStringIO.StringIO()
+            netio.writeNet_mat(tempnet,tempfile,type=type)
+            self.assertEqual(string1,tempfile.getvalue())
+        testConsistency("square")
+        testConsistency("upperdiag")
+        testConsistency("supperdiag")
+        testConsistency("lowerdiag")
+        testConsistency("slowerdiag")
+
+
 
 if __name__ == '__main__':
     if True:
