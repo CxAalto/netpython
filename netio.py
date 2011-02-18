@@ -172,41 +172,149 @@ def loadNet_adj(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
                 numerical=None):
     raise Exception("Reading adj file format is not implemented.")
 
-def loadNet_mat(input, mutualEdges=False, splitterChar=None,symmetricNet=True,nodeNames=[]):
-    rows, columns = 0, 0
-    for line in input:
-        rows += 1
-        fields=line.split(splitterChar)
-        if rows != 1 and len(fields) != columns:
-            raise Exception("Unconsistent number of columns at row %d." % rows)
-        columns = len(fields)
-    if columns != rows:
-        raise Exception("Not a square matrix: %d columns and %d rows."
-                        % (columns, rows))
-    input.seek(0)
+def loadNet_mat(input, mutualEdges=False, splitterChar=None,symmetricNet=True,nodeNames=[],type="square"):
+    """
+    Loads a network from a file which is in a weight matrix format. Nodes are ordered in ascending order by their names.
+    
+    Parameters
+    ----------
+    type : string
+        "square": Input is in a square matrix format. Weight of an edge between node i an j 
+        is in row i and column j of that row. 
+        "upperdiag": Same as the square matrix, but now only the elements at the diagonal and above
+        are present. 
+        "lowerdiag": See upperdiag
+        "supperdiag": Strictly upper diagonal. The diagonal elements are not present.
+        "slowerdiag": see supperdiag.
 
-    usenodelist=0	
+    Returns
+    -------
+    The network that is loaded in a FullNet or in SymmFullNet format.
+    """
+
+
+    usenodelist=False	
     if len(nodeNames)>0:
-	usenodelist=1
-	if len(nodeNames)!=columns:
-		raise Exception("Node label list has wrong length.")
-    		usenodelist=0
+	usenodelist=True
+
+    #Get the network size
+    if usenodelist:
+        netSize=len(nodeNames)
+    else: #we have to infer the size from the file
+        if type=="square" or type=="upperdiag" or type=="supperdiag":
+            netSize=len(input.readline().strip().split(splitterChar))
+            input.seek(0)
+            if type=="supperdiag": netSize+=1
+        elif type=="lowerdiag" or type=="slowerdiag":
+            for line in input: pass #it would be faster to read backwards
+            netSize=len(line.strip().split(splitterChar))
+            if type=="slowerdiag": netSize+=1
+        else:
+            raise Exception("Invalid type for the matrix: "+str(type))
 
     if symmetricNet:
-        newNet=pynet.SymmFullNet(columns)
+        newNet=pynet.SymmFullNet(netSize)
     else:
-        newNet=pynet.FullNet(columns)
+        newNet=pynet.FullNet(netSize)
 
-    row = 0
-    for line in input:
-        fields=line.split(splitterChar)
-        for columnIndex in range(0,columns):
-            if columnIndex != row:
-		if usenodelist==0:
-	                newNet[row,columnIndex]=float(fields[columnIndex])
-		else:
-			newNet[nodeNames[row],nodeNames[columnIndex]]=float(fields[columnIndex])
-        row+=1
+    if type=="square":
+        for rowIndex,line in enumerate(input):
+            fields=line.strip().split(splitterChar)
+            
+            #Check that the matrix is of right form
+            if netSize!=(len(fields)):
+                if usenodelabels and rowIndex==0:
+                    raise Exception("The length of the node label list does not macth the number of columns.")
+                else:
+                    raise Exception("The length of row "+str(rowIndex)+" does not match the previous rows.")
+
+            #Now fill the row of the matrix
+            for columnIndex,element in enumerate(fields):
+                if columnIndex!=rowIndex:
+                    if usenodelist:
+                        newNet[nodeNames[rowIndex],nodeNames[columnIndex]]=float(element)
+                    else:
+                        newNet[rowIndex,columnIndex]=float(element)
+        if (rowIndex+1)!=netSize:
+            raise Exception("Invalid number of rows: There are "+str(rowIndex+1)+" rows and "+str(netSize)+" columns.")            
+
+    elif type=="upperdiag":
+        for rowIndex,line in enumerate(input):
+            fields=line.strip().split(splitterChar)
+
+            #Check that the matrix is of right form
+            if netSize!=(len(fields)+rowIndex):
+                if usenodelabels and rowIndex==0:
+                    raise Exception("The length of the node label list does not macth the number of columns.")
+                else:
+                    raise Exception("The length of row "+str(rowIndex)+" does not match the previous rows.")
+
+            #Now fill the row of the matrix
+            for columnIndex,element in enumerate(fields[1:]):
+                columnIndex+=1
+                if usenodelist:
+                    newNet[nodeNames[rowIndex],nodeNames[columnIndex+rowIndex]]=float(element)
+                else:
+                    newNet[rowIndex,columnIndex+rowIndex]=float(element)
+        if (rowIndex+1)!=netSize:
+            raise Exception("Invalid number of rows: There are "+str(rowIndex+1)+" rows and "+str(netSize)+" columns.")
+
+    elif type=="supperdiag":
+        for rowIndex,line in enumerate(input):
+            fields=line.strip().split(splitterChar)
+
+            #Check that the matrix is of right form
+            if netSize!=(len(fields)+rowIndex+1):
+                if usenodelabels and rowIndex==0:
+                    raise Exception("The length of the node label list does not macth the number of columns.")
+                else:
+                    raise Exception("The length of row "+str(rowIndex)+" does not match the previous rows.")
+
+            #Now fill the row of the matrix
+            for columnIndex,element in enumerate(fields):
+                columnIndex+=1
+                if usenodelist:
+                    newNet[nodeNames[rowIndex],nodeNames[columnIndex+rowIndex]]=float(element)
+                else:
+                    newNet[rowIndex,columnIndex+rowIndex]=float(element)
+        if (rowIndex+2)!=netSize:
+            raise Exception("Invalid number of rows: There are "+str(rowIndex+1)+" rows and "+str(netSize)+" columns.")
+
+    elif type=="lowerdiag":
+        for rowIndex,line in enumerate(input):
+            fields=line.strip().split(splitterChar)
+
+            #Check that the matrix is of right form
+            if len(fields)!=(rowIndex+1):
+                raise Exception("The length of row "+str(rowIndex)+" does not match the previous rows.")
+
+            #Now fill the row of the matrix
+            for columnIndex,element in enumerate(fields[:-1]):
+                if usenodelist:
+                    newNet[nodeNames[rowIndex],nodeNames[columnIndex]]=float(element)
+                else:
+                    newNet[rowIndex,columnIndex]=float(element)
+        if (rowIndex+1)!=netSize:
+            raise Exception("Invalid number of rows: There are "+str(rowIndex+1)+" rows and "+str(netSize)+" columns.")
+
+    elif type=="slowerdiag":
+        for rowIndex,line in enumerate(input):
+            fields=line.strip().split(splitterChar)
+            rowIndex+=1
+
+            #Check that the matrix is of right form
+            if len(fields)!=rowIndex:
+                raise Exception("The length of row "+str(rowIndex)+" does not match the previous rows.")
+
+            #Now fill the row of the matrix
+            for columnIndex,element in enumerate(fields):
+                if usenodelist:
+                    newNet[nodeNames[rowIndex],nodeNames[columnIndex]]=float(element)
+                else:
+                    newNet[rowIndex,columnIndex]=float(element)
+        if (rowIndex+1)!=netSize:
+            raise Exception("Invalid number of rows: There are "+str(rowIndex+1)+" rows and "+str(netSize)+" columns.")
+
 
     return newNet
 
