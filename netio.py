@@ -207,6 +207,7 @@ def loadNet_mat(input, mutualEdges=False, splitterChar=None,symmetricNet=True,no
             if type=="supperdiag": netSize+=1
         elif type=="lowerdiag" or type=="slowerdiag":
             for line in input: pass #it would be faster to read backwards
+            input.seek(0)
             netSize=len(line.strip().split(splitterChar))
             if type=="slowerdiag": netSize+=1
         else:
