@@ -75,9 +75,11 @@ class TestNetio(unittest.TestCase):
         self.assertEqual(tempfile.getvalue(),"1.0\n2.0\t4.0\n3.0\t0.0\t0.0\n")
 
     def test_mat_readwrite_consistency(self):
-        def testConsistency(type):
+        def testConsistency(type,nonames=False):
             tempfile = cStringIO.StringIO()
             nodeNames=netio.writeNet_mat(self.simpleWeightedNet,tempfile,type=type)
+            if nonames:
+                nodeNames=[]
             string1=tempfile.getvalue()
             tempfile.seek(0)
             tempnet=netio.loadNet_mat(tempfile,nodeNames=nodeNames,type=type)
@@ -89,6 +91,11 @@ class TestNetio(unittest.TestCase):
         testConsistency("supperdiag")
         testConsistency("lowerdiag")
         testConsistency("slowerdiag")
+        testConsistency("square",True)
+        testConsistency("upperdiag",True)
+        testConsistency("supperdiag",True)
+        testConsistency("lowerdiag",True)
+        testConsistency("slowerdiag",True)
 
 
 
