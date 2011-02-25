@@ -9,17 +9,37 @@ from operator import mul
 
 
 
-class KtreeInteger_new:
+class KtreeInteger:
     def __init__(self,size=0):
-        self.ktree=numpy.ones(size,dtype="uint")
-        self.subTreeWeight=numpy.ones(size,dtype="uint")
+        """
+        Parameters
+        ----------
+        size : int
+            Size of the Kruskal tree. If size is set to 0, the Kruskal tree is
+            considered of having a dynamic size, and it can be made larger
+            by using the setSize methods. For positive values of size, the
+            Kruskal tree size is static. 
+        """
+        if size>0:
+            self.ktree=numpy.ones(size,dtype="uint")
+            self.subTreeWeight=numpy.ones(size,dtype="uint")
+        else:
+            self.ktree=[]
+            self.subTreeWeight=[]
+
         self.mappingOn=False
         self.sizeDistribution={}
-        self.sizeDistribution[1]=size
+        self.size=size
         if size!=0:
+            self.sizeDistribution[1]=size        
             for index in xrange(0,size):
                 self.ktree[index]=index;
+            self.giantSize=1
+        else:
+            self.giantSize=0
         
+        self.suscSum=size #The sum of the squared sizes in for the susceptibility
+
     def __getRealParent(self,node):
         """
         Private method. Reads elements directly from the tree.        
@@ -72,8 +92,22 @@ class KtreeInteger_new:
             self.sizeDistribution[small_set_size+large_set_size] = self.sizeDistribution.get(small_set_size+large_set_size,0)+1
             self.subTreeWeight[large_set]+=self.subTreeWeight[small_set]
 
+            new_set_size=small_set_size+large_set_size
+            if new_set_size>self.giantSize:
+                self.giantSize=new_set_size
+            self.suscSum-=small_set_size*small_set_size
+            self.suscSum-=large_set_size*large_set_size
+            self.suscSum+=new_set_size*new_set_size
+            assert self.suscSum>1
+
             self.__setRealParent(small_set,large_set)
 
+    def getSusceptibility(self):
+        if self.size!=self.giantSize:
+            return (self.suscSum-self.giantSize*self.giantSize)/float(self.size-self.giantSize)
+        else:
+            return 0.0
+        
     def mergeSetsWithElements(self,elements):
         first=elements[0]
         for i in range(1,len(elements)):
@@ -108,10 +142,18 @@ class KtreeInteger_new:
         self.setParent(edge[0],edge[1])
        
     def setSize(self,newSize):
-        for index in range( len(self.ktree),newSize+1):
-           self.ktree.append(index);
+        if newSize<self.size:
+            raise Exception("The size cannot be decreased.")
+        if self.size==0 and newSize>0:
+            self.giantSize=1
+        self.size=newSize
+        for index in range( len(self.ktree),newSize):
+           self.ktree.append(index)
+           self.subTreeWeight.append(1)
+           self.suscSum+=1
+           self.sizeDistribution[1]=self.sizeDistribution.get(1,0)+1
 
-class KtreeInteger:
+class KtreeInteger_old:
     def __init__(self,size=0):
         self.ktree=[]
         self.mappingOn=False
