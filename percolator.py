@@ -132,7 +132,7 @@ class KtreeInteger:
                 else:
                     communityMap[communityKey].append(node)
 
-        return communities.NodeCover(communityMap)
+        return communities.NodePartition(communityMap)
 
     def __len__(self):
         return len(self.ktree)
@@ -152,6 +152,12 @@ class KtreeInteger:
            self.subTreeWeight.append(1)
            self.suscSum+=1
            self.sizeDistribution[1]=self.sizeDistribution.get(1,0)+1
+
+    #this is for legacy support
+    def setParent(self,node,newParent):
+        self.mergeSets(node,newParent)
+    def getParent(self,node):
+        self.getSetIndex(node)
 
 class KtreeInteger_old:
     def __init__(self,size=0):
@@ -230,7 +236,7 @@ class KtreeInteger_old:
 
 
 #class KtreeMapping(KtreeInteger):
-class Ktree(KtreeInteger): 
+class Ktree: 
     """
     A Kruskal tree with mapping frontend. This means that node names can be any
     hashable objects.
@@ -241,9 +247,17 @@ class Ktree(KtreeInteger):
         self.mappingOn=True
 
     def getParent(self,node):
+        if self.ktree.size<(self.nodeIndex[node]+1):
+            self.ktree.setSize(self.nodeIndex[node]+1)
         return self.nodeIndex.getReverse(self.ktree.getParent(self.nodeIndex[node]))
     def setParent(self,node,newParent):
+        requiredSize=max(self.nodeIndex[node],self.nodeIndex[newParent])+1        
+        if self.ktree.size<requiredSize:
+            self.ktree.setSize(requiredSize)
         self.ktree.setParent(self.nodeIndex[node],self.nodeIndex[newParent])
+
+    def addEdge(self,edge):
+        self.setParent(edge[0],edge[1])
 
     def __iter__(self):
         return self.nodeIndex.__iter__()
