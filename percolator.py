@@ -241,10 +241,13 @@ class Ktree:
     A Kruskal tree with mapping frontend. This means that node names can be any
     hashable objects.
     """
-    def __init__(self,size=0):
+    def __init__(self,size=0,nodeNames=None):
         self.ktree=KtreeInteger(size)
         self.nodeIndex=netext.Enumerator()
         self.mappingOn=True
+        if nodeNames!=None:
+            for nodeName in nodeNames:
+                self.nodeIndex[nodeName]
 
     def getParent(self,node):
         if self.ktree.size<(self.nodeIndex[node]+1):
@@ -274,10 +277,11 @@ class Ktree:
         return newcs
 
 class Percolator:
-    def __init__(self,edgesAndEvaluations,buildNet=True,symmetricNet=True):
+    def __init__(self,edgesAndEvaluations,buildNet=True,symmetricNet=True,nodes=None):
         self.edges=edgesAndEvaluations
         self.buildNet=buildNet
         self.symmetricNet=symmetricNet
+        self.nodes=nodes
 
     def __iter__(self):
         if self.buildNet:
@@ -285,7 +289,12 @@ class Percolator:
                 net=pynet.SymmNet()
             else:
                 net=pynet.Net()
-        ktree=Ktree()
+
+        if self.nodes==None:
+            ktree=Ktree()
+        else:
+            ktree=Ktree(size=len(self.nodes),nodeNames=self.nodes)
+            
         for edge in self.edges:
             if isinstance(edge,EvaluationEvent):
                 cs=ktree.getCommStruct()
@@ -439,10 +448,6 @@ class EvaluationList:
         
 def getComponents(net):
     """Get connected components of a network
-
-    NOTE! This method currently discards nodes with no edges (proper
-    behaviour would be to turn them into components, so this should be
-    fixed).
     
     Parameters
     ----------
@@ -456,7 +461,7 @@ def getComponents(net):
     edges=net.edges
     ee=EvaluationList(edges)
     ee.setLastEvaluation()
-    p=Percolator(ee,buildNet=False)
+    p=Percolator(ee,buildNet=False,nodes=net)
     for cs in p:
         return cs
 
