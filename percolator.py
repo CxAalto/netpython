@@ -157,7 +157,7 @@ class KtreeInteger:
     def setParent(self,node,newParent):
         self.mergeSets(node,newParent)
     def getParent(self,node):
-        self.getSetIndex(node)
+        return self.getSetIndex(node)
 
 class KtreeInteger_old:
     def __init__(self,size=0):
