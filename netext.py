@@ -63,7 +63,7 @@ class Node_weights:
                 yield self.node.net[self.node.name,index]       
         else:
             for index in self.node:
-                yield self.node.net[self.node.name,index],self.node.net[index,self.node.name]      
+                yield self.node.net[self.node.name,index]+self.node.net[index,self.node.name]      
     def __len__(self):
         return self.node.deg()
     def __str__(self):
