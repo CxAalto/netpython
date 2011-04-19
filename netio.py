@@ -94,15 +94,15 @@ def loadNet_gml(input):
     return net
 
 def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
-                numerical=None,allowSelfEdges=True,hasHeaderLine=None):
+                numerical=None, allowSelfEdges=True, hasHeaderLine=False):
     """Read network data from input in edg format.
 
     If `mutualEdges` is set to True, an edge is added between nodes i
     and j only if both edges (i,j) and (j,i) are listed. The weight of
-    the edge is the average of the weights of the original edges.
+    the edge is the sum of the weights of the original edges.
 
-    If `mutualEdges` is False and the same edge is encountered
-    multiple times, the edge weight will be the sum of all weights.
+    If the same edge is encountered multiple times, the edge weight
+    will be the sum of all weights.
 
     If 'allowSelfEdges', the self edges are translated as nodes with
     no edges. Otherwise those edges are just thrown out.
@@ -133,7 +133,7 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
 
     #Check for headers
     possibleHeaders=[["from","to","weight"],["head","tail","weight"]]
-    if hasHeaderLine!=False:
+    if hasHeaderLine != False:
         firstLine=input.readline().strip().lower()
         fields=firstLine.split(splitterChar)
         if hasHeaderLine==None and fields not in possibleHeaders:
@@ -149,18 +149,19 @@ def loadNet_edg(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
             if len(fields)==2: #if weight is missing:
                 fields[1]=fields[1].strip('\n') #strip the endline from the node name
                 fields.append(1) #add one as the weight
-            if fields[0]!=fields[1] or allowSelfEdges:
+            if fields[0] != fields[1] or allowSelfEdges:
                 if numerical:
                     fields[0]=int(fields[0])
                     fields[1]=int(fields[1])
                 if fields[0]!=fields[1]:
                     if mutualEdges:
                         if nodeMap.has_key( (fields[1], fields[0]) ):
-                            value = 0.5*( nodeMap[(fields[1], fields[0])] 
-                                          + float(fields[2]) )
-                            newNet[fields[0]][fields[1]] = value
+                            newNet[fields[0]][fields[1]] += nodeMap[(fields[1], fields[0])]
+                            newNet[fields[0]][fields[1]] += float(fields[2])
+                            nodeMap[(fields[1], fields[0])] = 0
+                            nodeMap[(fields[0], fields[1])] = 0
                         else:
-                            nodeMap[(fields[0], fields[1])] = float(fields[2])
+                            nodeMap[(fields[0], fields[1])] = nodeMap.get((fields[0], fields[1]), 0) + float(fields[2])
                     else:
                         newNet[fields[0]][fields[1]] += float(fields[2])
                 else:
@@ -518,8 +519,7 @@ def writeNet(net, output, headers=False, fileType=None):
         if fileOpened:
             outputFile.close()
 
-def loadNet(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
-            numerical=None, fileType=None):
+def loadNet(input, fileType=None, **keywords):
     """Read network from disk.
 
     Parameters
@@ -535,6 +535,10 @@ def loadNet(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
     ValueError : If file type is unknown or unable to read from
                  `input`.
     """
+    #mutualEdges=False, splitterChar=None, symmetricNet=True,
+    #numerical=None, fileType=None, hasHeaderLine=False, allowSelfEdges=True):
+
+
     # If `input` is a string, we assume it is a file name and open
     # it. Otherwise if it implements 'write'-method we assume it is a
     # file object.
@@ -555,8 +559,7 @@ def loadNet(input, mutualEdges=False, splitterChar=None, symmetricNet=True,
     try:
         # edg-files need different behaviour.
         if fileType == 'edg':
-            newNet = loadNet_edg(inputFile, mutualEdges, splitterChar,
-                                 symmetricNet, numerical)
+            newNet = loadNet_edg(inputFile, **keywords)
         #elif fileType in ('gml', 'mat', 'net'):
         elif fileType in knownFiletypes:
             newNet = eval("loadNet_%s(inputFile)" % fileType)
