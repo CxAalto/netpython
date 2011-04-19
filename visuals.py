@@ -862,8 +862,8 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
             axes.arrow(x, y, dx, dy,
                        color=color, width=arrow_width,
                        head_width=12*arrow_width,
-                       head_length=14*arrow_width,
-                       shape='left', overhang=0.4,
+                       head_length=18*arrow_width,
+                       shape='left', overhang=0.2,
                        length_includes_head=True, 
                        head_starts_at_zero=False,
                        zorder=zorder)
@@ -955,7 +955,18 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
         # Sort by edge weight.
         edges.sort(key=operator.itemgetter(2))
         limits['weight'] = (edges[0][2], edges[-1][2])
-        
+
+        # DEBUGGING: Print statistics of edge weights.
+        #import data_utils
+        #weights_ = map(operator.itemgetter(2), edges) 
+        #print "Edges:", limits['weight'], " 10/25/50/75/90:",
+        #mp_ = len(edges)/2
+        #print "%d, %d, %d, %d, %d" % (int(data_utils.percentile(weights_, 0.1)),
+        #                              int(data_utils.percentile(weights_, 0.25)),
+        #                              int(data_utils.percentile(weights_, 0.5)),
+        #                              int(data_utils.percentile(weights_, 0.75)),
+        #                              int(data_utils.percentile(weights_, 0.9)))
+
         for i,j,w in edges:
             values = {"weight": w,
                       "strength": strengths[j],
