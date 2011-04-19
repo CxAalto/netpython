@@ -495,6 +495,25 @@ def netConfiguration(net, keepsOrigNet=False, seed=None):
 
     return newNet
 
+
+def copyNet(net):
+    """ Copy a network. Also the node properties are copied.
+
+    Parameters
+    ----------
+    net : any pynet object
+        The network to be copied.
+
+    Return
+    ------
+    newNet : net.__class__ object
+        A copy of the network.
+
+    """
+    newNet=net.__copy__()
+    netext.copyNodeProperties(net,newNet)
+    return newNet
+
 if __name__ == '__main__':
     """Run unit tests if called."""
     from tests.test_transforms import *
