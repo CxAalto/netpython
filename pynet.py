@@ -61,6 +61,27 @@ class VirtualNet(object):
 		return self._nodes.iterkeys()
 	def __len__(self):
 		return len(self._nodes)
+
+	def __copy__(self):
+		copyNet=self.__class__(self.sizeLimit)
+
+		#add nodes to the new net
+		for node in self:
+			copyNet.addNode(node)
+			
+		#add the edges to the backend
+		if self.symmetric:
+			for node1 in self:			
+				for node2 in self[node1]:
+					if node1.__hash__()<node2.__hash__():
+						copyNet[node1,node2]=self[node1,node2]
+		else:
+			for node1 in self:			
+				for node2 in self[node1]:
+					copyNet[node1,node2]=self[node1,node2]			
+
+		return copyNet
+
 	def addNode(self,nodeName):
 		"""
 		Adds an empty node to the network.
