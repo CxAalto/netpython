@@ -41,6 +41,15 @@ class TestPynet(unittest.TestCase):
         myNet[1,4]=4.0
         self.assertEqual(myNet[1,4],4.0)
 
+        #test copying
+        copyNet=myNet.__copy__()        
+        self.assertEqual(sorted(list(copyNet)),[1,2,3,4])
+        self.assertEqual(sorted(list(myNet)),sorted(list(copyNet)))
+        self.assertEqual(map(myNet.inDeg,myNet),map(copyNet.inDeg,myNet))
+        self.assertEqual(map(myNet.outDeg,myNet),map(copyNet.outDeg,myNet))
+        self.assertEqual(copyNet[1,4],4.0)
+        self.assertEqual(copyNet[2,3],5.0)
+
     def test_basic_symm(self,netType):
         myNet=netType(sizeLimit=10)
 
@@ -60,7 +69,12 @@ class TestPynet(unittest.TestCase):
         myNet.addNode("bar")
         self.assertEqual(len(myNet),3)
         self.assertEqual(myNet["bar"].deg(),0)
-        
+
+        #test copying
+        copyNet=myNet.__copy__()        
+        self.assertEqual(sorted(list(myNet)),sorted(list(copyNet)))
+        self.assertEqual(map(lambda node:sorted(myNet[node]),myNet),map(lambda node:sorted(copyNet[node]),myNet))
+
         #next net
         myNet2=netType(sizeLimit=10)
         myNet2.addNode(1)
@@ -72,6 +86,11 @@ class TestPynet(unittest.TestCase):
         #test adding empty nodes
         myNet2.addNode("empty")
         self.assertEqual(myNet2["empty"].deg(),0)
+
+        #test copying
+        copyNet2=myNet2.__copy__()        
+        self.assertEqual(sorted(list(myNet2)),sorted(list(copyNet2)))
+        self.assertEqual(map(lambda node:sorted(myNet2[node]),myNet2),map(lambda node:sorted(copyNet2[node]),myNet2))
 
 
     def test_basic_dir_ScipySparseDirNet(self):
