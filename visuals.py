@@ -590,16 +590,17 @@ def visualizeNet(net, coords=None, axes=None, frame=False,
 
     Node labels can be given in `nodeLabels` dictionary, where the key
     is node index and the value is the corresponding labels. If
-    `labelAllNodes` is True, also the nodes not in `nodeLabels` will
-    receive a label. In this case the label is the node index.
+    `labelAllNodes` is True, also nodes not in `nodeLabels` will
+    receive a label, which is the node index.
 
     The values in `nodeLabels` are converted to string with str().
 
     There are two possibilities for the positioning of node labels:
     'in' and 'out' (default). 'in' means that the label is printed at
     the exact position of the node; if the node is hollow, this
-    effectively prints the node labes inside the nodes. 'out' prints
-    the label next to the node.
+    effectively prints the node labes inside the nodes (make sure the
+    node size and font sizes are compatible). 'out' prints the label
+    next to the node.
 
     Edge labels
     -----------
