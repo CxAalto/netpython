@@ -277,11 +277,12 @@ class Ktree:
         return newcs
 
 class Percolator:
-    def __init__(self,edgesAndEvaluations,buildNet=True,symmetricNet=True,nodes=None):
+    def __init__(self,edgesAndEvaluations,buildNet=True,symmetricNet=True,nodes=None,returnKtree=False):
         self.edges=edgesAndEvaluations
         self.buildNet=buildNet
         self.symmetricNet=symmetricNet
         self.nodes=nodes
+        self.returnKtree=returnKtree
 
     def __iter__(self):
         if self.buildNet:
@@ -297,12 +298,17 @@ class Percolator:
             
         for edge in self.edges:
             if isinstance(edge,EvaluationEvent):
-                cs=ktree.getCommStruct()
-                cs.threshold=edge.threshold
-                cs.addedEdges=edge.addedElements
-                if self.buildNet:
-                    cs.net=net
-                yield cs
+                if self.returnKtree:
+                    ktree.threshold=edge.threshold
+                    ktree.addedEdges=edge.addedElements
+                    yield ktree
+                else:
+                    cs=ktree.getCommStruct()
+                    cs.threshold=edge.threshold
+                    cs.addedEdges=edge.addedElements
+                    if self.buildNet:
+                        cs.net=net
+                    yield cs
             else:
                 ktree.addEdge(edge)
                 if self.buildNet:
