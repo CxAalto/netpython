@@ -242,12 +242,17 @@ class Ktree:
     hashable objects.
     """
     def __init__(self,size=0,nodeNames=None):
-        self.ktree=KtreeInteger(size)
         self.nodeIndex=netext.Enumerator()
         self.mappingOn=True
+
         if nodeNames!=None:
+            if size<len(nodeNames):
+                size=len(nodeNames)
             for nodeName in nodeNames:
                 self.nodeIndex[nodeName]
+
+        self.ktree=KtreeInteger(size)
+
 
     def getParent(self,node):
         if self.ktree.size<(self.nodeIndex[node]+1):
