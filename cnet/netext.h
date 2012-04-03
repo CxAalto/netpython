@@ -3,4 +3,5 @@
 #include "sn.h"
 
 float clusteringCoefficient(Sn*, int);
+int getNumberOfTriangles(Sn *netContainer);
 float meanPathLength(Sn*, int);

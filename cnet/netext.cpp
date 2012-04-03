@@ -33,7 +33,25 @@ float clusteringCoefficient(Sn::Sn *netContainer, int node){
   //return (float)sum;
 }
 
+int getNumberOfTriangles(Sn::Sn *netContainer){
+  SymmNet<float> &net=*netContainer->net;
 
+  int triangles=0;
+  for (int i=0;i<net.size();++i)
+    for (SymmNet<float>::const_edge_iterator j=net(i).begin();
+	 !j.finished();
+	 ++j) { 
+      if (*j<i)
+	for (SymmNet<float>::const_edge_iterator k=net(*j).begin();
+	     !k.finished();
+	     ++k) {
+	  if (*k<*j)
+	    if (net(*k)[i] != 0){ triangles++;}
+    }
+  }
+  return triangles; 
+ 
+}
 
 float meanPathLength(Sn::Sn *netContainer, int maxSamples){
   SymmNet<float> &net=*netContainer->net;
@@ -62,7 +80,7 @@ float meanPathLength(Sn::Sn *netContainer, int maxSamples){
     
   for (size_t m=0; m<NStartNodes; ++m) {
     size_t startingPoint=order[m]; 
-    //std::cerr << "\r\rStarting to find shortest paths from node id " << startingPoint << "...\n";
+    std::cerr << "\r\rStarting to find shortest paths from node id " << startingPoint << "...\n";
     Dijkstrator<SymmNet<float> > paths(net,startingPoint);
     for (; !paths.finished(); ++paths) {
       sumlengths += (*paths).getWeight();

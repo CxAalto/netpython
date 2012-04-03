@@ -1,5 +1,8 @@
 import _cnet
 
+def getNumberOfTriangles(net):
+    return _cnet.getNumberOfTriangles(net._net)
+
 def clusteringCoefficent(net,node):
     #if not net.isNumeric():
     node=net._nodes[node]
