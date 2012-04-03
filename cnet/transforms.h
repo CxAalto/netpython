@@ -11,3 +11,4 @@
 #include "sn.h"
 
 void shuffleEdges(Sn*, int,int,int);
+int confModelSimple(Sn::Sn *netContainer, int rounds,int randseed);

@@ -17,3 +17,13 @@ void shuffleEdges(Sn::Sn *netContainer, int rounds,int limit,int randseed){
   randomize(net,generator,rounds,limit);
 
 }
+
+
+int confModelSimple(Sn::Sn *netContainer, int rounds,int randseed){
+  SymmNet<float> &net=*netContainer->net;
+
+  RandNumGen<> generator(randseed);
+
+  return confModelSimple(net,generator,rounds);
+
+}
