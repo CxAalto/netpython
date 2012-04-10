@@ -9,7 +9,7 @@
 #include "sn.h"
 #include "transforms.h"
 
-void shuffleEdges(Sn::Sn *netContainer, int rounds,int limit,int randseed){
+void shuffleEdges(Sn *netContainer, int rounds,int limit,int randseed){
   SymmNet<float> &net=*netContainer->net;
 
   RandNumGen<> generator(randseed);
@@ -19,7 +19,7 @@ void shuffleEdges(Sn::Sn *netContainer, int rounds,int limit,int randseed){
 }
 
 
-int confModelSimple(Sn::Sn *netContainer, int rounds,int randseed){
+int confModelSimple(Sn *netContainer, int rounds,int randseed){
   SymmNet<float> &net=*netContainer->net;
 
   RandNumGen<> generator(randseed);

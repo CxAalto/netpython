@@ -10,7 +10,7 @@
 #include "sn.h"
 #include "netext.h"
 
-float clusteringCoefficient(Sn::Sn *netContainer, int node){
+float clusteringCoefficient(Sn *netContainer, int node){
   int i=node;
   SymmNet<float> &net=*netContainer->net;
 
@@ -33,11 +33,11 @@ float clusteringCoefficient(Sn::Sn *netContainer, int node){
   //return (float)sum;
 }
 
-int getNumberOfTriangles(Sn::Sn *netContainer){
+int getNumberOfTriangles(Sn *netContainer){
   SymmNet<float> &net=*netContainer->net;
 
   int triangles=0;
-  for (int i=0;i<net.size();++i)
+  for (unsigned int i=0;i<net.size();++i)
     for (SymmNet<float>::const_edge_iterator j=net(i).begin();
 	 !j.finished();
 	 ++j) { 
@@ -53,7 +53,7 @@ int getNumberOfTriangles(Sn::Sn *netContainer){
  
 }
 
-float meanPathLength(Sn::Sn *netContainer, int maxSamples){
+float meanPathLength(Sn *netContainer, int maxSamples){
   SymmNet<float> &net=*netContainer->net;
   size_t randseed = time(0);
   RandNumGen<> generator(randseed);
@@ -62,7 +62,7 @@ float meanPathLength(Sn::Sn *netContainer, int maxSamples){
   double sumlengths=0; 
   long long Ndistances=0; 
   size_t NStartNodes=maxSamples;
-  if (maxSamples>net.size()){
+  if (maxSamples>(int)net.size()){
     NStartNodes=net.size();
   }
   if (maxSamples<1){
