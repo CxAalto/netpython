@@ -1539,7 +1539,7 @@ def VisualizeNet(net, xy, figsize=(6,6), coloredNodes=True, equalsize=False,
         nodeObject=plot_node(axes, x=xy[node][0], y=xy[node][1], shape=nodeshape,
                   color=color, size=nodesize,edgecolor=nodeEdgeColor)
 
-        if node in labels or uselabels == 'all':
+        if uselabels!='none' and (node in labels or uselabels == 'all'):
             if node in labels:
                 if isinstance(labels[node],float):
                     showthislabel="%2.2f" % labels[node]
