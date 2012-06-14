@@ -1528,6 +1528,98 @@ class MsLoadWaiter(MySimpleDialog):
         self.result=[self.Nclones,self.clones,self.keeptheserows,self.m,self.msdata]
 
 
+
+class LoadWaiter(MySimpleDialog):
+    """Display progress bar while doing something."""
+    
+
+    def __init__(self,parent,function,args=[],kwargs=None,callback_function_parameter="progressUpdater",bodymsg="Processing...",titlemsg="Please wait"):
+        Toplevel.__init__(self,parent)
+
+        title=titlemsg
+
+        if kwargs==None:
+            kwargs={}
+
+        self.title(title)
+        self.titlemsg=titlemsg
+        self.parent=parent
+        self.result=None
+
+        body=Frame(self)
+        self.initial_focus=self.body(self,body,titlemsg=titlemsg,bodymsg=bodymsg)
+        body.pack(padx=5,pady=5)
+
+        #self.buttonbox()
+        self.grab_set()
+        self.points=['.','..','...']
+        self.pointcounter=0
+
+        self.displayBusyCursor()
+        
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.l1['fg']='#b0b0b0'
+        self.l1.update()
+
+        kwargs[callback_function_parameter]=self.progressbar.set
+        self.output=function(*args,**kwargs)        
+
+        self.ok()
+
+
+    def animate(self):
+
+        self.pointcounter=self.pointcounter+1
+        if self.pointcounter==3:
+            self.pointcounter=0
+
+        self.clabel['text']=self.titlemsg+self.points[self.pointcounter]
+        self.clabel.update()
+
+        self.after(500,self.animate)
+
+    def body(self,masterclass,masterwindow,titlemsg="",bodymsg=""):
+        self.wholeframe=Frame(masterwindow,relief='sunken',borderwidth=2)
+        self.clabel=Label(self.wholeframe,text=self.titlemsg,
+                          justify=LEFT,
+                          anchor=W,
+                          bg='darkolivegreen2',
+                          relief='groove',borderwidth=1,padx=3,pady=3,width=40)
+        self.clabel.pack(side=TOP,expand=YES,fill=X,ipadx=5,ipady=5)
+        self.bottompart=Frame(self.wholeframe)
+        self.l1=Label(self.bottompart,text=bodymsg,justify=LEFT,
+                      anchor=W,bg='white',relief='flat',padx=3,pady=3)
+        self.l1.grid(row=1,column=0,sticky=W)
+        self.l1['fg']='black'
+        """
+        self.l2=Label(self.bottompart,text='-',justify=LEFT,
+                      anchor=W,bg='white',relief='flat',padx=3,pady=3)
+        self.l2.grid(row=2,column=0,sticky=W)
+        self.l3=Label(self.bottompart,text='-',justify=LEFT,
+                      anchor=W,bg='white',relief='flat',padx=3,pady=3)
+        self.l3.grid(row=3,column=0,sticky=W)
+        """
+        self.progressbar=Meter(self.bottompart,value=0.0)
+        self.progressbar.grid(row=4,column=0,sticky=W)
+
+        self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
+        self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
+               
+        return self.wholeframe
+
+    def applyme(self):
+        self.result=self.output
+
+
+
 class GenericLoadWaiter(MySimpleDialog):
     """Generic class for wait windows displaying one item"""
     
