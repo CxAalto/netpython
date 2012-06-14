@@ -801,26 +801,30 @@ class BinaryData(object):
         for i,line in enumerate(ifile):
             if len(line.strip())>0: #skip lines with only whitespaces
                 try:
-                    element=map(bool,line.split())
+                    elements=map(bool,line.split())
                 except Exception,e:
                     raise Exception("Error reading row "+str(i+1)+".")
                 assert nElements==None or len(elements)==nElements, "Row %d has %d features while previous row(s) have %d features." %(i+1,len(elements))
                 nElements=len(elements)
-                self.data.append(element)
+                self.data.append(elements)
     def get_union(self,x,y):
         count=0
         for i in range(len(self.data[0])):
-            if data[x]==True or data[y]==True:
+            if self.data[x]==True or self.data[y]==True:
                 count +=1
         return count
     def get_intersection(self,x,y):
         count=0
         for i in range(len(self.data[0])):
-            if data[x]==True and data[y]==True:
+            if self.data[x]==True and self.data[y]==True:
                 count +=1
         return count
     def get_jaccard_distance(self,x,y):
-        return 1-self.get_intersection(x,y)/float(self.get_union(x,y))
+        union=float(self.get_union(x,y))
+        if union!=0.0:
+            return 1-self.get_intersection(x,y)/union
+        else:
+            return 1.0
     def get_distance_matrix(self,distance_function,node_names,progressUpdater=None):
         size=len(self.data)
 
@@ -841,7 +845,7 @@ class BinaryData(object):
                 elementsAdded+=size-i
             for j in range(i+1,size):
                 jName=node_names[j]
-                matrix[iName,jName]=distance[distance_function](self.getNode(i),self.getNode(j))
+                matrix[iName,jName]=distance[distance_function](i,j)
         return matrix
 
 
