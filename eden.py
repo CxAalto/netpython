@@ -3,13 +3,14 @@ This module contains Eden specific classes.
 
 """
 
+import collections
 import pynet,random,netext
 import communities
 from communities import communityTree
 from math import sin,cos,asin,sqrt,pi
 import math
 import numpy
-
+from itertools import *
 
 def getGoldsteinLists(poplist):
     """Transforms the list of population indices (poplist) into
@@ -651,6 +652,197 @@ class MicrosatelliteDataHaploid(MicrosatelliteData):
 
         return sum(distList)/len(distList)
 
+
+class AlleleDistribution(collections.defaultdict):
+    def __init__(self):
+        super(AlleleDistribution, self).__init__()
+        #self.freqs=collections.defaultdict()
+        self.default_factory=lambda:0
+        self.totalFrequency=0
+
+    #def __get__(self,item):
+    #    return self.freqs[item]
+    def __set__(self,item,value):
+        self.totalFrequency+=value-self[item]
+        super(AlleleDistribution, self).__set__(item,value)
+
+    def get_normaized_distribution(self):
+        pass
+
+
+
+class AlleleFrequencyTable:
+    def init_freqFile(self,filename):
+        f=open(filename,'r')
+        data=[]
+        groups=set()
+        loci=set()
+        for line in f:
+            line=line.strip()
+            if not (line.startswith("%") or len(line)==0):
+                group,locus,allele=line.split()
+                allele = int(allele)
+                data.append((group,locus,allele))
+                groups.add(group)
+                loci.add(locus)
+        
+        self.nLoci=len(loci)
+        self.nGroups=len(groups)
+        self.groupNames=sorted(groups)
+        locusNames=sorted(loci)
+        groupNameToIndex=dict(((g,i) for i,g in enumerate(self.groupNames)))        
+        locusNameToIndex=dict(((l,i) for i,l in enumerate(locusNames)))        
+        self.freqsTable=[[{} for l in loci] for n in groups]
+        for group,locus,allele in data:
+            gi=groupNameToIndex[group]
+            li=locusNameToIndex[locus]
+            self.freqsTable[gi][li][allele]=self.freqsTable[gi][li].get(allele,0)+1
+
+            
+    def init_msData(self,msdata,groups,groupNames=None):
+        #self.msdata=msdata
+        self.nLoci=msdata.getNumberofLoci()
+        self.nGroups=len(groups)
+        self.freqsTable=[]
+        if groupNames==None:
+            self.groupNames=range(self.nGroups)
+        else:
+            self.groupNames=groupNames
+
+        for group in groups:
+            freqList=[]
+            freqsTable.append(freqList)
+            for locus in range(msdata.getNumberofLoci()):
+                freqs = collections.defaultdict()
+                freqs.default_factory=lambda:0
+                for nodeIndex in group:
+                    allele = msdata.getLocusforNodeIndex(locus,nodeIndex)
+                    if diploid:
+                        freqs[allele[0]] = freqs.get(allele[0],0) + 1
+                        freqs[allele[1]] = freqs.get(allele[1],0) + 1
+                    else:
+                        freqs[allele] = freqs.get(allele,0) + 1
+                freqList.append(freqs)
+
+    def normalizedFreqs(self,group,locus):
+        nfreqs = collections.defaultdict()
+        nfreqs.default_factory=lambda:0
+        tf=float(self.totalFreq(group,locus))
+        for key,freq in self.freqsTable[group][locus].iteritems():
+            nfreqs[key]=freq/tf
+        return nfreqs
+    
+    def totalFreq(self,group,locus):
+        return sum(self.freqsTable[group][locus].itervalues())
+
+    def getFST(self):
+        """ From Reynolds, J., Weir, B.S., and Cockerham, C.C. (1983) Estimation of the 
+        coancestry coefficient: basis for a short-term genetic distance. _Genetics_, 
+        105:767-779, p. 769.
+        """
+        d=pynet.SymmFullNet(self.nGroups)
+
+        for i in range(self.nGroups):
+            for j in range(i):
+                num=0.0
+                den=0.0
+                for locus in range(self.nLoci):
+                    ni=float(self.totalFreq(i,locus))
+                    nj=float(self.totalFreq(j,locus))
+                    if ni>0 and nj>0:
+                        summ=0.0
+                        ai=1.0
+                        aj=1.0
+                        fi=self.normalizedFreqs(i,locus)
+                        fj=self.normalizedFreqs(j,locus)
+                        for l in set(chain(fi.iterkeys(),fj.iterkeys())):                            
+                                summ+=(fi[l]-fj[l])**2
+                                ai-=fi[l]**2
+                                aj-=fj[l]**2
+                                        
+                        num+=summ/2.-((ni+nj)*(ni*ai+nj*aj))/(4*ni*nj*(ni+nj-1))
+                        den+=summ/2.+((4*ni*nj-ni-nj)*(ni*ai+nj*aj))/(4*ni*nj*(ni+nj-1))
+
+                if den>0:
+                    d[self.groupNames[i]][self.groupNames[j]] =-math.log(1-num/den)
+                else:
+                    d[self.groupNames[i]][self.groupNames[j]]=0.0 #not defined
+
+        return d
+
+    def heterozygozity(self,freqs):
+        result=1.0
+        total=float(sum(freqs.itervalues()))
+        for freq in freqs.itervalues():
+            f=freq/total
+            result-=f*f
+
+        return result
+     
+
+    def __get__(self,item):
+        return self.freqTable[item]
+
+class BinaryData(object):
+    """A class presenting presence/absense data.
+    """
+    def __init__(self):
+        self.data=[]
+    def read_file(self,inputfile):
+        """Read in and parse the input file. The input is expected to be in a format where
+        each row represents one organism/taxa. The inputfile can be given either as a file
+        name or any iterable list of strings, e.g. open file.
+        """
+        if isinstance(inputfile,str):
+            ifile=open(inputfilen,'rU')
+        else:
+            ifile=inputfile
+        nElements=None
+        for i,line in enumerate(ifile):
+            if len(line.strip())>0: #skip lines with only whitespaces
+                try:
+                    element=map(bool,line.split())
+                except Exception,e:
+                    raise Exception("Error reading row "+str(i+1)+".")
+                assert nElements==None or len(elements)==nElements, "Row %d has %d features while previous row(s) have %d features." %(i+1,len(elements))
+                nElements=len(elements)
+                self.data.append(element)
+    def get_union(self,x,y):
+        count=0
+        for i in range(len(self.data[0])):
+            if data[x]==True or data[y]==True:
+                count +=1
+        return count
+    def get_intersection(self,x,y):
+        count=0
+        for i in range(len(self.data[0])):
+            if data[x]==True and data[y]==True:
+                count +=1
+        return count
+    def get_jaccard_distance(self,x,y):
+        return 1-self.get_intersection(x,y)/float(self.get_union(x,y))
+    def get_distance_matrix(self,distance_function,node_names,progressUpdater=None):
+        size=len(self.data)
+
+        j=0
+        updateInterval=1000
+        totElems=size*(size-1)/2
+        elementsAdded=0
+        lastUpdate=0
+
+        distance={"jaccard_distance":self.get_jaccard_distance}
+        matrix=pynet.SymmFullNet(size)
+        if node_names==None:
+            node_names=range(0,size)
+        for i,iName in enumerate(node_names):
+            if progressUpdater!=None:
+                if elementsAdded-lastUpdate>updateInterval:
+                    progressUpdater(float(elementsAdded)/float(totElems))
+                elementsAdded+=size-i
+            for j in range(i+1,size):
+                jName=node_names[j]
+                matrix[iName,jName]=distance[distance_function](self.getNode(i),self.getNode(j))
+        return matrix
 
 
 class LocationData:
