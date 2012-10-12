@@ -17,6 +17,14 @@ class TestEden(unittest.TestCase):
 			    "123 123 999",
 			    "999 123 123"]
 
+		self.data_nonnumeric1=["A A B A B C",
+				       "A A 999 B A C"]
+
+		self.data_nonnumeric2=["A A B A B C",
+				       "A A B A B C",
+				       "A A 999 B A C",
+				       "A A 999 B A C"]
+
 		self.binary_data1=["1 1 1 1",
 				  "1 0 0 0",
 				  "0 1 1 1"]
@@ -24,6 +32,14 @@ class TestEden(unittest.TestCase):
 					 "1 1"]
 		self.binary_data_broken2=["1 1 1",
 					 "1 1"]
+
+	def test_distances_allele_freqs(self):
+		ms1=eden.MicrosatelliteDataHaploid(self.data_nonnumeric2)
+		af1=eden.AlleleFrequencyTable()
+		af1.init_msData(ms1,[[0,1],[2,3]])
+		print "here"
+		
+
 
 	def test_distances_binary_data(self):
 		bd1=eden.BinaryData()
@@ -83,6 +99,11 @@ class TestEden(unittest.TestCase):
 		assert dm4[0,1]==(1+1+1+1+29*29+31*31)/6.0,"Haploid data: Error calculating the goldstein distance."
 
 
+	def test_distances_individuals_nonnumeric(self):
+		ms1=eden.MicrosatelliteDataHaploid(self.data_nonnumeric1)
+		dm1=ms1.getDistanceMatrix(distance="ap")
+		assert dm1[0,1]==1.-3./5., "Error calculating the allele parsimony distance for non-numeric data."
+
 	def test_distances_individuals_missing_data(self):		
 		#Diploid
 		ms1=eden.MicrosatelliteData(self.data2)
@@ -132,9 +153,11 @@ if __name__ == '__main__':
 		# If true, run only the tests listed below, otherwise run all tests
 		# (this option is for testing the tests :-) )
 		suite = unittest.TestSuite()
+		suite.addTest(TestEden("test_distances_allele_freqs"))
 		suite.addTest(TestEden("test_distances_binary_data"))
 		suite.addTest(TestEden("test_distances_individuals"))
 		suite.addTest(TestEden("test_distances_populations"))
+		suite.addTest(TestEden("test_distances_individuals_nonnumeric"))
 		suite.addTest(TestEden("test_distances_individuals_missing_data"))
 		suite.addTest(TestEden("test_distances_populations_missing_data"))
 		unittest.TextTestRunner().run(suite)
