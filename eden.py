@@ -662,6 +662,8 @@ class MicrosatelliteDataHaploid(MicrosatelliteData):
 
         return sum(distList)/len(distList)
 
+    def __str__(self):
+        raise NotImplemented()
 
 class AlleleDistribution(collections.defaultdict):
     def __init__(self):
