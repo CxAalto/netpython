@@ -1,7 +1,9 @@
+import os
+import sys;sys.path.append(os.path.join("..",".."))
 import unittest
 from operator import itemgetter
 from netpython import eden
-import os
+
 
 class TestEden(unittest.TestCase):
     
@@ -14,6 +16,38 @@ class TestEden(unittest.TestCase):
 		self.data3=["123 999 999",
 			    "123 123 999",
 			    "999 123 123"]
+
+		self.binary_data1=["1 1 1 1",
+				  "1 0 0 0",
+				  "0 1 1 1"]
+		self.binary_data_broken1=["1 999",
+					 "1 1"]
+		self.binary_data_broken2=["1 1 1",
+					 "1 1"]
+
+	def test_distances_binary_data(self):
+		bd1=eden.BinaryData()
+		bd1.read_file(self.binary_data1)
+		dm1=bd1.get_distance_matrix("jaccard_distance",["a","b","c"])
+		assert dm1["a","b"]==1-1./4. and dm1["a","c"]==1-3./4. and dm1["b","c"]==1.0
+
+		bd2=eden.BinaryData()
+		exception_ok=False
+		try:
+			bd2.read_file(self.binary_data_broken1)
+		except eden.ParsingError,e:
+			if "Invalid element" in str(e):
+				exception_ok=True
+		assert exception_ok, "No/invalid exception on invalid data!"
+
+		bd3=eden.BinaryData()
+		exception_ok2=False
+		try:
+			bd3.read_file(self.binary_data_broken2)
+		except eden.ParsingError,e:
+			if "features" in str(e):
+				exception_ok2=True
+		assert exception_ok2, "No/invalid exception on invalid data."
 
 
 	def test_distances_individuals(self):
@@ -98,6 +132,7 @@ if __name__ == '__main__':
 		# If true, run only the tests listed below, otherwise run all tests
 		# (this option is for testing the tests :-) )
 		suite = unittest.TestSuite()
+		suite.addTest(TestEden("test_distances_binary_data"))
 		suite.addTest(TestEden("test_distances_individuals"))
 		suite.addTest(TestEden("test_distances_populations"))
 		suite.addTest(TestEden("test_distances_individuals_missing_data"))
