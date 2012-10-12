@@ -12,13 +12,23 @@ import math
 import numpy
 from itertools import *
 
+class ParsingError(Exception):
+    pass
+
 def getGoldsteinLists(poplist):
     """Transforms the list of population indices (poplist) into
     a list of lists, where each internal list contains all indices of
     a population. Useful for getting the Goldstein population-level
     distances for microsatellite data. Outputs: the population
     member list of lists (goldstein_lists), list of unique population labels (uniquepops)"""
-    uniquepops=[ uniq for uniq in poplist if uniq not in locals()['_[1]']]
+    uniquepops=[]
+    pops=set()
+    for pop in poplist:
+        if pop not in pops:
+            uniquepops.append(pop)
+            pops.add(pop)
+    #uniquepops=[ uniq for uniq in poplist if uniq not in locals()['_[1]']]
+
     goldstein_lists=[]
     for population in uniquepops:
         thislist=[]
@@ -793,6 +803,13 @@ class BinaryData(object):
         each row represents one organism/taxa. The inputfile can be given either as a file
         name or any iterable list of strings, e.g. open file.
         """
+        def to_bool(element):
+            element=element.strip()
+            if element in ["0","1"]:
+                return bool(int(element))
+            else:
+                raise ParsingError("Invalid element: "+element+", should be 0 or 1.")
+
         if isinstance(inputfile,str):
             ifile=open(inputfilen,'rU')
         else:
@@ -801,22 +818,25 @@ class BinaryData(object):
         for i,line in enumerate(ifile):
             if len(line.strip())>0: #skip lines with only whitespaces
                 try:
-                    elements=map(bool,line.split())
-                except Exception,e:
-                    raise Exception("Error reading row "+str(i+1)+".")
-                assert nElements==None or len(elements)==nElements, "Row %d has %d features while previous row(s) have %d features." %(i+1,len(elements))
+                    elements=map(to_bool,line.split())
+                except ParsingError,e:
+                    raise ParsingError("Error reading row "+str(i+1)+".\n"+str(e))
+                if nElements!=None and len(elements)!=nElements:
+                    raise ParsingError("Row %d has %d features while previous row(s) have %d features." % (i+1,len(elements),nElements))
                 nElements=len(elements)
                 self.data.append(elements)
+        if len(self.data)==0 or len(self.data[0])==0:
+            raise ParsingError("Error reading data: Empty file.")
     def get_union(self,x,y):
         count=0
         for i in range(len(self.data[0])):
-            if self.data[x]==True or self.data[y]==True:
+            if self.data[x][i]==True or self.data[y][i]==True:
                 count +=1
         return count
     def get_intersection(self,x,y):
         count=0
         for i in range(len(self.data[0])):
-            if self.data[x]==True and self.data[y]==True:
+            if self.data[x][i]==True and self.data[y][i]==True:
                 count +=1
         return count
     def get_jaccard_distance(self,x,y):
