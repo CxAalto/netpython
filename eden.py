@@ -784,7 +784,7 @@ class AlleleFrequencyTable:
         return self.freqTable[item]
 
 class BinaryData(object):
-    """A class presenting presence/absense data.
+    """A class for representing presence/absense data.
     """
     def __init__(self):
         self.data=[]
