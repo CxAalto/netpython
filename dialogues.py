@@ -405,6 +405,7 @@ class ProjectLaunchDialog(MySimpleDialog):
         r15=Radiobutton(self.bottompart,text='Genotype matrix, haploid, sampling site based',value='mpop_haploid',variable=masterclass.datatype)
         r175=Radiobutton(self.bottompart,text='Genotype matrix, diploid, sampling site based',value='mpop_diploid',variable=masterclass.datatype)
         r1875=Radiobutton(self.bottompart,text='Presence/absence matrix',value='presabs',variable=masterclass.datatype)
+        r19=Radiobutton(self.bottompart,text='Presence/abundancy matrix',value='presabu',variable=masterclass.datatype)
         r2=Radiobutton(self.bottompart,text='Distance matrix',value='dmat',variable=masterclass.datatype)
         r3=Radiobutton(self.bottompart,text='Network data',value='net',variable=masterclass.datatype)
         r1.grid(row=1,column=0,sticky=W)
@@ -412,8 +413,9 @@ class ProjectLaunchDialog(MySimpleDialog):
         r15.grid(row=2,column=0,sticky=W)
         r175.grid(row=4,column=0,sticky=W)
         r1875.grid(row=5,column=0,sticky=W)
-        r2.grid(row=6,column=0,sticky=W)
-        r3.grid(row=7,column=0,sticky=W)
+        r19.grid(row=6,column=0,sticky=W)
+        r2.grid(row=7,column=0,sticky=W)
+        r3.grid(row=8,column=0,sticky=W)
 
         self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
 

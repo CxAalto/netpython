@@ -408,14 +408,20 @@ class MicrosatelliteData:
             getMSDistance=self.getMSDistance_alleleParsimony
         elif distance=="hybrid":
             getMSDistance=self.getMSDistance_hybrid
+        elif distance=="czekanowski":
+            getMSDistance=self.get_czekanowski_dissimilarity
         else: #default
             getMSDistance=self.getMSDistance_linearManhattan
             
         numberOfSpecimens=len(self._alleles[0])
 
         j=0
-        updateInterval=1000
+        minUpdateInterval=1000
+        minUpdateSteps=30
         totElems=numberOfSpecimens*(numberOfSpecimens-1)/2
+
+        updateInterval=max(min(minUpdateInterval,int(totElems/float(minUpdateSteps))),1)
+
         elementsAdded=0
         lastUpdate=0
 
@@ -426,6 +432,7 @@ class MicrosatelliteData:
             if progressUpdater!=None:
                 if elementsAdded-lastUpdate>updateInterval:
                     progressUpdater(float(elementsAdded)/float(totElems))
+                    lastUpdate=elementsAdded
                 elementsAdded+=numberOfSpecimens-i
             for j in range(i+1,numberOfSpecimens):
                 jName=nodeNames[j]
@@ -549,6 +556,18 @@ class MicrosatelliteDataHaploid(MicrosatelliteData):
 
         if lastNumberOfFields!=None:
             self.nLoci=lastNumberOfFields
+
+    def get_czekanowski_dissimilarity(self,x,y):
+        up=0.0
+        down=0.0
+        for locus_index in range(len(x)):
+            up+=min(x[locus_index],y[locus_index])
+            down+=x[locus_index]+y[locus_index]
+        if down!=0:
+            return 2*up/float(down)
+        else:
+            return 1.0
+
 
     def getMSDistance_singleLocus_NonsharedAlleles(self,x,y):
         if x==y:
