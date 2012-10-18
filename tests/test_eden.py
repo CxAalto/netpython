@@ -37,7 +37,7 @@ class TestEden(unittest.TestCase):
 		ms1=eden.MicrosatelliteDataHaploid(self.data_nonnumeric2)
 		af1=eden.AlleleFrequencyTable()
 		af1.init_msData(ms1,[[0,1],[2,3]])
-		print "here"
+		
 		
 
 
