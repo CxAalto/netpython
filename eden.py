@@ -723,13 +723,13 @@ class AlleleFrequencyTable:
 
         for group in groups:
             freqList=[]
-            freqsTable.append(freqList)
+            self.freqsTable.append(freqList)
             for locus in range(msdata.getNumberofLoci()):
                 freqs = collections.defaultdict()
                 freqs.default_factory=lambda:0
                 for nodeIndex in group:
                     allele = msdata.getLocusforNodeIndex(locus,nodeIndex)
-                    if diploid:
+                    if msdata.diploid:
                         freqs[allele[0]] = freqs.get(allele[0],0) + 1
                         freqs[allele[1]] = freqs.get(allele[1],0) + 1
                     else:
@@ -841,6 +841,26 @@ class BinaryData(object):
             if self.data[x][i]==True and self.data[y][i]==True:
                 count +=1
         return count
+
+    def count_true(self,x):
+        count=0
+        for i in range(len(self.data[x])):
+            if self.data[x][i]==True:
+                count +=1
+        return count       
+
+    def get_bc_dissimilarity(self,x,y):
+        """ Bray-Curtis dissimilarity, defined as
+        d = 1.0 - 2*intersection(x,y)/(n(x)+n(y))
+
+        If n(x)+n(y) is zero, distance of 1.0 is returned.
+        """
+        s=self.count_true(x)+self.count_true(y)
+        if s>0:
+            return 1.0 - 2*self.get_intersection(x,y)/float(s)
+        else:
+            return 1.0
+
     def get_jaccard_distance(self,x,y):
         union=float(self.get_union(x,y))
         if union!=0.0:
@@ -856,7 +876,8 @@ class BinaryData(object):
         elementsAdded=0
         lastUpdate=0
 
-        distance={"jaccard_distance":self.get_jaccard_distance}
+        distance={"jaccard_distance":self.get_jaccard_distance,
+                  "bc_dissimilarity":self.get_bc_dissimilarity}
         matrix=pynet.SymmFullNet(size)
         if node_names==None:
             node_names=range(0,size)
