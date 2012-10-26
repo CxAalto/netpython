@@ -33,6 +33,15 @@ class TestEden(unittest.TestCase):
 		self.binary_data_broken2=["1 1 1",
 					 "1 1"]
 
+		self.abundance_data1=["0 0 1",
+				     "0 0 2",
+				     "1 1 1"]
+
+	def test_distances_abundances(self):
+		data1=eden.MicrosatelliteDataHaploid(self.abundance_data1)
+		dm1=data1.getDistanceMatrix(distance="czekanowski")
+		assert dm1[0,1]==2/3.0 and dm1[0,2]==0.5 and dm1[1,2]==0.4
+
 	def test_distances_allele_freqs(self):
 		ms1=eden.MicrosatelliteDataHaploid(self.data_nonnumeric2)
 		af1=eden.AlleleFrequencyTable()
@@ -153,6 +162,7 @@ if __name__ == '__main__':
 		# If true, run only the tests listed below, otherwise run all tests
 		# (this option is for testing the tests :-) )
 		suite = unittest.TestSuite()
+		suite.addTest(TestEden("test_distances_abundances"))
 		suite.addTest(TestEden("test_distances_allele_freqs"))
 		suite.addTest(TestEden("test_distances_binary_data"))
 		suite.addTest(TestEden("test_distances_individuals"))
