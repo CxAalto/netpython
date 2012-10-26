@@ -12,7 +12,10 @@ import math
 import numpy
 from itertools import *
 
-class ParsingError(Exception):
+class EDENException(Exception):
+    pass
+
+class ParsingError(EDENException):
     pass
 
 def getGoldsteinLists(poplist):
@@ -49,6 +52,85 @@ def loadNet_microsatellite(input,removeClones=True,distance="lm"):
         msData=msData.getUniqueSubset()
     msNet=msData.getDistanceMatrix(distance)
     return msNet
+
+class SampleFeatureData(object):
+    """ A class for representing data for a set of samples.
+    The features can be microsatellites, alleles, presence/absence
+    or presence/abundace data.
+    """
+    def __init__(self,input_iterator,missingValue="999",ploidity=2):
+        self.diploidity=ploidity
+        self.missingValue=missingValue
+        self.parse_input(input_iterator)
+
+    def parse_input(input_iterator):
+        #read the data to memory first:
+        lines=list(input_iterator)
+
+        #parse the first line to guess the format
+        try:
+            fields=map(int,lines[0].split())
+            self.numeric=True
+            missingValue=int(missingValue)
+        except ValueError:
+            self.numeric=False
+
+        #construct an empty array for the data
+        self._alleles=numpy.zeros() #sample, locus, allele
+
+
+
+        #--> old code
+        self._alleles=[] #The list of locus lists. Each locus list contains alleles as tuples.
+
+        for lineNumber,line in enumerate(input):
+            fields=line.split()
+
+            #At the first line, test if data is numerical
+            if lineNumber==0:
+                try:
+                    fields=map(int,fields)
+                    self.numeric=True
+                    missingValue=int(missingValue)
+                except ValueError:
+                    self.numeric=False
+
+            if len(fields)%2!=0:
+                raise SyntaxError("Input should have even number of columns");
+	    elif lastNumberOfFields!=None and lastNumberOfFields!=len(fields):
+		raise SyntaxError("The input has inconsistent number of columns")
+            else:
+                lastNumberOfFields=len(fields)
+                if self.numeric:
+                    try:
+                        fields=map(int,fields)
+                    except ValueError:
+                        raise SyntaxError("Input contains mixed numeric and not numeric alleles.")
+
+                #At the first line, add lists for loci
+                if len(self._alleles)==0:                    
+                    for dummy in range(0,len(fields)/2):
+                        self._alleles.append([])
+
+                for i in range(0,len(fields),2):                    
+                    if fields[i]!=missingValue and fields[i+1]!=missingValue:
+                        if fields[i]>fields[i+1]:
+                            fields[i],fields[i+1]=fields[i+1],fields[i]
+                        self._alleles[i/2].append((fields[i],fields[i+1]))
+                    elif fields[i]==missingValue: #None comes first
+                        if fields[i+1]==missingValue:
+                            self._alleles[i/2].append((None,None))
+                        else:
+                            self._alleles[i/2].append((None,fields[i+1]))
+                    else:
+                        self._alleles[i/2].append((None,fields[i]))
+
+        if lastNumberOfFields!=None:
+            self.nLoci=lastNumberOfFields/2
+
+    def _clear_cache(self):
+        pass
+
 
 class MicrosatelliteData:
     """ A class for parsing and using microsatellite data
