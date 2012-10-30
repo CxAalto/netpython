@@ -271,6 +271,9 @@ class Ktree:
     def __iter__(self):
         return self.nodeIndex.__iter__()
 
+    def mergeSetsWithElements(elements):
+        self.ktree.mergeSetsWithElements(map(lambda x:nodeIndex.number[x],elements))
+
     def getCommStruct(self):
         cs=self.ktree.getCommStruct()
         newcs=communities.NodeCover()
