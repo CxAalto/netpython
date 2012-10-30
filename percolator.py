@@ -106,6 +106,7 @@ class KtreeInteger:
         if self.size!=self.giantSize:
             return (self.suscSum-self.giantSize*self.giantSize)/float(self.size-self.giantSize)
         else:
+            assert self.suscSum==self.giantSize*self.giantSize
             return 0.0
         
     def mergeSetsWithElements(self,elements):
