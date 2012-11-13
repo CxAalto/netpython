@@ -47,7 +47,7 @@ class KtreeInteger:
         try:
             return self.ktree[node]
         except IndexError:
-            self.setSize(node)
+            self.setSize(node+1)
             return node
 
     def __setRealParent(self,node,newParent):
@@ -57,7 +57,7 @@ class KtreeInteger:
         try:
             self.ktree[node]=newParent
         except IndexError:
-            self.setSize(node)
+            self.setSize(node+1)
             self.ktree[node]=newParent        
 
     def getSetIndex(self,node):
@@ -112,7 +112,7 @@ class KtreeInteger:
     def mergeSetsWithElements(self,elements):
         first=elements[0]
         for i in range(1,len(elements)):
-            self.setParent(elements[i],first)
+            self.mergeSets(elements[i],first)
 
     def __iter__(self):
         for i in self.ktree:
@@ -254,6 +254,8 @@ class Ktree:
 
         self.ktree=KtreeInteger(size)
 
+    def _get_index(self,element):
+        return self.nodeIndex[element]
 
     def getParent(self,node):
         if self.ktree.size<(self.nodeIndex[node]+1):
@@ -271,8 +273,8 @@ class Ktree:
     def __iter__(self):
         return self.nodeIndex.__iter__()
 
-    def mergeSetsWithElements(elements):
-        self.ktree.mergeSetsWithElements(map(lambda x:nodeIndex.number[x],elements))
+    def mergeSetsWithElements(self,elements):
+        self.ktree.mergeSetsWithElements(map(lambda x:self._get_index(x),elements))
 
     def getCommStruct(self):
         cs=self.ktree.getCommStruct()
