@@ -822,19 +822,22 @@ class AlleleFrequencyTable:
         else:
             self.groupNames=groupNames
 
-        for group in groups:
+        for groupIndex,group in enumerate(groups):
             freqList=[]
             self.freqsTable.append(freqList)
             for locus in range(msdata.getNumberofLoci()):
-                freqs = collections.defaultdict()
-                freqs.default_factory=lambda:0
+                #freqs = collections.defaultdict()
+                #freqs.default_factory=lambda:0
+                freqs={}
                 for nodeIndex in group:
                     allele = msdata.getLocusforNodeIndex(locus,nodeIndex)
-                    if msdata.diploid:
+                    if msdata.diploid and allele!=(None,None):
                         freqs[allele[0]] = freqs.get(allele[0],0) + 1
                         freqs[allele[1]] = freqs.get(allele[1],0) + 1
-                    else:
+                    elif allele!=None:
                         freqs[allele] = freqs.get(allele,0) + 1
+                if len(freqs)==0:
+                    raise EDENException("Group %s in input data has only missing values in locus %s."%(self.groupNames[groupIndex],locus))
                 freqList.append(freqs)
 
     def normalizedFreqs(self,group,locus):
