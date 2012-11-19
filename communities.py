@@ -14,7 +14,13 @@ def printname(fun):
 class NodeCover(object):
     """Representation of possibly overlapping node partitions."""
     
-    def __init__(self, cmap=None, inputFile=None, N_nodes=None):
+    def __init__(self, 
+                 cmap=None, 
+                 inputFile=None, 
+                 inputStr=None,
+                 N_nodes=None,
+                 nodeSeparator=None,
+                 communitySeparator="\n"):
         """Create node cover from data.
 
         The data can be read either from a dictionary of a file, or
@@ -31,13 +37,25 @@ class NodeCover(object):
         inputFile : file object
            File to read the communities from. The file must have one
            community per line, with the indices of the nodes in each
-           community separated by whitespace.
+           community separated by the nodeSeparator argument.
+        inputStr : str
+           String to read the communities from.
         N_nodes : int
            The total number of nodes in the network. If None or not
            given, the number of nodes in all communities is used. Note
            that if there are nodes that are not included in any
            community the default behaviour is not what you want.
+        nodeSeparator : str, None
+           The string that is used to separate nodes from each other in
+           communities. Default None is any whitespace when reading the
+           data in ' ' when writing it.
+        communitySeparator : str
+           The string that is used to separate communities from each 
+           other. Only used in inputStr and writing.
         """
+        self.nodeSeparator=nodeSeparator
+        self.communitySeparator=communitySeparator
+
         if cmap is None:
             cmap = {}
 
@@ -45,7 +63,11 @@ class NodeCover(object):
         for community in cmap:
             self._addCommunity(cmap[community])
         if inputFile is not None:
+            if isinstance(inputFile,str):
+                inputFile=open(inputFile,'rU')
             self._parseStrings(inputFile)
+        if inputStr is not None:
+            self._parseStrings(inputStr.split(self.communitySeparator))
         self._sortBySize()
 
         # Find out the number of nodes if not given.
@@ -56,12 +78,15 @@ class NodeCover(object):
             N_nodes = len(all_nodes)
         self.N_nodes = N_nodes
 
+        if self.nodeSeparator==None:
+            self.nodeSeparator=" "
+
     def _addCommunity(self,newCommunity):
         self._comm.append(set(newCommunity))
 
     def _parseStrings(self,input):
         for line in input:
-            fields = map(int, line.split())
+            fields = map(int, line.split(self.nodeSeparator))
             self._addCommunity(fields)
 
     def _sortBySize(self):
@@ -72,12 +97,7 @@ class NodeCover(object):
         return self._comm
 
     def __str__(self):
-        string=""
-        for community in self.comm:
-            for node in community:
-                string=string+str(node)+" "
-            string=string[0:len(string)-1]+"\n"
-        return string
+        return self.communitySeparator.join(map(lambda community:self.nodeSeparator.join(map(str,community)),self.comm))
    
     def __getitem__(self,index):
         return self.comm[index]
