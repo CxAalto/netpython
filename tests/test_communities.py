@@ -18,6 +18,21 @@ class TestNodeCover(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_serializing(self):
+        """Test that the string representation is valid and 
+        internally consistent."""
+        commStr=str(self.comms[0])
+        self.assert_(commStr=="0 1 2 3\n4 5 6 7")
+        self.assertEqual(commStr,str(communities.NodeCover(inputStr=commStr)))
+        self.assertEqual(commStr,str(communities.NodeCover(inputFile=commStr.split("\n"))))
+
+        comms2=communities.NodeCover(inputStr=commStr)
+        comms2.nodeSeparator=","
+        comms2.communitySeparator=" "
+        commStr2=str(comms2)
+        self.assertEqual(commStr2,str(communities.NodeCover(inputStr=commStr2,nodeSeparator=",",communitySeparator=" ")))
+    
+
     def test_getMaxVariationOfInformation_selfmatch(self):
         """A community structure must always match itself."""
         for c in self.comms:
