@@ -38,6 +38,19 @@ def makeSparseER(n,p):
 
     return net
 
+def linearLattice(n,r):
+    """Linear lattice with periodic boundary conditions. Two nodes are connected
+    if they are at most r steps away from each other in the lattice.
+    """
+    net=pynet.SymmNet()
+    if r>=n:
+        r=n-1
+    for i in range(n):
+        for ri in range(r):
+            net[i,(i+ri+1)%n]=1
+            net[i,(i-1-ri)%n]=1
+    return net
+
 def girvanNewman(communitySize,numberOfCommunities,kIn,kOut):
     """
     A network model producing equally sized communities with equal expected 
