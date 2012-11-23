@@ -847,7 +847,7 @@ class communityTree:
         self.cslist=cslist
         self.tree.append([])
 
-        self.net=pynet.SymmNet()
+        self.net=pynet.DirNet()
         #self.multiplier=10**ceil(np.log10(len(cslist)))
         
         #add roots:
@@ -951,7 +951,7 @@ class communityTree:
 
     def getTreeAsNet(self,thinning=True):
         if thinning:
-            newNet=pynet.SymmNet()
+            newNet=pynet.DirNet()
             for edge in self.net.edges:
                 newNet[edge[0],edge[1]]=1#edge[2]
             for node in self.net:
