@@ -955,12 +955,13 @@ class communityTree:
             for edge in self.net.edges:
                 newNet[edge[0],edge[1]]=1#edge[2]
             for node in self.net:
-                if newNet[node].degIn()==1 and newNet[node].degOut==1:
-                    inNode=newNet.iterIn().next()
-                    outNode=newNet.iterOut().next()
-                    newNet[node,outNode]=0
-                    newNet[inNode,node]=0
-                    newNet[inNode,outNode]=1
+                if node in newNet and newNet[node].inDeg()==1 and newNet[node].outDeg()==1:
+                    inNode=newNet[node].iterIn().next()
+                    outNode=newNet[node].iterOut().next() #father.
+                    if newNet[outNode].inDeg()==1:
+                        newNet[node,outNode]=0
+                        newNet[inNode,node]=0
+                        newNet[inNode,outNode]=1
                 """
                 if newNet[node].deg()==2:
                     l=list(newNet[node])
