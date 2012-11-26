@@ -55,7 +55,11 @@ class TestEden(unittest.TestCase):
 		af2.init_msData(ms1,[[0,2],[1,3]])
 		assert af2.freqsTable[0]==[{'A':2},{'A':2},{'B':1},{'A':1,'B':1},{'B':1,'A':1},{'C':2}]
 		assert af2.freqsTable[1]==[{'A':2},{'A':2},{'B':1},{'A':1,'B':1},{'B':1,'A':1},{'C':2}]
-		#print af2.getFST()[0,1]
+
+		ms1=eden.MicrosatelliteData(self.data_nonnumeric2)
+		af3=eden.AlleleFrequencyTable()
+		af3.init_msData(ms1,[[0,2],[1,3]])
+		self.assertEqual(af3.freqsTable[0],[{'A':4},{'A':1,'B':2},{'B':1,'A':1,'C':2}])
 
 	def test_distances_allele_freqs_msat(self):
 		af=eden.AlleleFrequencyTable()
