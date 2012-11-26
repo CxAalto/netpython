@@ -832,8 +832,10 @@ class AlleleFrequencyTable:
                 for nodeIndex in group:
                     allele = msdata.getLocusforNodeIndex(locus,nodeIndex)
                     if msdata.diploid and allele!=(None,None):
-                        freqs[allele[0]] = freqs.get(allele[0],0) + 1
-                        freqs[allele[1]] = freqs.get(allele[1],0) + 1
+                        if allele[0]!=None:
+                            freqs[allele[0]] = freqs.get(allele[0],0) + 1
+                        if allele[1]!=None:
+                            freqs[allele[1]] = freqs.get(allele[1],0) + 1
                     elif allele!=None:
                         freqs[allele] = freqs.get(allele,0) + 1
                 if len(freqs)==0:
