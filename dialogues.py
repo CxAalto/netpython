@@ -1777,7 +1777,7 @@ class GoldsteinWaiter(GenericLoadWaiter):
         unique_poplist=glists[1]
 
         # then use msdata methods to get the Goldstein population-level distance matrix
-        distancematrix=msdata.getGroupwiseDistanceMatrix(goldstein_list,groupNames=unique_poplist)
+        distancematrix=msdata.getGroupwiseDistanceMatrix(goldstein_list,"goldstein",groupNames=unique_poplist)
         netext.addNodeProperty(distancematrix,"population_size")
         netext.addNodeProperty(distancematrix,"genotypes")
         netext.addNodeProperty(distancematrix,"clonal_diversity")
@@ -2044,3 +2044,55 @@ class AskNumberDialog(MySimpleDialog):
         self.result=self.e1.get()
 
 
+class EDENRadioDialog(MySimpleDialog):
+    """A dialog with a radio selector."""
+    
+    def __init__(self,parent,title=None,titlemsg="Choose one:",options=["Default"]):
+        Toplevel.__init__(self,parent)
+        self.title(title)
+        self.titlemsg=titlemsg
+        self.parent=parent
+        self.options=options
+
+        self.result=StringVar()
+      
+        body=Frame(self)
+        self.initial_focus=self.body(self,body)
+        body.pack(padx=5,pady=5)
+
+        self.buttonbox()
+        self.grab_set()
+
+        if not self.initial_focus:
+            self.initial_focus(self)
+
+        self.protocol("WM_DELETE_WINDOW",self.cancel)
+
+        self.geometry("+%d+%d" % (parent.winfo_rootx()+50,parent.winfo_rooty()+50))
+
+        self.initial_focus.focus_set()
+
+        self.wait_window(self)
+
+    def body(self,masterclass,masterwindow,titlemsg="Choose genetic distance measure"):
+        self.wholeframe=Frame(masterwindow,relief='sunken',borderwidth=2)
+        
+        self.clabel=Label(self.wholeframe,text=self.titlemsg,justify=LEFT,anchor=W,bg='gray90',relief='groove',borderwidth=1)
+        self.clabel.pack(side=TOP,expand=YES,fill=X,ipadx=5,ipady=5)
+
+        self.bottompart=Frame(self.wholeframe)
+
+        buttons=[]
+        for i,value in enumerate(masterclass.options):
+            r=Radiobutton(self.bottompart,text=value,value=value,variable=masterclass.result)
+            r.grid(row=i+1,column=0,sticky=W)
+        masterclass.result.set(masterclass.options[0])
+
+        self.bottompart.pack(side=TOP,expand=YES,fill=BOTH,ipadx=7,ipady=7)
+        self.wholeframe.pack(side=TOP,expand=YES,fill=BOTH)
+       
+        return self.wholeframe
+
+    def applyme(self):
+        self.result=(self.result.get())
+        

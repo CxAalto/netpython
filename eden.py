@@ -374,31 +374,37 @@ class MicrosatelliteData:
         else:
             return 0.0
 
-    def getGroupwiseDistanceMatrix(self,groups,distance='goldstein',groupNames=None):
+    def getGroupwiseDistanceMatrix(self,groups,distance,groupNames=None):
         """
         Returns a distance matrix in form of a full network (pynet.SymmFullNet). The groups
         argument must be an iterable object where each element is also iterable object containing
         the indices of the nodes belonging to each group.
         """
-        #only distance measure implemented so far:
-        if distance=="goldstein":
-            getGroupwiseDistance=self.getGroupwiseDistance_Goldstein
-        elif distance=="goldstein_d1":
-            getGroupwiseDistance=self.getGroupwiseDistance_Goldstein_D1
-        else:
-            raise NotImplementedError("Distance '"+distance+"' is not implemented.")
-        
         grouplist=list(groups)
         ngroups=len(grouplist)
         matrix=pynet.SymmFullNet(ngroups)
         if groupNames==None:
             groupNames=range(ngroups)
 
-        for i in range(0,ngroups):
-            for j in range(i+1,ngroups):
-                matrix[groupNames[i],groupNames[j]]=getGroupwiseDistance(grouplist[i],grouplist[j])
-        return matrix   
 
+        if distance in ["goldstein","goldstein_d1"]:
+            #only distance measure implemented so far:
+            if distance=="goldstein":
+                getGroupwiseDistance=self.getGroupwiseDistance_Goldstein
+            elif distance=="goldstein_d1":
+                getGroupwiseDistance=self.getGroupwiseDistance_Goldstein_D1
+
+            for i in range(0,ngroups):
+                for j in range(i+1,ngroups):
+                    matrix[groupNames[i],groupNames[j]]=getGroupwiseDistance(grouplist[i],grouplist[j])
+            return matrix   
+        elif distance in ["FST"]: #allele frequency table based distances
+            afTable=AlleleFrequencyTable()
+            afTable.init_msData(self,grouplist,groupNames)
+            if distance=="FST":
+                return afTable.getFST()
+        else:
+            raise NotImplementedError("Distance '"+distance+"' is not implemented.")
     #--- Distances between individuals
 
     def getMSDistance_linearManhattan(self,x,y):
