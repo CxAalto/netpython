@@ -380,6 +380,7 @@ class MicrosatelliteData:
         argument must be an iterable object where each element is also iterable object containing
         the indices of the nodes belonging to each group.
         """
+        distance=distance.lower() #any case is ok
         grouplist=list(groups)
         ngroups=len(grouplist)
         matrix=pynet.SymmFullNet(ngroups)
@@ -398,10 +399,10 @@ class MicrosatelliteData:
                 for j in range(i+1,ngroups):
                     matrix[groupNames[i],groupNames[j]]=getGroupwiseDistance(grouplist[i],grouplist[j])
             return matrix   
-        elif distance in ["FST"]: #allele frequency table based distances
+        elif distance in ["fst"]: #allele frequency table based distances
             afTable=AlleleFrequencyTable()
             afTable.init_msData(self,grouplist,groupNames)
-            if distance=="FST":
+            if distance=="fst":
                 return afTable.getFST()
         else:
             raise NotImplementedError("Distance '"+distance+"' is not implemented.")
