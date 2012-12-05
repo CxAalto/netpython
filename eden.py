@@ -653,9 +653,9 @@ class MicrosatelliteDataHaploid(MicrosatelliteData):
             up+=min(x[locus_index],y[locus_index])
             down+=x[locus_index]+y[locus_index]
         if down!=0:
-            return 2*up/float(down)
+            return 1.0-2*up/float(down)
         else:
-            return 1.0
+            return 0.0
 
 
     def getMSDistance_singleLocus_NonsharedAlleles(self,x,y):
