@@ -41,7 +41,7 @@ class TestEden(unittest.TestCase):
 	def test_distances_abundances(self):
 		data1=eden.MicrosatelliteDataHaploid(self.abundance_data1)
 		dm1=data1.getDistanceMatrix(distance="czekanowski")
-		assert dm1[0,1]==2/3.0 and dm1[0,2]==0.5 and dm1[1,2]==0.4
+		assert dm1[0,1]==1-2/3.0 and dm1[0,2]==1-0.5 and dm1[1,2]==1-0.4
 
 	def test_distances_allele_freqs(self):
 		ms1=eden.MicrosatelliteDataHaploid(self.data_nonnumeric2)
