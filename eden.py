@@ -150,46 +150,48 @@ class MicrosatelliteData:
         self._alleles=[] #The list of locus lists. Each locus list contains alleles as tuples.
 
         for lineNumber,line in enumerate(input):
-            fields=line.split()
+            line=line.strip()
+            if len(line)>0:
+                fields=line.split()
 
-            #At the first line, test if data is numerical
-            if lineNumber==0:
-                try:
-                    fields=map(int,fields)
-                    self.numeric=True
-                    missingValue=int(missingValue)
-                except ValueError:
-                    self.numeric=False
-
-            if len(fields)%2!=0:
-                raise SyntaxError("Input should have even number of columns");
-	    elif lastNumberOfFields!=None and lastNumberOfFields!=len(fields):
-		raise SyntaxError("The input has inconsistent number of columns")
-            else:
-                lastNumberOfFields=len(fields)
-                if self.numeric:
+                #At the first line, test if data is numerical
+                if lineNumber==0:
                     try:
                         fields=map(int,fields)
+                        self.numeric=True
+                        missingValue=int(missingValue)
                     except ValueError:
-                        raise SyntaxError("Input contains mixed numeric and not numeric alleles.")
+                        self.numeric=False
 
-                #At the first line, add lists for loci
-                if len(self._alleles)==0:                    
-                    for dummy in range(0,len(fields)/2):
-                        self._alleles.append([])
+                if len(fields)%2!=0:
+                    raise SyntaxError("Input should have even number of columns");
+                elif lastNumberOfFields!=None and lastNumberOfFields!=len(fields):
+                    raise SyntaxError("The input has inconsistent number of columns")
+                else:
+                    lastNumberOfFields=len(fields)
+                    if self.numeric:
+                        try:
+                            fields=map(int,fields)
+                        except ValueError:
+                            raise SyntaxError("Input contains mixed numeric and not numeric alleles.")
 
-                for i in range(0,len(fields),2):                    
-                    if fields[i]!=missingValue and fields[i+1]!=missingValue:
-                        if fields[i]>fields[i+1]:
-                            fields[i],fields[i+1]=fields[i+1],fields[i]
-                        self._alleles[i/2].append((fields[i],fields[i+1]))
-                    elif fields[i]==missingValue: #None comes first
-                        if fields[i+1]==missingValue:
-                            self._alleles[i/2].append((None,None))
+                    #At the first line, add lists for loci
+                    if len(self._alleles)==0:                    
+                        for dummy in range(0,len(fields)/2):
+                            self._alleles.append([])
+
+                    for i in range(0,len(fields),2):                    
+                        if fields[i]!=missingValue and fields[i+1]!=missingValue:
+                            if fields[i]>fields[i+1]:
+                                fields[i],fields[i+1]=fields[i+1],fields[i]
+                            self._alleles[i/2].append((fields[i],fields[i+1]))
+                        elif fields[i]==missingValue: #None comes first
+                            if fields[i+1]==missingValue:
+                                self._alleles[i/2].append((None,None))
+                            else:
+                                self._alleles[i/2].append((None,fields[i+1]))
                         else:
-                            self._alleles[i/2].append((None,fields[i+1]))
-                    else:
-                        self._alleles[i/2].append((None,fields[i]))
+                            self._alleles[i/2].append((None,fields[i]))
 
         if lastNumberOfFields!=None:
             self.nLoci=lastNumberOfFields/2
@@ -611,37 +613,39 @@ class MicrosatelliteDataHaploid(MicrosatelliteData):
         self._alleles=[] #The list of locus lists. Each locus list contains alleles as tuples.
 
         for lineNumber,line in enumerate(input):
-            fields=line.split()
+            line=line.strip()
+            if len(line)>0:
+                fields=line.split()
 
-            #At the first line, test if data is numerical
-            if lineNumber==0:
-                try:
-                    fields=map(int,fields)
-                    self.numeric=True
-                    missingValue=int(missingValue)
-                except ValueError:
-                    self.numeric=False
-
-	    if lastNumberOfFields!=None and lastNumberOfFields!=len(fields):
-		raise SyntaxError("The input has inconsistent number of columns")
-            else:
-                lastNumberOfFields=len(fields)
-                if self.numeric:
+                #At the first line, test if data is numerical
+                if lineNumber==0:
                     try:
                         fields=map(int,fields)
+                        self.numeric=True
+                        missingValue=int(missingValue)
                     except ValueError:
-                        raise SyntaxError("Input contains mixed numeric and not numeric alleles.")
+                        self.numeric=False
 
-                #At the first line, add lists for loci
-                if len(self._alleles)==0:                    
-                    for dummy in range(0,len(fields)):
-                        self._alleles.append([])
+                if lastNumberOfFields!=None and lastNumberOfFields!=len(fields):
+                    raise SyntaxError("The input has inconsistent number of columns")
+                else:
+                    lastNumberOfFields=len(fields)
+                    if self.numeric:
+                        try:
+                            fields=map(int,fields)
+                        except ValueError:
+                            raise SyntaxError("Input contains mixed numeric and not numeric alleles.")
 
-                for i in range(0,len(fields)):                    
-                    if fields[i]!=missingValue:
-                        self._alleles[i].append(fields[i])
-                    else:
-                        self._alleles[i].append(None)
+                    #At the first line, add lists for loci
+                    if len(self._alleles)==0:                    
+                        for dummy in range(0,len(fields)):
+                            self._alleles.append([])
+
+                    for i in range(0,len(fields)):                    
+                        if fields[i]!=missingValue:
+                            self._alleles[i].append(fields[i])
+                        else:
+                            self._alleles[i].append(None)
 
         if lastNumberOfFields!=None:
             self.nLoci=lastNumberOfFields
