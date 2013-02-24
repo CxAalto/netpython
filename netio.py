@@ -493,7 +493,7 @@ def writeNet(net, output, headers=False, fileType=None):
     # it. Otherwise if it implements 'write'-method we assume it is a
     # file object.
     fileOpened = False
-    if isinstance(output, str):
+    if isinstance(output, str) or isinstance(output,unicode):
         outputFile = open(output, 'w')
         fileOpened = True
     elif not hasattr(output, 'write'):
@@ -543,7 +543,7 @@ def loadNet(input, fileType=None, **keywords):
     # it. Otherwise if it implements 'write'-method we assume it is a
     # file object.
     fileOpened = False
-    if isinstance(input, str):
+    if isinstance(input, str) or isinstance(input, unicode):
         inputFile = open(input, 'r')
         fileOpened = True
     elif not isinstance(input, file):
@@ -627,7 +627,7 @@ def loadNodeProperties(net,input,splitterChar=None,propertyNames=None,
         Returns length of the given file in lines. Throws IOError if the file does not 
         exist.
         """
-        if isinstance(input, str):
+        if isinstance(input, str) or isinstance(input, unicode):
             theFile = open(input, 'rU')
         else:
             theFile = input
@@ -651,7 +651,7 @@ def loadNodeProperties(net,input,splitterChar=None,propertyNames=None,
         The second element is True if each node in the property file is in the network, and otherwise False
         """
 
-        if isinstance(input, str):
+        if isinstance(input, str) or isinstance(input, unicode):
             f = open(input, 'rU')
         else:
             f = input
@@ -693,7 +693,7 @@ def loadNodeProperties(net,input,splitterChar=None,propertyNames=None,
             net.nodeProperty[propertyName][node]=theString 
 
         
-    if isinstance(input, str):
+    if isinstance(input, str) or isinstance(input, unicode):
         f = open(input, 'rU')
     else:
         f = input
