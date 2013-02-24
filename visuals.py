@@ -1792,7 +1792,8 @@ class Himmeli:
         netext_path = os.path.dirname(netext.__file__)
         himmeliExecutableAlternatives=[os.path.join(netext_path,"himmeli_3.0.1","win32","himmeli.exe"),
                                        os.path.join(netext_path,"..","himmeli_3.0.1","win32","himmeli.exe"),
-                                       os.path.join("himmeli_3.0.1","win32","himmeli.exe")
+                                       os.path.join("himmeli_3.0.1","win32","himmeli.exe"),
+                                       os.path.join("himmeli_3.0.1","himmeli.exe")
                                        ]
         himmeliExecutable=None
         for alt in reversed(himmeliExecutableAlternatives):
