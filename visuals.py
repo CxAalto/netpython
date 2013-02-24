@@ -1789,7 +1789,17 @@ class Himmeli:
     if sys.platform=='win32':
         # For Win use direct path (probably works better with the
         # executable network toolbox...)
-        himmeliExecutable="himmeli_3.0.1\himmeli.exe"
+        netext_path = os.path.dirname(netext.__file__)
+        himmeliExecutableAlternatives=[os.path.join(netext_path,"himmeli_3.0.1","win32","himmeli.exe"),
+                                       os.path.join(netext_path,"..","himmeli_3.0.1","win32","himmeli.exe"),
+                                       os.path.join("himmeli_3.0.1","win32","himmeli.exe")
+                                       ]
+        himmeliExecutable=None
+        for alt in reversed(himmeliExecutableAlternatives):
+            if os.path.isfile(alt):
+                himmeliExecutable=alt
+        if himmeliExecutable==None:
+            raise Exception("Cannot find Himmeli executable!")
     else:
         # Trick: find out where netext.py is (must be in the netpython
         # directory), then add the rest of the path
