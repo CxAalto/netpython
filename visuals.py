@@ -10,6 +10,8 @@ import copy
 import random
 import shutil
 import operator
+import tempfile 
+import subprocess
 
 # --------------------------------------        
 
@@ -1792,8 +1794,8 @@ class Himmeli:
         netext_path = os.path.dirname(netext.__file__)
         himmeliExecutableAlternatives=[os.path.join(netext_path,"himmeli_3.0.1","win32","himmeli.exe"),
                                        os.path.join(netext_path,"..","himmeli_3.0.1","win32","himmeli.exe"),
-                                       os.path.join("himmeli_3.0.1","win32","himmeli.exe"),
-                                       os.path.join("himmeli_3.0.1","himmeli.exe")
+                                       os.path.abspath(os.path.join("himmeli_3.0.1","win32","himmeli.exe")),
+                                       os.path.abspath(os.path.join("himmeli_3.0.1","himmeli.exe"))
                                        ]
         himmeliExecutable=None
         for alt in reversed(himmeliExecutableAlternatives):
@@ -1831,15 +1833,19 @@ class Himmeli:
                  useMST=False, wmin=None, wmax=None, coloredNodes=True,
                  equalsize=True, nodeColor="999999", nodeSize="1.0",
                  coordinates=None, labels={}, distanceUnit=1, showAllNodes=True,
-                 edgeLabels=False, nodeColors={}, treeMode=False):
+                 edgeLabels=False, nodeColors={}, treeMode=False,tempdir=None):
+        """
+        inputs:
+        time - time limit (secs) for the Himmeli optimization of layout; for large nets, use higher values
+        configFile - Himmeli .cfg file, if you want to use a pre-existing one
+        threshold - for weighted nets; use only edges above this
+        useMST (true/false) : true - uses pre-calculated MST coords for the (weighted) net
+        tempdir - Temporary directory for Himmeli input and output files. If None, temporary
+                  directory is set as tempfile.gettempdir().
+        """
+        if tempdir==None:
+            tempdir=tempfile.gettempdir()
 
-        # inputs:
-        # time - time limit (secs) for the Himmeli optimization of layout; for large nets, use higher values
-        # configFile - Himmeli .cfg file, if you want to use a pre-existing one
-        # threshold - for weighted nets; use only edges above this
-        # useMST (true/false) : true - uses pre-calculated MST coords for the (weighted) net
-
-        
         # Checking that the given net is valid and not empty
         #if net.__class__!=pynet.Net and net.__class__!=pynet.SymmNet:
         if not isinstance(inputnet,pynet.VirtualNet):
@@ -1885,14 +1891,14 @@ class Himmeli:
         #First we need to generate names for this net and its files
         rgen = random.Random()
         netName = str(rgen.randint(1,10000))
-        edgFileName = "himmeli_tmp"+netName+".edg"
-        confFileName = "himmeli_tmp"+netName+".cfg"
-        vtxFileName = "himmeli_tmp"+netName+".vtx"
-        coordFileName = netName+".vertices.txt"
-        legendFileName = netName+".legend.eps"
-        output_confFileName = netName+'.config.txt'
-        output_edgFileName = netName+'.edges.txt'
-        output_psFileName = netName+'.ps'
+        edgFileName = os.path.join(tempdir,"himmeli_tmp"+netName+".edg")
+        confFileName = os.path.join(tempdir,"himmeli_tmp"+netName+".cfg")
+        vtxFileName = os.path.join(tempdir,"himmeli_tmp"+netName+".vtx")
+        coordFileName = os.path.join(tempdir,netName+".vertices.txt")
+        legendFileName = os.path.join(tempdir,netName+".legend.eps")
+        output_confFileName = os.path.join(tempdir,netName+'.config.txt')
+        output_edgFileName = os.path.join(tempdir,netName+'.edges.txt')
+        output_psFileName = os.path.join(tempdir,netName+'.ps')
 
         #Then we make config for Himmeli or read it from a file
         if configFile==None:
@@ -1981,9 +1987,11 @@ class Himmeli:
         confFile.close()
 
         # All is set for running Himmeli
-        himmeli = os.popen(self.himmeliExecutable+' '+confFileName,'r')
-        #print string.join(himmeli.readlines()) #for long debug
-        himmeli.close()
+        himmeli = subprocess.Popen([self.himmeliExecutable,confFileName],
+                                   cwd=tempdir,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        output,errors=himmeli.communicate()
 
         #print himmeli #for short debug
 
