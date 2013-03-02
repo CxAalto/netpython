@@ -1990,7 +1990,9 @@ class Himmeli:
         himmeli = subprocess.Popen([self.himmeliExecutable,confFileName],
                                    cwd=tempdir,
                                    stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
+                                   stderr=subprocess.PIPE,
+                                   creationflags=subprocess.SW_HIDE,
+                                   shell=True)
         output,errors=himmeli.communicate()
 
         #print himmeli #for short debug
