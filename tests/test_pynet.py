@@ -93,6 +93,9 @@ class TestPynet(unittest.TestCase):
         self.assertEqual(map(lambda node:sorted(myNet2[node]),myNet2),map(lambda node:sorted(copyNet2[node]),myNet2))
 
 
+    def test_basic_dir_DictDirNet(self):
+        self.test_basic_dir(pynet.DictDirNet)
+
     def test_basic_dir_ScipySparseDirNet(self):
         self.test_basic_dir(pynet.ScipySparseDirNet)
 
@@ -101,6 +104,9 @@ class TestPynet(unittest.TestCase):
 
     def test_basic_dir_LCELibSparseDirNet(self):
         self.test_basic_dir(pynet.LCELibSparseDirNet)
+
+    def test_basic_symm_DictSymmNet(self):
+        self.test_basic_symm(pynet.DictSymmNet)
 
     def test_basic_symm_ScipySparseSymmNet(self):
         self.test_basic_symm(pynet.ScipySparseSymmNet)
@@ -115,11 +121,13 @@ class TestPynet(unittest.TestCase):
 def test_pynet():
     suite = unittest.TestSuite()    
     #symmetric tests:
+    suite.addTest(TestPynet("test_basic_symm_DictSymmNet"))
     suite.addTest(TestPynet("test_basic_symm_ScipySparseSymmNet"))
     suite.addTest(TestPynet("test_basic_symm_NumpyFullSymmNet"))
     suite.addTest(TestPynet("test_basic_symm_LCELibSparseSymmNet"))
 
     #dir tests:
+    suite.addTest(TestPynet("test_basic_dir_DictDirNet"))
     suite.addTest(TestPynet("test_basic_dir_ScipySparseDirNet"))
     suite.addTest(TestPynet("test_basic_dir_NumpyFullDirNet"))
     suite.addTest(TestPynet("test_basic_dir_LCELibSparseDirNet"))
