@@ -1,5 +1,3 @@
-import numpy
-import scipy.sparse
 import itertools
 
 
@@ -218,6 +216,106 @@ class VirtualDirNet(VirtualNet):
 		raise NotImplemented
 	def _outDegIndex(self,nodeIndex):
 		raise NotImplemented
+
+class DictSymmNet(VirtualNet):
+	def __init__(self,sizeLimit=0):
+		VirtualNet.__init__(self,sizeLimit=sizeLimit)
+		self._nodeList=[]
+	def _addNode(self):
+		newNode={}
+		self._nodeList.append(newNode)
+
+	#--- Methods used by VirtualNet:
+	def _degIndex(self,nodeIndex):
+		return len(self._nodeList[nodeIndex])
+	def _getEdge(self,src,dest):
+		if dest in self._nodeList[src]:
+			return self._nodeList[src][dest]
+		else:
+			return 0
+	def _setEdge(self,src,dest,val):
+		nNodes=len(self._nodeList)
+		while nNodes<=src or nNodes<=dest:
+			self._addNode()
+			nNodes+=1
+		if val==0:
+			try:
+				del self._nodeList[src][dest]
+			except KeyError:
+				pass
+			try:
+				del self._nodeList[dest][src]
+			except KeyError:
+				pass
+		else:
+			self._nodeList[src][dest]=val
+			self._nodeList[dest][src]=val
+	def _iterNode(self,nodeIndex):
+		return self._nodeList[nodeIndex].iterkeys()
+
+class DictDirNet(VirtualDirNet):
+	def __init__(self,sizeLimit=0):
+		VirtualNet.__init__(self,sizeLimit=sizeLimit)
+		self._nodeList=[] #directed edges and weights
+		self._backNodeList=[] #reversed directed edges 
+		self._totalDeg=[] #total degree of nodes
+	def _addNode(self):
+		newNode={}
+		self._nodeList.append(newNode)
+		newBackNode={}
+		self._backNodeList.append(newBackNode)
+		self._totalDeg.append(0)
+
+	#--- Methods used by VirtualDirNet:
+	def _degIndex(self,nodeIndex):
+		return self._totalDeg[nodeIndex]
+	def _getEdge(self,src,dest):
+		if dest in self._nodeList[src]:
+			return self._nodeList[src][dest]
+		else:
+			return 0
+	def _setEdge(self,src,dest,val):
+		nNodes=len(self._nodeList)
+		if src>=nNodes: 
+			self._addNode()
+		if dest>=nNodes: 
+			self._addNode()
+		if val==0: #removing an edge
+			#nothing happens if the link does not exist:
+			if dest in self._nodeList[src]:
+				if not src in self._nodeList[dest]:
+					self._totalDeg[src]+=-1
+					self._totalDeg[dest]+=-1
+				del self._nodeList[src][dest]
+				del self._backNodeList[dest][src]
+		else:
+			if not dest in self._nodeList[src] and not src in self._nodeList[dest]:
+				self._totalDeg[src]+=1
+				self._totalDeg[dest]+=1
+
+			self._nodeList[src][dest]=val
+			self._backNodeList[dest][src]=1
+
+
+	def _iterNode(self,nodeIndex):
+		#First iter through all outgoing neighbors:
+		for neigh in self._nodeList[nodeIndex].iterkeys():
+			yield neigh
+		#Then iter through only incoming neighbors
+		for neigh in self._backNodeList[nodeIndex].iterkeys():
+			if not neigh in self._nodeList[nodeIndex]:
+				yield neigh
+	def _iterNodeIn(self,nodeIndex):
+		return self._backNodeList[nodeIndex].iterkeys()
+	def _iterNodeOut(self,nodeIndex):
+		return self._nodeList[nodeIndex].iterkeys()
+
+	def _inDegIndex(self,nodeIndex):
+		return len(self._backNodeList[nodeIndex])
+	def _outDegIndex(self,nodeIndex):
+		return len(self._nodeList[nodeIndex])
+
+
 
 class ScipySparseSymmNet(VirtualNet):
 	def __init__(self,sizeLimit=0):
@@ -455,16 +553,33 @@ class LCELibSparseDirNet(VirtualDirNet):
 
 
 #--- Implementation lists
-SymmBackends=[LCELibSparseSymmNet,ScipySparseSymmNet,NumpyFullSymmNet]
-DirBackends=[LCELibSparseDirNet,ScipySparseDirNet,NumpyFullDirNet]
+SymmBackends=[LCELibSparseSymmNet,ScipySparseSymmNet,NumpyFullSymmNet,DictSymmNet]
+DirBackends=[LCELibSparseDirNet,ScipySparseDirNet,NumpyFullDirNet,DictDirNet]
 
 #--- Default implementations
-DirNet=ScipySparseDirNet #LCELibSparseDirNet overrides this
+DirNet=DictDirNet #LCELibSparseDirNet overrides this
 Net=DirNet
-SymmNet=ScipySparseSymmNet #LCELibSparseSymmNet overrides this
-SymmFullNet=NumpyFullSymmNet
-FullNet=NumpyFullDirNet
+SymmNet=DictSymmNet #LCELibSparseSymmNet overrides this
+SymmFullNet=DictSymmNet
+FullNet=DictDirNet
 
+
+#--- Try to import numpy
+try:
+	import numpy
+	SymmFullNet=NumpyFullSymmNet
+	FullNet=NumpyFullDirNet
+except:
+        print "Failed to import numpy."
+
+
+#--- Try to import scipy.sparse
+try:
+	import scipy.sparse
+	DirNet=ScipySparseDirNet	
+	SymmNet=ScipySparseSymmNet
+except:
+        print "Failed to import scipy.sparse."
 
 #--- Try to import the C++-implementation.
 try:
