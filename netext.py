@@ -8,7 +8,6 @@ import percolator
 import transforms
 import shutil
 import copy
-import visuals
 import numpy
 
 
@@ -187,6 +186,7 @@ def getPropertyTypes(net):
     """Returns a dictionary where keys are nodeProperties
     and values indicate their type ('int','float','number','string','string/color','mixed')
     """
+    import visuals
     propertylist=list(net.nodeProperty)
     propertydict={}
 
