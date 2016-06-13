@@ -1819,6 +1819,9 @@ class Himmeli:
             himmeliExecutable = ("%s%s../himmeli_3.0.1/himmeli" % 
                                  (netext_path, ("/" if netext_path else "")))
 
+    #Lets make it absolute.
+    himmeliExecutable=os.path.abspath(himmeliExecutable)
+
     # Directly complain if Himmeli not found.
     if not(os.path.isfile(himmeliExecutable)):
         complaint = ("Cannot find Himmeli! This is where it should be: "
@@ -1986,16 +1989,29 @@ class Himmeli:
         confFile.write(config)
         confFile.close()
 
+        #Calling subprocess.popen is not platform independent so we need to create
+        #(at least) two different keyword argument dicts. 
+        popen_kwargs={"cwd":tempdir,
+                      "stdout":subprocess.PIPE,
+                      "stderr":subprocess.PIPE,
+                      "shell":True}
+
+        if hasattr(subprocess, 'SW_HIDE'):
+            #In Windows one can have 'creation flags' and we need to include
+            #SW_HIDE flag so that the console is not shown to the user.
+            popen["creationflags"]=subprocess.SW_HIDE
+
         # All is set for running Himmeli
-        himmeli = subprocess.Popen([self.himmeliExecutable,confFileName],
-                                   cwd=tempdir,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE,
-                                   creationflags=subprocess.SW_HIDE,
-                                   shell=True)
+        #Note that if shell=True the arguments cannot be given as a separate string.
+        himmeli = subprocess.Popen([self.himmeliExecutable+" "+confFileName],
+                                   **popen_kwargs)
         output,errors=himmeli.communicate()
 
         #print himmeli #for short debug
+        #print "Output:"
+        #print output
+        #print "Errors:"
+        #print errors
 
         # Save coordinates produced by Himmeli
         self.coordinates = self._parseCoordinates(coordFileName)
