@@ -18,7 +18,7 @@ void shuffleEdges(Sn *netContainer, int rounds,int limit,int randseed){
 
 }
 
-
+/*
 int confModelSimple(Sn *netContainer, int rounds,int randseed){
   SymmNet<float> &net=*netContainer->net;
 
@@ -27,3 +27,4 @@ int confModelSimple(Sn *netContainer, int rounds,int randseed){
   return confModelSimple(net,generator,rounds);
 
 }
+*/
