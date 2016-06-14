@@ -97,4 +97,4 @@ float meanPathLength(Sn*, int);
 
 //%include "transforms.h"
 void shuffleEdges(Sn*, int,int,int);
-int confModelSimple(Sn*, int,int);
+//int confModelSimple(Sn*, int,int);
